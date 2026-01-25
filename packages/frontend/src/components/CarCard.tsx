@@ -1,0 +1,215 @@
+import { useState } from 'react'
+import { Car, User } from '../lib/api'
+import { Avatar } from './Avatar'
+import { useAuthStore } from '../stores/auth'
+import { useSessionStore } from '../stores/session'
+import { BanModal } from './BanModal'
+import clsx from 'clsx'
+
+interface CarCardProps {
+  car: Car
+  isBanned?: boolean
+}
+
+export function CarCard({ car, isBanned }: CarCardProps) {
+  const { user } = useAuthStore()
+  const { joinCar, leaveCar, removeCar, kickPassenger } = useSessionStore()
+  const [loading, setLoading] = useState(false)
+  const [error, setError] = useState<string | null>(null)
+  const [banTarget, setBanTarget] = useState<User | null>(null)
+
+  const isDriver = user?.id === car.driverId
+  const isPassenger = car.passengers.some((p) => p.userId === user?.id)
+  const isFull = car.passengers.length >= car.seats
+  const availableSeats = car.seats - car.passengers.length
+
+  const handleJoin = async () => {
+    setLoading(true)
+    setError(null)
+    try {
+      await joinCar(car.id)
+    } catch (err) {
+      setError((err as Error).message)
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  const handleLeave = async () => {
+    setLoading(true)
+    setError(null)
+    try {
+      await leaveCar(car.id)
+    } catch (err) {
+      setError((err as Error).message)
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  const handleRemoveCar = async () => {
+    if (!confirm('Supprimer ta voiture ?')) return
+    setLoading(true)
+    try {
+      await removeCar(car.id)
+    } catch (err) {
+      setError((err as Error).message)
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  const handleKick = async (passengerId: string) => {
+    setLoading(true)
+    try {
+      await kickPassenger(car.id, passengerId)
+    } catch (err) {
+      setError((err as Error).message)
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  return (
+    <>
+      <div className={clsx(
+        'card p-4',
+        isBanned && 'opacity-60 border-red-200 bg-red-50'
+      )}>
+        {/* Driver */}
+        <div className="flex items-center justify-between mb-3">
+          <div className="flex items-center gap-3">
+            {car.userCar ? (
+              <div className="w-12 h-12 rounded-full bg-gradient-to-br from-primary-400 to-primary-600 flex items-center justify-center text-2xl flex-shrink-0">
+                {car.userCar.avatar.imageUrl.startsWith('http') ? (
+                  <img src={car.userCar.avatar.imageUrl} alt={car.userCar.avatar.name} className="w-full h-full object-cover rounded-full" />
+                ) : (
+                  <span>{car.userCar.avatar.imageUrl}</span>
+                )}
+              </div>
+            ) : (
+              <Avatar user={car.driver} size="md" />
+            )}
+            <div>
+              <p className="font-medium">{car.driver.name}</p>
+              <p className="text-sm text-gray-500">
+                {car.userCar ? (car.userCar.name || car.userCar.avatar.name) : 'Conducteur'}
+              </p>
+            </div>
+          </div>
+          <div className="text-right">
+            <p className={clsx(
+              'text-lg font-bold',
+              isFull ? 'text-red-500' : 'text-green-600'
+            )}>
+              {availableSeats}/{car.seats}
+            </p>
+            <p className="text-xs text-gray-500">places</p>
+          </div>
+        </div>
+
+        {/* Passengers */}
+        {car.passengers.length > 0 && (
+          <div className="border-t border-gray-100 pt-3 mb-3">
+            <p className="text-sm text-gray-500 mb-2">Passagers</p>
+            <div className="flex flex-wrap gap-2">
+              {car.passengers.map((passenger) => (
+                <div
+                  key={passenger.id}
+                  className="flex items-center gap-2 bg-gray-50 rounded-full pl-1 pr-3 py-1"
+                >
+                  <Avatar user={passenger.user} size="sm" />
+                  <span className="text-sm">{passenger.user.name}</span>
+                  {isDriver && passenger.userId !== user?.id && (
+                    <div className="flex gap-1 ml-1">
+                      <button
+                        onClick={() => handleKick(passenger.userId)}
+                        className="text-gray-400 hover:text-red-500 p-1"
+                        title="Éjecter"
+                      >
+                        <XIcon className="w-4 h-4" />
+                      </button>
+                      <button
+                        onClick={() => setBanTarget(passenger.user)}
+                        className="text-gray-400 hover:text-red-500 p-1"
+                        title="Bannir"
+                      >
+                        <BanIcon className="w-4 h-4" />
+                      </button>
+                    </div>
+                  )}
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+
+        {/* Error */}
+        {error && (
+          <p className="text-sm text-red-500 mb-3">{error}</p>
+        )}
+
+        {/* Actions */}
+        <div className="flex gap-2">
+          {isDriver ? (
+            <button
+              onClick={handleRemoveCar}
+              disabled={loading}
+              className="btn-danger flex-1"
+            >
+              Retirer ma voiture
+            </button>
+          ) : isPassenger ? (
+            <button
+              onClick={handleLeave}
+              disabled={loading}
+              className="btn-secondary flex-1"
+            >
+              Quitter
+            </button>
+          ) : isBanned ? (
+            <button disabled className="btn-secondary flex-1 opacity-50">
+              Banni de cette voiture
+            </button>
+          ) : isFull ? (
+            <button disabled className="btn-secondary flex-1 opacity-50">
+              Complet
+            </button>
+          ) : (
+            <button
+              onClick={handleJoin}
+              disabled={loading}
+              className="btn-primary flex-1"
+            >
+              Rejoindre
+            </button>
+          )}
+        </div>
+      </div>
+
+      {/* Ban Modal */}
+      {banTarget && (
+        <BanModal
+          user={banTarget}
+          onClose={() => setBanTarget(null)}
+        />
+      )}
+    </>
+  )
+}
+
+function XIcon({ className }: { className?: string }) {
+  return (
+    <svg className={className} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+      <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
+    </svg>
+  )
+}
+
+function BanIcon({ className }: { className?: string }) {
+  return (
+    <svg className={className} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+      <path strokeLinecap="round" strokeLinejoin="round" d="M18.364 18.364A9 9 0 005.636 5.636m12.728 12.728A9 9 0 015.636 5.636m12.728 12.728L5.636 5.636" />
+    </svg>
+  )
+}

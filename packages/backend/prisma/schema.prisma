@@ -1,0 +1,166 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id              String    @id @default(cuid())
+  email           String?   @unique
+  name            String
+  avatarId        String?
+  customAvatarUrl String?
+  googleId        String?   @unique
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
+
+  avatar        Avatar?        @relation(fields: [avatarId], references: [id])
+  memberships   GroupMember[]
+  cars          Car[]
+  participations Passenger[]
+  bansGiven     Ban[]          @relation("BanGiver")
+  bansReceived  Ban[]          @relation("BanReceiver")
+  magicLinks    MagicLink[]
+  userCars      UserCar[]
+
+  @@index([email])
+  @@index([googleId])
+}
+
+model MagicLink {
+  id        String   @id @default(cuid())
+  token     String   @unique
+  userId    String
+  email     String
+  expiresAt DateTime
+  usedAt    DateTime?
+  createdAt DateTime @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([token])
+  @@index([email])
+}
+
+model Avatar {
+  id       String  @id @default(cuid())
+  name     String
+  imageUrl String
+  category String?
+
+  users User[]
+  userCars UserCar[]
+  groups Group[]
+}
+
+model Group {
+  id         String   @id @default(cuid())
+  name       String
+  inviteCode String   @unique
+  avatarId   String?
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+
+  avatar   Avatar?       @relation(fields: [avatarId], references: [id])
+  members  GroupMember[]
+  sessions Session[]
+
+  @@index([inviteCode])
+}
+
+model GroupMember {
+  id       String   @id @default(cuid())
+  userId   String
+  groupId  String
+  role     String   @default("member")
+  joinedAt DateTime @default(now())
+
+  user  User  @relation(fields: [userId], references: [id], onDelete: Cascade)
+  group Group @relation(fields: [groupId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, groupId])
+  @@index([groupId])
+}
+
+model Session {
+  id        String   @id @default(cuid())
+  groupId   String
+  date      DateTime @db.Date
+  createdAt DateTime @default(now())
+
+  group      Group       @relation(fields: [groupId], references: [id], onDelete: Cascade)
+  cars       Car[]
+  passengers Passenger[]
+
+  @@unique([groupId, date])
+  @@index([groupId, date])
+}
+
+model Car {
+  id        String  @id @default(cuid())
+  sessionId String
+  driverId  String
+  seats     Int
+  userCarId String?
+
+  session    Session     @relation(fields: [sessionId], references: [id], onDelete: Cascade)
+  driver     User        @relation(fields: [driverId], references: [id], onDelete: Cascade)
+  userCar    UserCar?    @relation(fields: [userCarId], references: [id], onDelete: SetNull)
+  passengers Passenger[]
+
+  @@unique([sessionId, driverId])
+  @@index([sessionId])
+  @@index([userCarId])
+}
+
+model Passenger {
+  id        String   @id @default(cuid())
+  sessionId String
+  userId    String
+  carId     String?
+  joinedAt  DateTime @default(now())
+
+  session Session @relation(fields: [sessionId], references: [id], onDelete: Cascade)
+  user    User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+  car     Car?    @relation(fields: [carId], references: [id], onDelete: SetNull)
+
+  @@unique([sessionId, userId])
+  @@index([sessionId])
+  @@index([carId])
+}
+
+model Ban {
+  id         String    @id @default(cuid())
+  giverId    String
+  receiverId String
+  reason     String?
+  startsAt   DateTime  @default(now())
+  endsAt     DateTime
+  liftedAt   DateTime?
+  createdAt  DateTime  @default(now())
+
+  giver    User @relation("BanGiver", fields: [giverId], references: [id], onDelete: Cascade)
+  receiver User @relation("BanReceiver", fields: [receiverId], references: [id], onDelete: Cascade)
+
+  @@index([giverId, receiverId])
+  @@index([receiverId, endsAt])
+}
+
+model UserCar {
+  id            String   @id @default(cuid())
+  userId        String
+  name          String?
+  avatarId      String
+  defaultSeats  Int      @default(3)
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  user        User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+  avatar      Avatar @relation(fields: [avatarId], references: [id])
+  sessionCars Car[]
+
+  @@index([userId])
+}

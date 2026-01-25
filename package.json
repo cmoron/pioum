@@ -1,0 +1,19 @@
+{
+  "name": "pioum",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Webapp de covoiturage pour la muscu entre potes",
+  "scripts": {
+    "dev": "pnpm -r --parallel run dev",
+    "build": "pnpm -r run build",
+    "lint": "pnpm -r run lint",
+    "test": "pnpm -r run test",
+    "db:push": "pnpm --filter @pioum/backend db:push",
+    "db:generate": "pnpm --filter @pioum/backend db:generate",
+    "db:seed": "pnpm --filter @pioum/backend db:seed"
+  },
+  "engines": {
+    "node": ">=20.0.0",
+    "pnpm": ">=9.0.0"
+  }
+}

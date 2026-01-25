@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react'
 import { useAuthStore } from '../stores/auth'
 import { useUserCarsStore } from '../stores/userCars'
 import { api, Avatar as AvatarType, UserCar } from '../lib/api'
+import { isImageUrl } from '../lib/utils'
 import { Avatar } from '../components/Avatar'
 import { LoadingSpinner } from '../components/LoadingSpinner'
 import { UserCarCard } from '../components/UserCarCard'
@@ -29,7 +30,8 @@ export function ProfilePage() {
   useEffect(() => {
     api.getAvatars()
       .then(({ avatars }) => {
-        setAvatars(avatars)
+        // Filtrer par catégorie
+        setAvatars(avatars.filter(a => a.category === 'users'))
         setCarAvatars(avatars.filter(a => a.category === 'cars'))
       })
       .finally(() => setLoadingAvatars(false))
@@ -112,29 +114,20 @@ export function ProfilePage() {
 
   if (!user) return null
 
-  // Group avatars by category
-  const avatarsByCategory = avatars.reduce((acc, avatar) => {
-    const category = avatar.category || 'other'
-    if (!acc[category]) acc[category] = []
-    acc[category].push(avatar)
-    return acc
-  }, {} as Record<string, AvatarType[]>)
-
-  const categoryLabels: Record<string, string> = {
-    muscu: 'Muscu',
-    fun: 'Fun',
-    animals: 'Animaux',
-    other: 'Autres'
-  }
-
   return (
     <div className="p-4">
       <h1 className="text-2xl font-bold mb-6">Mon profil</h1>
 
       <div className="card p-6 mb-6">
-        {/* Current avatar */}
+        {/* Current avatar preview */}
         <div className="flex items-center gap-4 mb-6">
-          <Avatar user={{ ...user, avatarId: selectedAvatarId || undefined }} size="lg" />
+          <Avatar
+            user={{
+              ...user,
+              avatar: avatars.find(a => a.id === selectedAvatarId) || user.avatar
+            }}
+            size="xl"
+          />
           <div>
             <p className="font-medium">{user.name}</p>
             <p className="text-sm text-gray-500">{user.email}</p>
@@ -164,32 +157,30 @@ export function ProfilePage() {
               <LoadingSpinner />
             </div>
           ) : (
-            Object.entries(avatarsByCategory).map(([category, categoryAvatars]) => (
-              <div key={category} className="mb-4">
-                <p className="text-sm text-gray-500 mb-2">
-                  {categoryLabels[category] || category}
-                </p>
-                <div className="flex flex-wrap gap-2">
-                  {categoryAvatars.map((avatar) => (
-                    <button
-                      key={avatar.id}
-                      onClick={() => setSelectedAvatarId(avatar.id)}
-                      className={`w-12 h-12 rounded-full overflow-hidden ring-2 transition-all ${
-                        selectedAvatarId === avatar.id
-                          ? 'ring-primary-600 ring-offset-2'
-                          : 'ring-transparent hover:ring-gray-300'
-                      }`}
-                    >
-                      <img
-                        src={avatar.imageUrl}
-                        alt={avatar.name}
-                        className="w-full h-full object-cover"
-                      />
-                    </button>
-                  ))}
-                </div>
-              </div>
-            ))
+            <div className="grid grid-cols-5 sm:grid-cols-6 md:grid-cols-8 lg:grid-cols-10 gap-2">
+              {avatars.map((avatar) => (
+                <button
+                  key={avatar.id}
+                  onClick={() => setSelectedAvatarId(avatar.id)}
+                  className={`w-14 h-14 rounded-full flex items-center justify-center text-2xl bg-gray-100 ring-2 transition-all overflow-hidden ${
+                    selectedAvatarId === avatar.id
+                      ? 'ring-primary-600 ring-offset-2'
+                      : 'ring-transparent hover:ring-gray-300'
+                  }`}
+                  title={avatar.name}
+                >
+                  {isImageUrl(avatar.imageUrl) ? (
+                    <img
+                      src={avatar.imageUrl}
+                      alt={avatar.name}
+                      className="w-full h-full object-cover rounded-full"
+                    />
+                  ) : (
+                    avatar.imageUrl
+                  )}
+                </button>
+              ))}
+            </div>
           )}
         </div>
 
@@ -279,25 +270,25 @@ export function ProfilePage() {
               {loadingAvatars ? (
                 <LoadingSpinner />
               ) : (
-                <div className="grid grid-cols-4 gap-2">
+                <div className="grid grid-cols-3 gap-3">
                   {carAvatars.map((avatar) => (
                     <button
                       key={avatar.id}
                       onClick={() => setCarAvatarId(avatar.id)}
-                      className={`p-2 rounded-lg border-2 transition-all ${
+                      className={`p-3 rounded-lg border-2 transition-all ${
                         carAvatarId === avatar.id
                           ? 'border-primary-600 bg-primary-50'
                           : 'border-gray-200 hover:border-gray-300'
                       }`}
                     >
-                      <div className="text-2xl mb-1">
-                        {avatar.imageUrl.startsWith('http') ? (
-                          <img src={avatar.imageUrl} alt={avatar.name} className="w-8 h-8 object-cover mx-auto" />
+                      <div className="text-4xl mb-2 flex justify-center">
+                        {isImageUrl(avatar.imageUrl) ? (
+                          <img src={avatar.imageUrl} alt={avatar.name} className="w-16 h-16 object-cover rounded-lg" />
                         ) : (
                           avatar.imageUrl
                         )}
                       </div>
-                      <div className="text-xs text-center">{avatar.name}</div>
+                      <div className="text-sm text-center font-medium">{avatar.name}</div>
                     </button>
                   ))}
                 </div>

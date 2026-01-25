@@ -2,12 +2,15 @@ import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useAuthStore } from '../stores/auth'
 
+const isDev = import.meta.env.DEV
+
 export function LoginPage() {
   const navigate = useNavigate()
-  const { loginWithGoogle, requestMagicLink, user } = useAuthStore()
-  const [mode, setMode] = useState<'choose' | 'magic-link'>('choose')
+  const { loginWithGoogle, requestMagicLink, devLogin, user } = useAuthStore()
+  const [mode, setMode] = useState<'choose' | 'magic-link' | 'dev'>('choose')
   const [email, setEmail] = useState('')
   const [name, setName] = useState('')
+  const [devName, setDevName] = useState('')
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [magicLinkSent, setMagicLinkSent] = useState(false)
@@ -59,6 +62,21 @@ export function LoginPage() {
     try {
       await requestMagicLink(email, name || undefined)
       setMagicLinkSent(true)
+    } catch (err) {
+      setError((err as Error).message)
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  const handleDevLogin = async (e: React.FormEvent) => {
+    e.preventDefault()
+    setLoading(true)
+    setError(null)
+
+    try {
+      await devLogin(devName)
+      navigate('/')
     } catch (err) {
       setError((err as Error).message)
     } finally {
@@ -145,6 +163,74 @@ export function LoginPage() {
               >
                 Connexion par email
               </button>
+
+              {isDev && (
+                <>
+                  <div className="flex items-center gap-3 my-4">
+                    <div className="flex-1 h-px bg-gray-200" />
+                    <span className="text-sm text-gray-500">dev</span>
+                    <div className="flex-1 h-px bg-gray-200" />
+                  </div>
+
+                  <button
+                    onClick={() => setMode('dev')}
+                    className="w-full px-4 py-2 bg-yellow-100 text-yellow-800 rounded-lg hover:bg-yellow-200 transition-colors text-sm"
+                  >
+                    Connexion rapide (dev)
+                  </button>
+                </>
+              )}
+            </>
+          ) : mode === 'dev' ? (
+            <>
+              <button
+                onClick={() => setMode('choose')}
+                className="flex items-center gap-2 text-gray-600 hover:text-gray-900 mb-4"
+              >
+                <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
+                </svg>
+                Retour
+              </button>
+
+              <h2 className="text-xl font-bold mb-2">Mode Dev</h2>
+              <p className="text-sm text-gray-500 mb-4">Crée ou connecte un utilisateur test</p>
+
+              {error && (
+                <div className="bg-red-50 text-red-600 p-3 rounded-lg mb-4 text-sm">
+                  {error}
+                </div>
+              )}
+
+              <form onSubmit={handleDevLogin}>
+                <div className="mb-4">
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    Prénom
+                  </label>
+                  <input
+                    type="text"
+                    value={devName}
+                    onChange={(e) => setDevName(e.target.value)}
+                    className="input"
+                    placeholder="Alice, Bob, Charlie..."
+                    required
+                  />
+                </div>
+
+                <button
+                  type="submit"
+                  disabled={loading || !devName}
+                  className="w-full bg-yellow-500 text-white py-2 px-4 rounded-lg hover:bg-yellow-600 transition-colors"
+                >
+                  {loading ? 'Connexion...' : 'Se connecter'}
+                </button>
+              </form>
+
+              <div className="mt-4 p-3 bg-gray-50 rounded-lg">
+                <p className="text-xs text-gray-500">
+                  Utilisateurs créés : <code>prénom@test.local</code>
+                </p>
+              </div>
             </>
           ) : (
             <>

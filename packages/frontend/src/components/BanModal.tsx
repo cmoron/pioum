@@ -5,6 +5,7 @@ import { Avatar } from './Avatar'
 interface BanModalProps {
   user: User
   onClose: () => void
+  onBanned?: () => void
 }
 
 const durations = [
@@ -14,7 +15,7 @@ const durations = [
   { value: '2w', label: '2 semaines' }
 ]
 
-export function BanModal({ user, onClose }: BanModalProps) {
+export function BanModal({ user, onClose, onBanned }: BanModalProps) {
   const [duration, setDuration] = useState('1d')
   const [reason, setReason] = useState('')
   const [loading, setLoading] = useState(false)
@@ -25,6 +26,7 @@ export function BanModal({ user, onClose }: BanModalProps) {
     setError(null)
     try {
       await api.createBan(user.id, duration, reason || undefined)
+      onBanned?.()
       onClose()
     } catch (err) {
       setError((err as Error).message)

@@ -9,6 +9,7 @@ interface AuthState {
   loginWithGoogle: (credential: string) => Promise<void>
   requestMagicLink: (email: string, name?: string) => Promise<void>
   verifyMagicLink: (token: string) => Promise<void>
+  devLogin: (name: string) => Promise<void>
   logout: () => Promise<void>
   updateUser: (user: User) => void
 }
@@ -54,6 +55,17 @@ export const useAuthStore = create<AuthState>((set) => ({
     try {
       set({ loading: true, error: null })
       const { user } = await api.verifyMagicLink(token)
+      set({ user, loading: false })
+    } catch (err) {
+      set({ error: (err as Error).message, loading: false })
+      throw err
+    }
+  },
+
+  devLogin: async (name: string) => {
+    try {
+      set({ loading: true, error: null })
+      const { user } = await api.devLogin(name)
       set({ user, loading: false })
     } catch (err) {
       set({ error: (err as Error).message, loading: false })

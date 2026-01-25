@@ -1,4 +1,4 @@
-const API_BASE = '/api'
+const API_BASE = import.meta.env.VITE_API_URL || '/api'
 
 interface ApiError {
   error: string
@@ -40,6 +40,16 @@ export const api = {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ token }),
+      credentials: 'include'
+    })
+    return handleResponse<{ user: User; token: string }>(res)
+  },
+
+  async devLogin(name: string) {
+    const res = await fetch(`${API_BASE}/auth/dev-login`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ name }),
       credentials: 'include'
     })
     return handleResponse<{ user: User; token: string }>(res)
@@ -130,6 +140,14 @@ export const api = {
       credentials: 'include'
     })
     return handleResponse<{ group: Group }>(res)
+  },
+
+  async deleteGroup(id: string) {
+    const res = await fetch(`${API_BASE}/groups/${id}`, {
+      method: 'DELETE',
+      credentials: 'include'
+    })
+    return handleResponse<{ message: string }>(res)
   },
 
   // Sessions

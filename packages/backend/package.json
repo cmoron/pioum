@@ -26,6 +26,7 @@
     "googleapis": "^144.0.0",
     "jsonwebtoken": "^9.0.2",
     "nanoid": "^5.0.9",
+    "node-fetch": "^2",
     "nodemailer": "^6.9.16",
     "zod": "^3.24.1"
   },

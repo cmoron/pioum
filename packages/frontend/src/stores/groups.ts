@@ -13,6 +13,7 @@ interface GroupsState {
   joinGroup: (inviteCode: string) => Promise<Group>
   leaveGroup: (groupId: string) => Promise<void>
   updateGroup: (id: string, data: { name?: string; avatarId?: string | null }) => Promise<Group>
+  deleteGroup: (id: string) => Promise<void>
 }
 
 export const useGroupsStore = create<GroupsState>((set, get) => ({
@@ -98,6 +99,22 @@ export const useGroupsStore = create<GroupsState>((set, get) => ({
         loading: false
       }))
       return group
+    } catch (err) {
+      set({ error: (err as Error).message, loading: false })
+      throw err
+    }
+  },
+
+  deleteGroup: async (id: string) => {
+    try {
+      set({ loading: true, error: null })
+      await api.deleteGroup(id)
+      set((state) => ({
+        groups: state.groups.filter((g) => g.id !== id),
+        currentGroup: state.currentGroup?.id === id ? null : state.currentGroup,
+        currentUserRole: state.currentGroup?.id === id ? null : state.currentUserRole,
+        loading: false
+      }))
     } catch (err) {
       set({ error: (err as Error).message, loading: false })
       throw err

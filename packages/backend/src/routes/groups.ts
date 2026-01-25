@@ -1,11 +1,15 @@
 import { Router } from 'express'
 import { z } from 'zod'
-import { nanoid } from 'nanoid'
+import { customAlphabet } from 'nanoid'
 import { prisma } from '../lib/prisma.js'
+import { USER_SELECT } from '../lib/prismaSelects.js'
 import { authenticate } from '../middleware/auth.js'
 import { AppError } from '../middleware/errorHandler.js'
 
 export const groupsRouter = Router()
+
+// Génère des codes en majuscules uniquement (plus facile à lire/taper)
+const generateInviteCode = customAlphabet('ABCDEFGHJKLMNPQRSTUVWXYZ23456789', 8)
 
 const createGroupSchema = z.object({
   name: z.string().min(1).max(100)
@@ -32,13 +36,7 @@ groupsRouter.get('/', authenticate, async (req, res, next) => {
             members: {
               include: {
                 user: {
-                  select: {
-                    id: true,
-                    name: true,
-                    avatarId: true,
-                    customAvatarUrl: true,
-                    avatar: true
-                  }
+                  select: USER_SELECT
                 }
               }
             }
@@ -71,7 +69,7 @@ groupsRouter.post('/', authenticate, async (req, res, next) => {
     const group = await prisma.group.create({
       data: {
         name,
-        inviteCode: nanoid(8),
+        inviteCode: generateInviteCode(),
         members: {
           create: {
             userId: req.user!.userId,
@@ -84,13 +82,7 @@ groupsRouter.post('/', authenticate, async (req, res, next) => {
         members: {
           include: {
             user: {
-              select: {
-                id: true,
-                name: true,
-                avatarId: true,
-                customAvatarUrl: true,
-                avatar: true
-              }
+              select: USER_SELECT
             }
           }
         }
@@ -119,7 +111,7 @@ groupsRouter.post('/join', authenticate, async (req, res, next) => {
     const { inviteCode } = joinGroupSchema.parse(req.body)
 
     const group = await prisma.group.findUnique({
-      where: { inviteCode }
+      where: { inviteCode: inviteCode.toUpperCase() }
     })
 
     if (!group) {
@@ -154,13 +146,7 @@ groupsRouter.post('/join', authenticate, async (req, res, next) => {
         members: {
           include: {
             user: {
-              select: {
-                id: true,
-                name: true,
-                avatarId: true,
-                customAvatarUrl: true,
-                avatar: true
-              }
+              select: USER_SELECT
             }
           }
         }
@@ -206,13 +192,7 @@ groupsRouter.get('/:id', authenticate, async (req, res, next) => {
         members: {
           include: {
             user: {
-              select: {
-                id: true,
-                name: true,
-                avatarId: true,
-                customAvatarUrl: true,
-                avatar: true
-              }
+              select: USER_SELECT
             }
           }
         }
@@ -291,13 +271,7 @@ groupsRouter.patch('/:id', authenticate, async (req, res, next) => {
         members: {
           include: {
             user: {
-              select: {
-                id: true,
-                name: true,
-                avatarId: true,
-                customAvatarUrl: true,
-                avatar: true
-              }
+              select: USER_SELECT
             }
           }
         }
@@ -337,10 +311,37 @@ groupsRouter.post('/:id/regenerate-code', authenticate, async (req, res, next) =
 
     const group = await prisma.group.update({
       where: { id: req.params.id as string },
-      data: { inviteCode: nanoid(8) }
+      data: { inviteCode: generateInviteCode() }
     })
 
     res.json({ inviteCode: group.inviteCode })
+  } catch (error) {
+    next(error)
+  }
+})
+
+// Delete group (admin only)
+groupsRouter.delete('/:id', authenticate, async (req, res, next) => {
+  try {
+    const membership = await prisma.groupMember.findUnique({
+      where: {
+        userId_groupId: {
+          userId: req.user!.userId,
+          groupId: req.params.id as string
+        }
+      }
+    })
+
+    if (!membership || membership.role !== 'admin') {
+      throw new AppError(403, 'Admin access required')
+    }
+
+    // Delete the group (cascade will handle members, sessions, etc.)
+    await prisma.group.delete({
+      where: { id: req.params.id as string }
+    })
+
+    res.json({ message: 'Groupe supprimé' })
   } catch (error) {
     next(error)
   }

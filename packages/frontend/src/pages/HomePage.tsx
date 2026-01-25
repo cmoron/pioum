@@ -1,6 +1,7 @@
 import { useEffect } from 'react'
 import { Link } from 'react-router-dom'
 import { useGroupsStore } from '../stores/groups'
+import { isImageUrl } from '../lib/utils'
 import { LoadingSpinner } from '../components/LoadingSpinner'
 import { Avatar } from '../components/Avatar'
 
@@ -50,13 +51,30 @@ export function HomePage() {
                 to={`/groups/${group.id}`}
                 className="card p-4 flex items-center justify-between hover:shadow-md transition-shadow"
               >
-                <div>
-                  <h3 className="font-medium">{group.name}</h3>
-                  <p className="text-sm text-gray-500">
-                    {group.members.length} membre{group.members.length > 1 ? 's' : ''}
-                  </p>
+                <div className="flex items-center gap-3">
+                  {group.avatar ? (
+                    <div className="w-16 h-16 flex items-center justify-center text-3xl bg-primary-50 rounded-full flex-shrink-0 overflow-hidden">
+                      {isImageUrl(group.avatar.imageUrl) ? (
+                        <img src={group.avatar.imageUrl} alt={group.avatar.name} className="w-full h-full object-cover" />
+                      ) : (
+                        group.avatar.imageUrl
+                      )}
+                    </div>
+                  ) : (
+                    <div className="w-16 h-16 flex items-center justify-center bg-gray-100 rounded-full flex-shrink-0">
+                      <svg className="w-8 h-8 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
+                      </svg>
+                    </div>
+                  )}
+                  <div>
+                    <h3 className="font-medium">{group.name}</h3>
+                    <p className="text-sm text-gray-500">
+                      {group.members.length} membre{group.members.length > 1 ? 's' : ''}
+                    </p>
+                  </div>
                 </div>
-                <div className="flex -space-x-2">
+                <div className="flex -space-x-3">
                   {group.members.slice(0, 4).map((member) => (
                     <Avatar
                       key={member.id}
@@ -66,7 +84,7 @@ export function HomePage() {
                     />
                   ))}
                   {group.members.length > 4 && (
-                    <div className="w-8 h-8 rounded-full bg-gray-200 flex items-center justify-center text-xs font-medium text-gray-600 ring-2 ring-white">
+                    <div className="w-10 h-10 rounded-full bg-gray-200 flex items-center justify-center text-sm font-medium text-gray-600 ring-2 ring-white">
                       +{group.members.length - 4}
                     </div>
                   )}

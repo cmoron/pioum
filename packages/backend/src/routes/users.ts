@@ -1,6 +1,7 @@
 import { Router } from 'express'
 import { z } from 'zod'
 import { prisma } from '../lib/prisma.js'
+import { USER_SELECT } from '../lib/prismaSelects.js'
 import { authenticate } from '../middleware/auth.js'
 import { AppError } from '../middleware/errorHandler.js'
 
@@ -52,13 +53,7 @@ usersRouter.get('/:id', authenticate, async (req, res, next) => {
   try {
     const user = await prisma.user.findUnique({
       where: { id: req.params.id as string },
-      select: {
-        id: true,
-        name: true,
-        avatarId: true,
-        customAvatarUrl: true,
-        avatar: true
-      }
+      select: USER_SELECT
     })
 
     if (!user) {

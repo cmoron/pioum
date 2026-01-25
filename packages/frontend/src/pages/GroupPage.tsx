@@ -1,9 +1,10 @@
 import { useEffect, useState, useCallback } from 'react'
-import { useParams } from 'react-router-dom'
+import { useParams, useNavigate } from 'react-router-dom'
 import { useGroupsStore } from '../stores/groups'
 import { useSessionStore } from '../stores/session'
 import { useAuthStore } from '../stores/auth'
 import { api } from '../lib/api'
+import { isImageUrl } from '../lib/utils'
 import { LoadingSpinner } from '../components/LoadingSpinner'
 import { Avatar } from '../components/Avatar'
 import { CarCard } from '../components/CarCard'
@@ -14,7 +15,8 @@ import { fr } from 'date-fns/locale'
 
 export function GroupPage() {
   const { groupId } = useParams<{ groupId: string }>()
-  const { currentGroup, currentUserRole, fetchGroup, updateGroup, loading: groupLoading, error: groupError } = useGroupsStore()
+  const { currentGroup, currentUserRole, fetchGroup, updateGroup, deleteGroup, loading: groupLoading, error: groupError } = useGroupsStore()
+  const navigate = useNavigate()
   const { session, fetchTodaySession, joinSession, leaveSession, addCar, loading: sessionLoading } = useSessionStore()
   const { user } = useAuthStore()
   const [showInvite, setShowInvite] = useState(false)
@@ -89,6 +91,12 @@ export function GroupPage() {
     await updateGroup(currentGroup.id, data)
   }
 
+  const handleDeleteGroup = async () => {
+    if (!currentGroup) return
+    await deleteGroup(currentGroup.id)
+    navigate('/')
+  }
+
   const isAdmin = currentUserRole === 'admin'
 
   return (
@@ -97,8 +105,12 @@ export function GroupPage() {
       <div className="flex items-center justify-between mb-6">
         <div className="flex items-center gap-3">
           {currentGroup.avatar && (
-            <div className="w-12 h-12 flex items-center justify-center text-3xl bg-primary-50 rounded-full">
-              {currentGroup.avatar.imageUrl}
+            <div className="w-20 h-20 flex items-center justify-center text-5xl bg-primary-50 rounded-full overflow-hidden">
+              {isImageUrl(currentGroup.avatar.imageUrl) ? (
+                <img src={currentGroup.avatar.imageUrl} alt={currentGroup.avatar.name} className="w-full h-full object-cover" />
+              ) : (
+                currentGroup.avatar.imageUrl
+              )}
             </div>
           )}
           <div>
@@ -158,14 +170,14 @@ export function GroupPage() {
       {participantsWithoutCar && participantsWithoutCar.length > 0 && (
         <div className="mb-4">
           <h2 className="text-lg font-medium mb-2">En attente de voiture</h2>
-          <div className="flex flex-wrap gap-2">
+          <div className="flex flex-wrap gap-3">
             {participantsWithoutCar.map((p) => (
               <div
                 key={p.id}
-                className="flex items-center gap-2 bg-gray-50 rounded-full pl-1 pr-3 py-1"
+                className="flex items-center gap-2 bg-gray-50 rounded-full pl-1 pr-4 py-1.5"
               >
-                <Avatar user={p.user} size="sm" />
-                <span className="text-sm">{p.user.name}</span>
+                <Avatar user={p.user} size="md" />
+                <span className="text-base">{p.user.name}</span>
               </div>
             ))}
           </div>
@@ -195,6 +207,7 @@ export function GroupPage() {
                 key={car.id}
                 car={car}
                 isBanned={bansReceived.includes(car.driverId)}
+                onRefresh={refresh}
               />
             ))}
           </div>
@@ -261,6 +274,7 @@ export function GroupPage() {
         <GroupSettingsModal
           group={currentGroup}
           onSave={handleUpdateGroup}
+          onDelete={handleDeleteGroup}
           onClose={() => setShowSettings(false)}
         />
       )}

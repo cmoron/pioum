@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react'
 import { UserCar, Avatar as AvatarType } from '../lib/api'
+import { isImageUrl } from '../lib/utils'
 import { useUserCarsStore } from '../stores/userCars'
 import { api } from '../lib/api'
 import { LoadingSpinner } from './LoadingSpinner'
@@ -109,7 +110,7 @@ export function UserCarSelector({ onSelect, onClose }: UserCarSelectorProps) {
               {loadingAvatars ? (
                 <LoadingSpinner />
               ) : (
-                <div className="flex flex-wrap gap-2">
+                <div className="grid grid-cols-3 gap-3">
                   {avatars.map((avatar) => (
                     <button
                       key={avatar.id}
@@ -120,9 +121,9 @@ export function UserCarSelector({ onSelect, onClose }: UserCarSelectorProps) {
                           : 'border-gray-200 hover:border-gray-300'
                       }`}
                     >
-                      <div className="text-3xl mb-1">
-                        {avatar.imageUrl.startsWith('http') ? (
-                          <img src={avatar.imageUrl} alt={avatar.name} className="w-10 h-10 object-cover" />
+                      <div className="text-4xl mb-1 flex justify-center">
+                        {isImageUrl(avatar.imageUrl) ? (
+                          <img src={avatar.imageUrl} alt={avatar.name} className="w-14 h-14 object-cover rounded-lg" />
                         ) : (
                           avatar.imageUrl
                         )}
@@ -190,8 +191,8 @@ export function UserCarSelector({ onSelect, onClose }: UserCarSelectorProps) {
                       }`}
                     >
                       <div className="flex items-center gap-3">
-                        <div className="w-12 h-12 rounded-full bg-gradient-to-br from-primary-400 to-primary-600 flex items-center justify-center text-2xl">
-                          {car.avatar.imageUrl.startsWith('http') ? (
+                        <div className="w-16 h-16 rounded-full bg-gradient-to-br from-primary-400 to-primary-600 flex items-center justify-center text-3xl">
+                          {isImageUrl(car.avatar.imageUrl) ? (
                             <img src={car.avatar.imageUrl} alt={car.avatar.name} className="w-full h-full object-cover rounded-full" />
                           ) : (
                             <span>{car.avatar.imageUrl}</span>

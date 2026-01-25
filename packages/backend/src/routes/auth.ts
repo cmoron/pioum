@@ -40,29 +40,42 @@ authRouter.post('/google', async (req, res, next) => {
       throw new AppError(400, 'Invalid Google token')
     }
 
-    let user = await prisma.user.findFirst({
-      where: {
-        OR: [
-          { googleId: payload.sub },
-          { email: payload.email }
-        ]
-      }
+    let user = await prisma.user.findUnique({
+      where: { googleId: payload.sub }
     })
 
     if (!user) {
-      user = await prisma.user.create({
-        data: {
-          email: payload.email,
-          name: payload.name || payload.email.split('@')[0],
-          googleId: payload.sub,
-          customAvatarUrl: payload.picture
+      const userByEmail = await prisma.user.findUnique({
+        where: { email: payload.email }
+      })
+
+      if (userByEmail) {
+        // User exists with this email (e.g., from magic link), but no googleId.
+        // We need to link the googleId to their account.
+        if (userByEmail.googleId) {
+          // This should technically not be reached if the first check for googleId passed,
+          // but as a safeguard: the email is linked to another google account.
+          throw new AppError(409, 'Email already linked to another account.')
         }
-      })
-    } else if (!user.googleId) {
-      user = await prisma.user.update({
-        where: { id: user.id },
-        data: { googleId: payload.sub }
-      })
+        user = await prisma.user.update({
+          where: { id: userByEmail.id },
+          data: {
+            googleId: payload.sub,
+            // Update avatar from Google if not already set
+            customAvatarUrl: userByEmail.customAvatarUrl || payload.picture
+          }
+        })
+      } else {
+        // No user by googleId or email, create a new one.
+        user = await prisma.user.create({
+          data: {
+            email: payload.email,
+            name: payload.name || payload.email.split('@')[0],
+            googleId: payload.sub,
+            customAvatarUrl: payload.picture
+          }
+        })
+      }
     }
 
     const token = signToken({ userId: user.id, email: user.email || undefined })
@@ -177,6 +190,42 @@ authRouter.post('/magic-link/verify', async (req, res, next) => {
 authRouter.post('/logout', (_req, res) => {
   res.clearCookie('token')
   res.json({ message: 'Logged out' })
+})
+
+// DEV ONLY: Quick login with test user
+authRouter.post('/dev-login', async (req, res, next) => {
+  if (process.env.NODE_ENV !== 'development') {
+    return res.status(404).json({ error: 'Not found' })
+  }
+
+  try {
+    const { name } = z.object({ name: z.string().min(1) }).parse(req.body)
+    const email = `${name.toLowerCase().replace(/\s+/g, '.')}@test.local`
+
+    let user = await prisma.user.findUnique({ where: { email } })
+
+    if (!user) {
+      user = await prisma.user.create({
+        data: { email, name }
+      })
+      console.log(`[DEV] Created test user: ${name} (${email})`)
+    } else {
+      console.log(`[DEV] Logged in as: ${name} (${email})`)
+    }
+
+    const token = signToken({ userId: user.id, email: user.email || undefined })
+
+    res.cookie('token', token, {
+      httpOnly: true,
+      secure: false,
+      sameSite: 'lax',
+      maxAge: 7 * 24 * 60 * 60 * 1000
+    })
+
+    res.json({ user, token })
+  } catch (error) {
+    next(error)
+  }
 })
 
 // Get current user

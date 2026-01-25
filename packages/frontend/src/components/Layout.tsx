@@ -16,7 +16,7 @@ export function Layout({ children }: { children: React.ReactNode }) {
     <div className="min-h-screen flex flex-col">
       {/* Header */}
       <header className="bg-white border-b border-gray-200 px-4 py-3 flex items-center justify-between">
-        <Link to="/" className="text-xl font-bold text-primary-600">
+        <Link to="/" className="text-3xl font-bold text-primary-600">
           Pioum
         </Link>
         {user && (

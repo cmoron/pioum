@@ -1,6 +1,7 @@
 import { Router } from 'express'
 import { z } from 'zod'
 import { prisma } from '../lib/prisma.js'
+import { USER_SELECT } from '../lib/prismaSelects.js'
 import { authenticate } from '../middleware/auth.js'
 import { AppError } from '../middleware/errorHandler.js'
 
@@ -33,13 +34,7 @@ bansRouter.get('/active', authenticate, async (req, res, next) => {
         },
         include: {
           receiver: {
-            select: {
-              id: true,
-              name: true,
-              avatarId: true,
-              customAvatarUrl: true,
-              avatar: true
-            }
+            select: USER_SELECT
           }
         },
         orderBy: { endsAt: 'asc' }
@@ -52,13 +47,7 @@ bansRouter.get('/active', authenticate, async (req, res, next) => {
         },
         include: {
           giver: {
-            select: {
-              id: true,
-              name: true,
-              avatarId: true,
-              customAvatarUrl: true,
-              avatar: true
-            }
+            select: USER_SELECT
           }
         },
         orderBy: { endsAt: 'asc' }
@@ -96,13 +85,7 @@ bansRouter.get('/hall-of-fame', authenticate, async (req, res, next) => {
 
     const users = await prisma.user.findMany({
       where: { id: { in: allUserIds } },
-      select: {
-        id: true,
-        name: true,
-        avatarId: true,
-        customAvatarUrl: true,
-        avatar: true
-      }
+      select: USER_SELECT
     })
 
     const userMap = new Map(users.map(u => [u.id, u]))
@@ -168,16 +151,37 @@ bansRouter.post('/', authenticate, async (req, res, next) => {
       },
       include: {
         receiver: {
-          select: {
-            id: true,
-            name: true,
-            avatarId: true,
-            customAvatarUrl: true,
-            avatar: true
-          }
+          select: USER_SELECT
         }
       }
     })
+
+    // Retirer le banni des voitures du bannisseur (sessions en cours)
+    const today = new Date()
+    today.setHours(0, 0, 0, 0)
+
+    // Trouver les voitures du bannisseur dans les sessions actives
+    const giverCars = await prisma.car.findMany({
+      where: {
+        driverId: req.user!.userId,
+        session: {
+          date: { gte: today }
+        }
+      },
+      select: { id: true }
+    })
+
+    if (giverCars.length > 0) {
+      await prisma.passenger.updateMany({
+        where: {
+          userId: receiverId,
+          carId: { in: giverCars.map(c => c.id) }
+        },
+        data: {
+          carId: null
+        }
+      })
+    }
 
     res.status(201).json({ ban })
   } catch (error) {

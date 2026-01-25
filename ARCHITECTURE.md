@@ -66,14 +66,17 @@ pioum/
 │   │   │   │   ├── cars.ts       # Voitures et passagers
 │   │   │   │   ├── bans.ts       # Système de ban
 │   │   │   │   ├── avatars.ts    # Banque d'avatars
-│   │   │   │   └── users.ts      # Profils utilisateurs
+│   │   │   │   ├── users.ts      # Profils utilisateurs
+│   │   │   │   └── userCars.ts   # Voitures personnelles
 │   │   │   ├── middleware/
 │   │   │   │   ├── auth.ts       # JWT verification
 │   │   │   │   └── errorHandler.ts
 │   │   │   ├── lib/
-│   │   │   │   ├── prisma.ts     # Client DB
-│   │   │   │   └── jwt.ts        # Token management
-│   │   │   └── index.ts          # Entry point
+│   │   │   │   ├── prisma.ts        # Client DB
+│   │   │   │   ├── jwt.ts           # Token management
+│   │   │   │   ├── prismaSelects.ts # Constantes SELECT réutilisables
+│   │   │   │   └── email.ts         # Envoi emails (magic link)
+│   │   │   └── index.ts             # Entry point
 │   │   ├── prisma/
 │   │   │   ├── schema.prisma     # Modèle de données
 │   │   │   └── seed.ts           # Données initiales
@@ -85,22 +88,31 @@ pioum/
 │       │   │   ├── Avatar.tsx
 │       │   │   ├── CarCard.tsx
 │       │   │   ├── BanModal.tsx
+│       │   │   ├── UserCarCard.tsx
+│       │   │   ├── UserCarSelector.tsx
+│       │   │   ├── GroupSettingsModal.tsx
 │       │   │   └── ...
 │       │   ├── pages/        # Vues principales
 │       │   │   ├── LoginPage.tsx
 │       │   │   ├── HomePage.tsx
 │       │   │   ├── GroupPage.tsx
+│       │   │   ├── ProfilePage.tsx
 │       │   │   ├── BansPage.tsx
 │       │   │   └── ...
 │       │   ├── stores/       # État global (Zustand)
 │       │   │   ├── auth.ts
 │       │   │   ├── groups.ts
-│       │   │   └── session.ts
+│       │   │   ├── session.ts
+│       │   │   └── userCars.ts
 │       │   ├── lib/
-│       │   │   └── api.ts    # Client API
+│       │   │   ├── api.ts    # Client API
+│       │   │   └── utils.ts  # Helpers (isImageUrl, etc.)
 │       │   └── App.tsx
 │       ├── public/
 │       │   └── avatars/      # Images avatars
+│       │       ├── users/    # Avatars utilisateurs
+│       │       ├── cars/     # Avatars voitures
+│       │       └── groups/   # Avatars groupes
 │       └── package.json
 │
 ├── docker-compose.yml        # Orchestration dev/prod
@@ -121,7 +133,7 @@ pioum/
 │ id           │
 │ name         │
 │ imageUrl     │
-│ category     │
+│ category     │  (users/cars/groups)
 └──────┬───────┘
        │ 1
        │
@@ -143,6 +155,7 @@ pioum/
        │                 │ id           │    │
        │                 │ name         │    │
        │                 │ inviteCode   │    │
+       │                 │ avatarId     │    │
        │                 └──────────────┘    │
        │                        │            │
        │                        │ *          │
@@ -162,20 +175,30 @@ pioum/
        └───►│ driverId     │    │ userId        │
             │ seats        │◄───│ carId (opt)   │
             │ sessionId    │  * │ sessionId     │
-            └──────────────┘    └───────────────┘
+            │ userCarId    │    └───────────────┘
+            └──────┬───────┘
                    │
-                   │ driver
-       ┌───────────┘
-       │
-       │         ┌──────────────┐
-       └────────►│     Ban      │
-        giver    ├──────────────┤
-                 │ giverId      │◄──── receiver
-                 │ receiverId   │
-                 │ reason       │
-                 │ startsAt     │
-                 │ endsAt       │
-                 └──────────────┘
+                   │ 0..1
+            ┌──────▼───────┐
+            │   UserCar    │  (voiture personnelle)
+            ├──────────────┤
+            │ id           │
+            │ userId       │
+            │ name         │
+            │ avatarId     │
+            │ defaultSeats │
+            └──────────────┘
+
+       ┌──────────────┐
+       │     Ban      │
+       ├──────────────┤
+       │ giverId      │◄──── giver (User)
+       │ receiverId   │◄──── receiver (User)
+       │ reason       │
+       │ startsAt     │
+       │ endsAt       │
+       │ liftedAt     │  (nullable, pour lever le ban)
+       └──────────────┘
 ```
 
 ---

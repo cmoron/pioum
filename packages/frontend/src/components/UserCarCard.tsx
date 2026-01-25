@@ -1,4 +1,5 @@
 import { UserCar } from '../lib/api'
+import { isImageUrl } from '../lib/utils'
 import { useState } from 'react'
 
 interface UserCarCardProps {
@@ -20,8 +21,8 @@ export function UserCarCard({ userCar, onEdit, onDelete }: UserCarCardProps) {
     <div className="card p-4 relative">
       <div className="flex items-center gap-4">
         {/* Avatar */}
-        <div className="w-16 h-16 rounded-full bg-gradient-to-br from-primary-400 to-primary-600 flex items-center justify-center text-3xl">
-          {userCar.avatar.imageUrl.startsWith('http') ? (
+        <div className="w-20 h-20 rounded-full bg-gradient-to-br from-primary-400 to-primary-600 flex items-center justify-center text-4xl">
+          {isImageUrl(userCar.avatar.imageUrl) ? (
             <img src={userCar.avatar.imageUrl} alt={userCar.avatar.name} className="w-full h-full object-cover rounded-full" />
           ) : (
             <span>{userCar.avatar.imageUrl}</span>

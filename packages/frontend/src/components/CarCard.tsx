@@ -1,5 +1,6 @@
 import { useState } from 'react'
 import { Car, User } from '../lib/api'
+import { isImageUrl } from '../lib/utils'
 import { Avatar } from './Avatar'
 import { useAuthStore } from '../stores/auth'
 import { useSessionStore } from '../stores/session'
@@ -9,9 +10,10 @@ import clsx from 'clsx'
 interface CarCardProps {
   car: Car
   isBanned?: boolean
+  onRefresh?: () => void
 }
 
-export function CarCard({ car, isBanned }: CarCardProps) {
+export function CarCard({ car, isBanned, onRefresh }: CarCardProps) {
   const { user } = useAuthStore()
   const { joinCar, leaveCar, removeCar, kickPassenger } = useSessionStore()
   const [loading, setLoading] = useState(false)
@@ -80,8 +82,8 @@ export function CarCard({ car, isBanned }: CarCardProps) {
         <div className="flex items-center justify-between mb-3">
           <div className="flex items-center gap-3">
             {car.userCar ? (
-              <div className="w-12 h-12 rounded-full bg-gradient-to-br from-primary-400 to-primary-600 flex items-center justify-center text-2xl flex-shrink-0">
-                {car.userCar.avatar.imageUrl.startsWith('http') ? (
+              <div className="w-16 h-16 rounded-full bg-gradient-to-br from-primary-400 to-primary-600 flex items-center justify-center text-3xl flex-shrink-0">
+                {isImageUrl(car.userCar.avatar.imageUrl) ? (
                   <img src={car.userCar.avatar.imageUrl} alt={car.userCar.avatar.name} className="w-full h-full object-cover rounded-full" />
                 ) : (
                   <span>{car.userCar.avatar.imageUrl}</span>
@@ -127,14 +129,14 @@ export function CarCard({ car, isBanned }: CarCardProps) {
                         className="text-gray-400 hover:text-red-500 p-1"
                         title="Éjecter"
                       >
-                        <XIcon className="w-4 h-4" />
+                        <XIcon className="w-5 h-5" />
                       </button>
                       <button
                         onClick={() => setBanTarget(passenger.user)}
                         className="text-gray-400 hover:text-red-500 p-1"
                         title="Bannir"
                       >
-                        <BanIcon className="w-4 h-4" />
+                        <BanIcon className="w-5 h-5" />
                       </button>
                     </div>
                   )}
@@ -192,6 +194,7 @@ export function CarCard({ car, isBanned }: CarCardProps) {
         <BanModal
           user={banTarget}
           onClose={() => setBanTarget(null)}
+          onBanned={onRefresh}
         />
       )}
     </>

@@ -1,6 +1,7 @@
 import { Router } from 'express'
 import { z } from 'zod'
 import { prisma } from '../lib/prisma.js'
+import { USER_SELECT } from '../lib/prismaSelects.js'
 import { authenticate } from '../middleware/auth.js'
 import { AppError } from '../middleware/errorHandler.js'
 
@@ -107,13 +108,7 @@ carsRouter.post('/', authenticate, async (req, res, next) => {
       },
       include: {
         driver: {
-          select: {
-            id: true,
-            name: true,
-            avatarId: true,
-            customAvatarUrl: true,
-            avatar: true
-          }
+          select: USER_SELECT
         },
         userCar: {
           include: {
@@ -123,13 +118,7 @@ carsRouter.post('/', authenticate, async (req, res, next) => {
         passengers: {
           include: {
             user: {
-              select: {
-                id: true,
-                name: true,
-                avatarId: true,
-                customAvatarUrl: true,
-                avatar: true
-              }
+              select: USER_SELECT
             }
           }
         }
@@ -170,13 +159,7 @@ carsRouter.patch('/:id', authenticate, async (req, res, next) => {
       data: { seats },
       include: {
         driver: {
-          select: {
-            id: true,
-            name: true,
-            avatarId: true,
-            customAvatarUrl: true,
-            avatar: true
-          }
+          select: USER_SELECT
         },
         userCar: {
           include: {
@@ -186,13 +169,7 @@ carsRouter.patch('/:id', authenticate, async (req, res, next) => {
         passengers: {
           include: {
             user: {
-              select: {
-                id: true,
-                name: true,
-                avatarId: true,
-                customAvatarUrl: true,
-                avatar: true
-              }
+              select: USER_SELECT
             }
           }
         }

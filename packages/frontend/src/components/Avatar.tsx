@@ -1,43 +1,47 @@
 import { User } from '../lib/api'
+import { isImageUrl } from '../lib/utils'
 import clsx from 'clsx'
 
 interface AvatarProps {
   user: User
-  size?: 'sm' | 'md' | 'lg'
+  size?: 'sm' | 'md' | 'lg' | 'xl'
   className?: string
 }
 
 const sizeClasses = {
-  sm: 'w-8 h-8 text-xs',
-  md: 'w-12 h-12 text-sm',
-  lg: 'w-16 h-16 text-lg'
+  sm: 'w-10 h-10 text-sm',      // 40px (était 32px)
+  md: 'w-14 h-14 text-base',    // 56px (était 48px)
+  lg: 'w-20 h-20 text-xl',      // 80px (était 64px)
+  xl: 'w-24 h-24 text-2xl'      // 96px (nouveau)
 }
 
 export function Avatar({ user, size = 'md', className }: AvatarProps) {
-  const avatarUrl = user.customAvatarUrl || user.avatar?.imageUrl
-  const initials = user.name
-    .split(' ')
-    .map((n) => n[0])
-    .join('')
-    .toUpperCase()
-    .slice(0, 2)
+  // Priority: Selected avatar (emoji/internal) > Google photo
+  const avatarUrl = user.avatar?.imageUrl || user.customAvatarUrl
+  const initials = user.name?.charAt(0).toUpperCase() || '?'
 
   return (
     <div
       className={clsx(
-        'rounded-full flex items-center justify-center font-medium bg-primary-100 text-primary-700 overflow-hidden',
+        'rounded-full flex items-center justify-center font-bold bg-primary-100 text-primary-700 overflow-hidden select-none',
         sizeClasses[size],
         className
       )}
     >
-      {avatarUrl ? (
+      {isImageUrl(avatarUrl) ? (
         <img
           src={avatarUrl}
           alt={user.name}
           className="w-full h-full object-cover"
         />
+      ) : avatarUrl ? (
+        <span className="flex items-center justify-center w-full h-full text-2xl">
+          {avatarUrl}
+        </span>
       ) : (
-        initials
+        <span className="flex items-center justify-center w-full h-full">
+          {initials}
+        </span>
       )}
     </div>
   )

@@ -11,7 +11,8 @@ Application de covoiturage pour aller à la muscu avec tes potes.
 - Système de ban (1 jour à 2 semaines)
 - Hall of Fame des bans
 - Authentification OAuth Google + Magic Link
-- Avatars personnalisables
+- Avatars personnalisables (utilisateurs, voitures, groupes)
+- Gestion des voitures personnelles (UserCar)
 - PWA installable sur mobile
 
 ## Stack technique
@@ -166,6 +167,7 @@ pioum/
 - `POST /api/auth/google` - Connexion Google
 - `POST /api/auth/magic-link` - Demande de magic link
 - `POST /api/auth/magic-link/verify` - Vérification magic link
+- `POST /api/auth/dev-login` - Login dev (NODE_ENV=development uniquement)
 - `GET /api/auth/me` - Utilisateur courant
 - `POST /api/auth/logout` - Déconnexion
 
@@ -174,6 +176,8 @@ pioum/
 - `POST /api/groups` - Créer un groupe
 - `POST /api/groups/join` - Rejoindre via code
 - `GET /api/groups/:id` - Détail d'un groupe
+- `PATCH /api/groups/:id` - Modifier un groupe (admin)
+- `DELETE /api/groups/:id` - Supprimer un groupe (admin)
 - `DELETE /api/groups/:id/leave` - Quitter un groupe
 
 ### Sessions
@@ -195,14 +199,32 @@ pioum/
 - `POST /api/bans` - Bannir quelqu'un
 - `DELETE /api/bans/:id` - Lever un ban
 
+### User Cars (voitures personnelles)
+- `GET /api/user-cars` - Mes voitures
+- `POST /api/user-cars` - Créer une voiture
+- `PATCH /api/user-cars/:id` - Modifier une voiture
+- `DELETE /api/user-cars/:id` - Supprimer une voiture
+
 ### Avatars
 - `GET /api/avatars` - Liste des avatars disponibles
 
+### Users
+- `GET /api/users/me` - Mon profil
+- `PATCH /api/users/me` - Modifier mon profil
+
 ## Personnalisation des avatars
 
-Les avatars sont stockés dans `packages/frontend/public/avatars/`. Pour ajouter tes propres avatars:
+Les avatars sont organisés par catégorie dans `packages/frontend/public/avatars/` :
 
-1. Place tes images SVG/PNG dans `public/avatars/`
+```
+public/avatars/
+├── users/      # Avatars utilisateurs
+├── cars/       # Avatars voitures
+└── groups/     # Avatars groupes (emojis dans seed)
+```
+
+Pour ajouter tes propres avatars :
+1. Place tes images dans le sous-dossier approprié
 2. Mets à jour le seed dans `packages/backend/prisma/seed.ts`
 3. Relance `pnpm db:seed`
 

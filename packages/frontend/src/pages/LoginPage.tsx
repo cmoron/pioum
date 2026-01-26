@@ -89,7 +89,16 @@ export function LoginPage() {
       <div className="w-full max-w-sm">
         {/* Logo */}
         <div className="text-center mb-8">
-          <h1 className="text-4xl font-bold text-primary-600 mb-2">Pioum</h1>
+          <div className="flex justify-center mb-3">
+            <div className="h-24 bg-[#fee6b8] px-4 py-3 rounded-lg shadow-comic">
+              <img
+                src="/logo.png"
+                alt="Pioum Logo"
+                className="h-full w-auto object-contain"
+              />
+            </div>
+          </div>
+          <h1 className="text-4xl font-bold text-[#c66e24] mb-2">Pioum</h1>
           <p className="text-gray-600">Qui vient ??</p>
         </div>
 

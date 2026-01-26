@@ -15,9 +15,16 @@ export function Layout({ children }: { children: React.ReactNode }) {
   return (
     <div className="min-h-screen flex flex-col">
       {/* Header */}
-      <header className="bg-white border-b border-gray-200 px-4 py-3 flex items-center justify-between">
-        <Link to="/" className="text-3xl font-bold text-primary-600">
-          Pioum
+      <header className="bg-[#fee6b8] border-b border-[#f5d89e] px-4 py-3 flex items-center justify-between">
+        <Link to="/" className="flex items-center gap-3">
+          <div className="h-14 flex-shrink-0">
+            <img
+              src="/logo.png"
+              alt="Pioum Logo"
+              className="h-full w-auto object-contain"
+            />
+          </div>
+          <span className="text-3xl font-bold text-[#c66e24]">Pioum</span>
         </Link>
         {user && (
           <Link to="/profile" className="flex items-center gap-2">

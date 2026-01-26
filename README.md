@@ -1,233 +1,372 @@
 # Pioum - Covoiturage Muscu
 
-Application de covoiturage pour aller à la muscu avec tes potes.
+Application de covoiturage pour aller à la muscu avec tes potes. Une webapp simple et fun pour organiser les sessions quotidiennes de covoiturage entre amis.
 
 ## Fonctionnalités
 
-- Gestion de groupes avec code d'invitation
-- Sessions quotidiennes de covoiturage
-- Déclaration des voitures et places disponibles
-- Attribution des passagers aux voitures
-- Système de ban (1 jour à 2 semaines)
-- Hall of Fame des bans
-- Authentification OAuth Google + Magic Link
-- Avatars personnalisables (utilisateurs, voitures, groupes)
-- Gestion des voitures personnelles (UserCar)
-- PWA installable sur mobile
+- **Gestion de groupes** avec code d'invitation
+- **Sessions quotidiennes** de covoiturage avec inscription en temps réel
+- **Gestion des voitures** avec déclaration de places disponibles
+- **Attribution automatique** des passagers aux voitures
+- **Système de ban** avec durée configurable (1 jour à 2 semaines)
+- **Hall of Fame** des bans (stats fun)
+- **Authentification OAuth Google** + Magic Link (sans mot de passe)
+- **Avatars personnalisables** pour utilisateurs, voitures et groupes
+- **Gestion des voitures personnelles** (UserCar) avec avatars
+- **PWA installable** sur mobile
 
-## Stack technique
+## Stack Technique
 
-- **Frontend**: React 19 + TypeScript + Vite + Tailwind CSS + Zustand
-- **Backend**: Node.js + Express + Prisma + PostgreSQL
-- **Auth**: OAuth Google + Magic Link (email)
-- **Déploiement**: Docker + docker-compose
+### Frontend
+- React 19 + TypeScript
+- Vite (build tool)
+- Tailwind CSS (styling)
+- Zustand (state management)
+- React Router (routing)
 
-## Démarrage rapide (développement)
+### Backend
+- Node.js 20+ + Express
+- Prisma + PostgreSQL
+- JWT authentication
+- Zod (validation)
+- Nodemailer (emails)
+
+### Infrastructure
+- Docker + docker-compose
+- Traefik (reverse proxy, SSL)
+- PostgreSQL 16
+- GitHub Actions (CI/CD)
+
+## Démarrage Rapide
 
 ### Prérequis
 
-- Node.js 20+
-- pnpm 9+
-- PostgreSQL (ou Docker)
+- **Node.js** >= 20.0.0
+- **pnpm** >= 9.0.0
+- **PostgreSQL** (ou Docker)
 
-### Installation
+### Installation (Mode Hybride - Recommandé)
 
 ```bash
-# Cloner le repo
+# 1. Cloner et installer
+git clone <repo-url>
 cd pioum
-
-# Installer les dépendances
 pnpm install
 
-# Copier les variables d'environnement
+# 2. Lancer PostgreSQL en Docker
+docker compose up db
+
+# 3. Configurer le backend
+cd packages/backend
 cp .env.example .env
-cp packages/backend/.env.example packages/backend/.env
+# Édite .env avec tes variables (DATABASE_URL, JWT_SECRET, etc.)
 
-# Configurer la base de données dans packages/backend/.env
-# DATABASE_URL="postgresql://user:password@localhost:5432/pioum"
+# 4. Initialiser la base de données
+pnpm db:generate   # Génère le client Prisma
+pnpm db:push       # Applique le schéma
+pnpm db:seed       # Insère les avatars
 
-# Générer le client Prisma
-pnpm db:generate
-
-# Pousser le schéma vers la base de données
-pnpm db:push
-
-# Seed des avatars
-pnpm db:seed
-
-# Lancer en développement
-pnpm dev
+# 5. Lancer le backend
+pnpm dev          # Démarre sur http://localhost:3000
 ```
 
-L'application sera disponible sur:
-- Frontend: http://localhost:5173
-- Backend: http://localhost:3000
-
-## Déploiement Docker (Développement)
+### Dans un autre terminal - Frontend
 
 ```bash
-# Build et lancer tous les services
-docker-compose up -d
-
-# L'app sera disponible sur :
-# - Frontend: http://localhost:5173
-# - Backend:  http://localhost:3000
+cd packages/frontend
+cp .env.example .env
+pnpm dev          # Démarre sur http://localhost:5173
 ```
 
-### Variables d'environnement Docker
+L'app sera disponible sur **http://localhost:5173**
 
+## Configuration
+
+### Variables d'Environnement
+
+#### Backend (`packages/backend/.env`)
 ```env
-# .env (à la racine)
-JWT_SECRET=your-super-secret-key
-GOOGLE_CLIENT_ID=your-google-client-id
-GOOGLE_CLIENT_SECRET=your-google-client-secret
-FRONTEND_URL=http://localhost:5173
+# Base de données
+DATABASE_URL="postgresql://user:password@localhost:5432/pioum"
+
+# JWT
+JWT_SECRET="your-secret-key-32-chars-minimum"
+
+# Google OAuth (optionnel)
+GOOGLE_CLIENT_ID="xxx.apps.googleusercontent.com"
+GOOGLE_CLIENT_SECRET="GOCSPX-xxx"
+
+# Email Magic Link (optionnel)
+SMTP_HOST="smtp.gmail.com"
+SMTP_PORT="587"
+SMTP_USER="your-email@gmail.com"
+SMTP_PASS="your-app-password"
+
+# Configuration
+FRONTEND_URL="http://localhost:5173"
+PORT=3000
+NODE_ENV="development"
 ```
 
-## Déploiement Production (NAS / Self-hosted)
+#### Frontend (`packages/frontend/.env`)
+```env
+# API Backend
+VITE_API_URL="http://localhost:3000"
+```
 
-Pour déployer sur un NAS Debian ou tout autre serveur self-hosted :
+## Scripts
 
+### À la racine (tous les packages)
 ```bash
-# 1. Copier le fichier d'exemple
-cp .env.prod.example .env.prod
-
-# 2. Éditer les variables (obligatoire)
-nano .env.prod
-
-# 3. Lancer en production
-docker compose -f docker-compose.prod.yml --env-file .env.prod up -d
+pnpm dev          # Lance backend + frontend en parallèle
+pnpm build        # Build production
+pnpm lint         # Lint tout le code
+pnpm test         # Tests en watch mode
+pnpm test:run     # Tests une seule fois (CI mode)
 ```
 
-### Configuration requise
+### Backend spécifique
+```bash
+cd packages/backend
 
-Dans `.env.prod` :
+pnpm dev          # Serveur avec hot reload
+pnpm build        # Build TypeScript
+pnpm lint         # Lint le code
+pnpm test         # Tests en watch
+pnpm test:run     # Tests une seule fois
 
-```env
-# Domaine pointant vers votre NAS
-DOMAIN=pioum.monnas.com
-
-# Email pour les certificats Let's Encrypt
-ACME_EMAIL=ton-email@example.com
-
-# Secrets (générer avec: openssl rand -hex 32)
-JWT_SECRET=<généré>
-DB_PASSWORD=<généré>
-
-# Google OAuth
-GOOGLE_CLIENT_ID=xxx.apps.googleusercontent.com
-GOOGLE_CLIENT_SECRET=xxx
+# Prisma
+pnpm db:generate  # Génère le client après modif schema
+pnpm db:push      # Applique les changements à la DB
+pnpm db:seed      # Insère les données initiales
+pnpm db:studio    # UI web pour explorer la DB
 ```
 
-### Prérequis NAS
+### Frontend spécifique
+```bash
+cd packages/frontend
 
-1. **Docker** et **docker-compose** installés
-2. **Ports 80 et 443** ouverts et redirigés
-3. **Nom de domaine** pointant vers l'IP publique (ou DynDNS)
-
-### Architecture production
-
-```
-Internet → Port 443 → Traefik (SSL) → Frontend (Nginx)
-                                   → Backend (Node.js) → PostgreSQL
-```
-
-Traefik gère automatiquement :
-- Certificats SSL via Let's Encrypt
-- Redirection HTTP → HTTPS
-- Routing `/api/*` vers le backend
-
-## Structure du projet
-
-```
-pioum/
-├── packages/
-│   ├── backend/          # API Express + Prisma
-│   │   ├── src/
-│   │   │   ├── routes/   # Routes API
-│   │   │   ├── lib/      # Utilitaires
-│   │   │   └── middleware/
-│   │   └── prisma/       # Schéma et seeds
-│   └── frontend/         # App React
-│       ├── src/
-│       │   ├── components/
-│       │   ├── pages/
-│       │   ├── stores/   # État Zustand
-│       │   └── lib/      # API client
-│       └── public/
-├── docker-compose.yml
-├── Dockerfile.backend
-├── Dockerfile.frontend
-└── nginx.conf
+pnpm dev          # Vite dev server
+pnpm build        # Build production
+pnpm preview      # Preview du build
+pnpm lint         # Lint le code
+pnpm test         # Tests en watch
+pnpm test:run     # Tests une seule fois
 ```
 
-## API Endpoints
+## API REST
 
-### Auth
-- `POST /api/auth/google` - Connexion Google
-- `POST /api/auth/magic-link` - Demande de magic link
-- `POST /api/auth/magic-link/verify` - Vérification magic link
-- `POST /api/auth/dev-login` - Login dev (NODE_ENV=development uniquement)
+### Authentification
+- `POST /api/auth/google` - Connexion via Google
+- `POST /api/auth/magic-link` - Demander une magic link
+- `POST /api/auth/magic-link/verify` - Vérifier la magic link
+- `POST /api/auth/dev-login` - Login dev (dev mode seulement)
 - `GET /api/auth/me` - Utilisateur courant
 - `POST /api/auth/logout` - Déconnexion
 
-### Groups
+### Groupes
 - `GET /api/groups` - Mes groupes
 - `POST /api/groups` - Créer un groupe
 - `POST /api/groups/join` - Rejoindre via code
 - `GET /api/groups/:id` - Détail d'un groupe
-- `PATCH /api/groups/:id` - Modifier un groupe (admin)
-- `DELETE /api/groups/:id` - Supprimer un groupe (admin)
+- `PATCH /api/groups/:id` - Modifier (admin)
+- `DELETE /api/groups/:id` - Supprimer (admin)
 - `DELETE /api/groups/:id/leave` - Quitter un groupe
 
-### Sessions
+### Sessions & Voitures
 - `GET /api/sessions/today/:groupId` - Session du jour
 - `POST /api/sessions/:id/join` - Participer
 - `DELETE /api/sessions/:id/leave` - Ne plus participer
-
-### Cars
 - `POST /api/cars` - Ajouter ma voiture
 - `PATCH /api/cars/:id` - Modifier places
-- `DELETE /api/cars/:id` - Retirer ma voiture
-- `POST /api/cars/:id/join` - Rejoindre une voiture
-- `DELETE /api/cars/:id/leave` - Quitter une voiture
+- `DELETE /api/cars/:id` - Retirer
+- `POST /api/cars/:id/join` - Rejoindre
+- `DELETE /api/cars/:id/leave` - Quitter
 - `DELETE /api/cars/:id/kick/:userId` - Éjecter un passager
 
 ### Bans
 - `GET /api/bans/active` - Mes bans actifs
-- `GET /api/bans/hall-of-fame` - Hall of Fame
+- `GET /api/bans/hall-of-fame` - Statistiques des bans
 - `POST /api/bans` - Bannir quelqu'un
 - `DELETE /api/bans/:id` - Lever un ban
 
-### User Cars (voitures personnelles)
+### Voitures Personnelles
 - `GET /api/user-cars` - Mes voitures
-- `POST /api/user-cars` - Créer une voiture
-- `PATCH /api/user-cars/:id` - Modifier une voiture
-- `DELETE /api/user-cars/:id` - Supprimer une voiture
+- `POST /api/user-cars` - Créer
+- `PATCH /api/user-cars/:id` - Modifier
+- `DELETE /api/user-cars/:id` - Supprimer
 
-### Avatars
-- `GET /api/avatars` - Liste des avatars disponibles
-
-### Users
+### Avatars & Utilisateurs
+- `GET /api/avatars` - Liste des avatars
 - `GET /api/users/me` - Mon profil
 - `PATCH /api/users/me` - Modifier mon profil
 
-## Personnalisation des avatars
+## Déploiement
 
-Les avatars sont organisés par catégorie dans `packages/frontend/public/avatars/` :
+### Docker (Développement)
+```bash
+docker compose up --build
+```
 
+Accessible sur **http://localhost:5173**
+
+### Production (Self-hosted sur NAS)
+
+```bash
+# 1. Préparer la configuration
+cp .env.prod.example .env.prod
+nano .env.prod
+
+# 2. Lancer en production
+docker compose -f docker-compose.prod.yml --env-file .env.prod up -d
+```
+
+**Configuration requise dans `.env.prod`:**
+```env
+DOMAIN=pioum.monnas.com
+ACME_EMAIL=ton-email@example.com
+JWT_SECRET=<généré avec: openssl rand -hex 32>
+DB_PASSWORD=<généré>
+GOOGLE_CLIENT_ID=xxx
+GOOGLE_CLIENT_SECRET=xxx
+```
+
+**Architecture :**
+- Internet → Port 443 → Traefik (SSL + routing)
+- Traefik gère les certificats Let's Encrypt automatiquement
+- Frontend servi par Nginx
+- Backend Express.js
+- PostgreSQL persistant
+
+## Tests
+
+### Couverture
+- **195 tests** au total (61 backend + 134 frontend)
+- **100% coverage** sur les modules testés
+- Tous les tests passent en **< 2 secondes**
+
+### Exécuter les tests
+```bash
+# Tous les tests
+pnpm test:run
+
+# Avec rapport de coverage
+pnpm test:run --coverage
+
+# En watch mode (développement)
+pnpm test
+
+# Backend ou Frontend spécifiquement
+cd packages/backend && pnpm test:run
+cd packages/frontend && pnpm test:run
+```
+
+Voir [DOCUMENTATION.md](./DOCUMENTATION.md) pour plus de détails sur les tests et l'architecture.
+
+## Structure du Projet
+
+```
+pioum/
+├── packages/
+│   ├── backend/              # API Express + Prisma
+│   │   ├── src/
+│   │   │   ├── routes/       # Endpoints REST
+│   │   │   ├── middleware/   # Auth, error handling
+│   │   │   └── lib/          # Utilities
+│   │   ├── prisma/
+│   │   │   ├── schema.prisma # Schéma de données
+│   │   │   └── seed.ts       # Données initiales
+│   │   └── package.json
+│   │
+│   └── frontend/             # App React
+│       ├── src/
+│       │   ├── components/   # Composants réutilisables
+│       │   ├── pages/        # Vues principales
+│       │   ├── stores/       # État global (Zustand)
+│       │   └── lib/          # API client, utils
+│       ├── public/
+│       │   └── avatars/      # Images avatars
+│       └── package.json
+│
+├── .github/workflows/        # GitHub Actions CI/CD
+├── docker-compose.yml        # Environnement Docker
+├── docker-compose.prod.yml   # Production Docker setup
+├── nginx.conf                # Configuration reverse proxy
+└── package.json              # Workspace root (pnpm)
+```
+
+## CI/CD
+
+GitHub Actions automatise :
+- **Linting** de tout le code
+- **Tests** (195 tests)
+- **Build** production
+- **Coverage reporting**
+
+Workflows disponibles : `.github/workflows/`
+
+## Personnalisation des Avatars
+
+Les avatars sont stockés dans `packages/frontend/public/avatars/` par catégorie:
 ```
 public/avatars/
 ├── users/      # Avatars utilisateurs
 ├── cars/       # Avatars voitures
-└── groups/     # Avatars groupes (emojis dans seed)
+└── groups/     # Avatars groupes (emojis)
 ```
 
-Pour ajouter tes propres avatars :
-1. Place tes images dans le sous-dossier approprié
+Pour ajouter tes avatars:
+1. Place les images dans le sous-dossier approprié
 2. Mets à jour le seed dans `packages/backend/prisma/seed.ts`
 3. Relance `pnpm db:seed`
+
+## Troubleshooting
+
+### "ECONNREFUSED" sur /api/*
+Le frontend ne peut pas joindre le backend.
+- Vérifie que le backend tourne sur le port 3000
+- En Docker, le proxy doit pointer vers `http://backend:3000`
+
+### "PrismaClientInitializationError"
+Client Prisma pas généré ou DB pas accessible.
+```bash
+pnpm db:generate && pnpm db:push
+```
+
+### La DB semble vide
+```bash
+pnpm db:seed
+```
+
+### Reset complet
+```bash
+docker compose down -v              # Supprime les volumes
+rm -rf node_modules packages/*/node_modules
+pnpm install
+docker compose up db
+pnpm db:push && pnpm db:seed
+```
+
+Voir [DOCUMENTATION.md](./DOCUMENTATION.md) pour plus de troubleshooting.
+
+## Contribution
+
+1. Crée une branche pour ta feature
+2. Applique le style guide du projet
+3. Ajoute des tests pour la nouvelle logique
+4. Assure-toi que `pnpm lint` et `pnpm test:run` passent
+5. Crée une PR
+
+Voir [DOCUMENTATION.md](./DOCUMENTATION.md) pour les guidelines complets.
 
 ## Licence
 
 MIT
+
+---
+
+**Questions ?** Consulte [DOCUMENTATION.md](./DOCUMENTATION.md) pour les guides détaillés sur :
+- Architecture complète
+- Guide de développement
+- Tests et coverage
+- Workflow CI/CD

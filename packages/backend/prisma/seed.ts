@@ -14,6 +14,9 @@ const avatars = [
   { name: 'aGorilla', imageUrl: '/avatars/users/avatar_animal_gorilla.jpeg', category: 'users' },
   { name: 'aWolf', imageUrl: '/avatars/users/avatar_animal_wolf.jpeg', category: 'users' },
   { name: 'aBear', imageUrl: '/avatars/users/avatar_animal_bear.jpeg', category: 'users' },
+  { name: 'hSuperman', imageUrl: '/avatars/users/avatar_hero_superman.jpeg', category: 'users' },
+  { name: 'hHulk', imageUrl: '/avatars/users/avatar_hero_hulk.jpeg', category: 'users' },
+  { name: 'hBatman', imageUrl: '/avatars/users/avatar_hero_batman.jpeg', category: 'users' },
 
   // Cars category - avatars pour les voitures
   { name: 'Van', imageUrl: '/avatars/cars/cars_van.png', category: 'cars' },

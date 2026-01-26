@@ -8,6 +8,7 @@
     "build": "pnpm -r run build",
     "lint": "pnpm -r run lint",
     "test": "pnpm -r run test",
+    "test:run": "pnpm -r run test:run",
     "db:push": "pnpm --filter @pioum/backend db:push",
     "db:generate": "pnpm --filter @pioum/backend db:generate",
     "db:seed": "pnpm --filter @pioum/backend db:seed"
@@ -15,5 +16,10 @@
   "engines": {
     "node": ">=20.0.0",
     "pnpm": ">=9.0.0"
+  },
+  "devDependencies": {
+    "@vitest/coverage-v8": "^4.0.18",
+    "typescript-eslint": "^8.53.1",
+    "vitest": "^4.0.18"
   }
 }

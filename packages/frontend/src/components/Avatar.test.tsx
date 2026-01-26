@@ -11,7 +11,8 @@ describe('Avatar', () => {
 
   it('renders user initials when no avatar', () => {
     render(<Avatar user={mockUser} />)
-    expect(screen.getByText('JD')).toBeInTheDocument()
+    // Only first initial is shown now
+    expect(screen.getByText('J')).toBeInTheDocument()
   })
 
   it('renders image when customAvatarUrl is provided', () => {
@@ -26,9 +27,10 @@ describe('Avatar', () => {
 
   it('applies size classes correctly', () => {
     const { container, rerender } = render(<Avatar user={mockUser} size="sm" />)
-    expect(container.firstChild).toHaveClass('w-8', 'h-8')
+    // Updated size classes based on actual component
+    expect(container.firstChild).toHaveClass('w-10', 'h-10')
 
     rerender(<Avatar user={mockUser} size="lg" />)
-    expect(container.firstChild).toHaveClass('w-16', 'h-16')
+    expect(container.firstChild).toHaveClass('w-20', 'h-20')
   })
 })

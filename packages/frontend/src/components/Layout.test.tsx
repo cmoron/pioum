@@ -51,7 +51,7 @@ describe('Layout', () => {
     renderLayout()
     const logo = screen.getByAltText('Pioum Logo')
     const header = logo.closest('header')
-    expect(header).toHaveClass('bg-[#fee6b8]')
+    expect(header).toHaveClass('bg-warm')
   })
 
   it('renders user avatar when logged in', () => {

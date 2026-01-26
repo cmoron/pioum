@@ -13,21 +13,21 @@ export function Layout({ children }: { children: React.ReactNode }) {
   const { user } = useAuthStore()
 
   return (
-    <div className="min-h-screen flex flex-col">
-      {/* Header */}
-      <header className="bg-[#fee6b8] border-b border-[#f5d89e] px-4 py-3 flex items-center justify-between">
-        <Link to="/" className="flex items-center gap-3">
-          <div className="h-14 flex-shrink-0">
+    <div className="min-h-screen flex flex-col bg-primary-50">
+      {/* Header - Enlarged */}
+      <header className="bg-warm border-b-2 border-warmDark px-4 py-5 flex items-center justify-between shadow-warm">
+        <Link to="/" className="flex items-center gap-4">
+          <div className="h-20 flex-shrink-0">
             <img
               src="/logo.png"
               alt="Pioum Logo"
               className="h-full w-auto object-contain"
             />
           </div>
-          <span className="text-3xl font-bold text-[#c66e24]">Pioum</span>
+          <span className="text-4xl font-bold text-primary-700">Pioum</span>
         </Link>
         {user && (
-          <Link to="/profile" className="flex items-center gap-2">
+          <Link to="/profile" className="flex items-center gap-2 hover:opacity-80 transition-opacity">
             <Avatar user={user} size="sm" />
           </Link>
         )}
@@ -38,8 +38,8 @@ export function Layout({ children }: { children: React.ReactNode }) {
         {children}
       </main>
 
-      {/* Bottom navigation */}
-      <nav className="fixed bottom-0 left-0 right-0 bg-white border-t border-gray-200 px-4 py-2 safe-area-bottom">
+      {/* Bottom navigation - Updated theme */}
+      <nav className="fixed bottom-0 left-0 right-0 bg-warm border-t-2 border-warmDark px-4 py-3 safe-area-bottom shadow-warm-lg">
         <div className="flex justify-around items-center max-w-lg mx-auto">
           {navItems.map((item) => {
             const isActive = location.pathname === item.path
@@ -48,10 +48,10 @@ export function Layout({ children }: { children: React.ReactNode }) {
               <Link
                 key={item.path}
                 to={item.path}
-                className={`flex flex-col items-center gap-1 p-2 rounded-lg transition-colors ${
+                className={`flex flex-col items-center gap-1 p-2 rounded-warm transition-all ${
                   isActive
-                    ? 'text-primary-600'
-                    : 'text-gray-500 hover:text-gray-700'
+                    ? 'text-primary-800 bg-primary-200'
+                    : 'text-primary-600 hover:text-primary-800 hover:bg-primary-100'
                 }`}
               >
                 <Icon className="w-6 h-6" />

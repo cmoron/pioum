@@ -116,7 +116,7 @@ export function ProfilePage() {
 
   return (
     <div className="p-4">
-      <h1 className="text-2xl font-bold mb-6">Mon profil</h1>
+      <h1 className="text-2xl font-bold mb-6 text-primary-800">Mon profil</h1>
 
       <div className="card p-6 mb-6">
         {/* Current avatar preview */}
@@ -129,14 +129,14 @@ export function ProfilePage() {
             size="xl"
           />
           <div>
-            <p className="font-medium">{user.name}</p>
-            <p className="text-sm text-gray-500">{user.email}</p>
+            <p className="font-medium text-primary-800">{user.name}</p>
+            <p className="text-sm text-primary-600">{user.email}</p>
           </div>
         </div>
 
         {/* Name */}
         <div className="mb-6">
-          <label className="block text-sm font-medium text-gray-700 mb-2">
+          <label className="block text-sm font-medium text-primary-800 mb-2">
             Nom
           </label>
           <input
@@ -149,7 +149,7 @@ export function ProfilePage() {
 
         {/* Avatar selection */}
         <div className="mb-6">
-          <label className="block text-sm font-medium text-gray-700 mb-2">
+          <label className="block text-sm font-medium text-primary-800 mb-2">
             Avatar
           </label>
           {loadingAvatars ? (
@@ -162,10 +162,10 @@ export function ProfilePage() {
                 <button
                   key={avatar.id}
                   onClick={() => setSelectedAvatarId(avatar.id)}
-                  className={`w-14 h-14 rounded-full flex items-center justify-center text-2xl bg-gray-100 ring-2 transition-all overflow-hidden ${
+                  className={`w-14 h-14 rounded-full flex items-center justify-center text-2xl bg-primary-100 ring-2 transition-all overflow-hidden ${
                     selectedAvatarId === avatar.id
-                      ? 'ring-primary-600 ring-offset-2'
-                      : 'ring-transparent hover:ring-gray-300'
+                      ? 'ring-primary-700 ring-offset-2 shadow-warm'
+                      : 'ring-transparent hover:ring-primary-300'
                   }`}
                   title={avatar.name}
                 >
@@ -204,7 +204,7 @@ export function ProfilePage() {
       {/* My cars section */}
       <div className="card p-6 mb-6">
         <div className="flex items-center justify-between mb-4">
-          <h2 className="text-xl font-bold">Mes voitures</h2>
+          <h2 className="text-xl font-bold text-primary-800">Mes voitures</h2>
           <button
             onClick={() => handleOpenCarModal()}
             className="btn-secondary flex items-center gap-2"
@@ -217,7 +217,7 @@ export function ProfilePage() {
         </div>
 
         {userCars.length === 0 ? (
-          <p className="text-gray-500 text-center py-8">
+          <p className="text-primary-600 text-center py-8">
             Aucune voiture enregistrée. Ajoutez-en une pour aller plus vite lors de l'ajout à une session.
           </p>
         ) : (
@@ -245,13 +245,13 @@ export function ProfilePage() {
       {/* Car modal */}
       {showCarModal && (
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center p-4 z-50">
-          <div className="bg-white rounded-xl p-6 w-full max-w-md max-h-[90vh] overflow-y-auto">
-            <h2 className="text-xl font-bold mb-4">
+          <div className="bg-white rounded-warm p-6 w-full max-w-md max-h-[90vh] overflow-y-auto shadow-warm-xl border-2 border-primary-300">
+            <h2 className="text-xl font-bold mb-4 text-primary-800">
               {editingCar ? 'Modifier la voiture' : 'Nouvelle voiture'}
             </h2>
 
             <div className="mb-4">
-              <label className="block text-sm font-medium text-gray-700 mb-2">
+              <label className="block text-sm font-medium text-primary-800 mb-2">
                 Nom (optionnel)
               </label>
               <input
@@ -264,7 +264,7 @@ export function ProfilePage() {
             </div>
 
             <div className="mb-4">
-              <label className="block text-sm font-medium text-gray-700 mb-2">
+              <label className="block text-sm font-medium text-primary-800 mb-2">
                 Type de voiture
               </label>
               {loadingAvatars ? (
@@ -275,10 +275,10 @@ export function ProfilePage() {
                     <button
                       key={avatar.id}
                       onClick={() => setCarAvatarId(avatar.id)}
-                      className={`p-3 rounded-lg border-2 transition-all ${
+                      className={`p-3 rounded-warm border-2 transition-all ${
                         carAvatarId === avatar.id
-                          ? 'border-primary-600 bg-primary-50'
-                          : 'border-gray-200 hover:border-gray-300'
+                          ? 'border-primary-700 bg-primary-100 shadow-warm'
+                          : 'border-primary-300 hover:border-primary-400'
                       }`}
                     >
                       <div className="text-4xl mb-2 flex justify-center">
@@ -288,7 +288,7 @@ export function ProfilePage() {
                           avatar.imageUrl
                         )}
                       </div>
-                      <div className="text-sm text-center font-medium">{avatar.name}</div>
+                      <div className="text-sm text-center font-medium text-primary-800">{avatar.name}</div>
                     </button>
                   ))}
                 </div>
@@ -296,25 +296,25 @@ export function ProfilePage() {
             </div>
 
             <div className="mb-6">
-              <label className="block text-sm font-medium text-gray-700 mb-2">
+              <label className="block text-sm font-medium text-primary-800 mb-2">
                 Places par défaut
               </label>
               <div className="flex items-center justify-center gap-4">
                 <button
                   onClick={() => setCarSeats(Math.max(1, carSeats - 1))}
-                  className="w-10 h-10 rounded-full bg-gray-100 flex items-center justify-center text-lg font-bold"
+                  className="w-10 h-10 rounded-full bg-primary-200 hover:bg-primary-300 flex items-center justify-center text-lg font-bold text-primary-800 transition-colors"
                 >
                   -
                 </button>
-                <span className="text-3xl font-bold">{carSeats}</span>
+                <span className="text-3xl font-bold text-primary-800">{carSeats}</span>
                 <button
                   onClick={() => setCarSeats(Math.min(8, carSeats + 1))}
-                  className="w-10 h-10 rounded-full bg-gray-100 flex items-center justify-center text-lg font-bold"
+                  className="w-10 h-10 rounded-full bg-primary-200 hover:bg-primary-300 flex items-center justify-center text-lg font-bold text-primary-800 transition-colors"
                 >
                   +
                 </button>
               </div>
-              <p className="text-sm text-gray-500 text-center mt-2">
+              <p className="text-sm text-primary-600 text-center mt-2">
                 {carSeats} place{carSeats > 1 ? 's' : ''} (hors toi)
               </p>
             </div>

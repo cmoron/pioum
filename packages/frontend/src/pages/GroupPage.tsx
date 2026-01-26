@@ -105,7 +105,7 @@ export function GroupPage() {
       <div className="flex items-center justify-between mb-6">
         <div className="flex items-center gap-3">
           {currentGroup.avatar && (
-            <div className="w-20 h-20 flex items-center justify-center text-5xl bg-primary-50 rounded-full overflow-hidden">
+            <div className="w-20 h-20 flex items-center justify-center text-5xl bg-primary-100 rounded-full overflow-hidden border-2 border-primary-300">
               {isImageUrl(currentGroup.avatar.imageUrl) ? (
                 <img src={currentGroup.avatar.imageUrl} alt={currentGroup.avatar.name} className="w-full h-full object-cover" />
               ) : (
@@ -114,8 +114,8 @@ export function GroupPage() {
             </div>
           )}
           <div>
-            <h1 className="text-2xl font-bold">{currentGroup.name}</h1>
-            <p className="text-gray-500">
+            <h1 className="text-2xl font-bold text-primary-800">{currentGroup.name}</h1>
+            <p className="text-primary-600">
               {format(new Date(), 'EEEE d MMMM', { locale: fr })}
             </p>
           </div>
@@ -124,7 +124,7 @@ export function GroupPage() {
           {isAdmin && (
             <button
               onClick={() => setShowSettings(true)}
-              className="p-2 rounded-lg hover:bg-gray-100"
+              className="p-2 rounded-warm hover:bg-primary-100 transition-colors text-primary-700"
               title="Paramètres du groupe"
             >
               <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -135,7 +135,7 @@ export function GroupPage() {
           )}
           <button
             onClick={() => setShowInvite(true)}
-            className="p-2 rounded-lg hover:bg-gray-100"
+            className="p-2 rounded-warm hover:bg-primary-100 transition-colors text-primary-700"
             title="Inviter des potes"
           >
             <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -149,10 +149,10 @@ export function GroupPage() {
       <div className="card p-4 mb-4">
         <div className="flex items-center justify-between">
           <div>
-            <p className="font-medium">
+            <p className="font-medium text-primary-800">
               {isParticipating ? 'Tu participes !' : 'Tu viens à la muscu ?'}
             </p>
-            <p className="text-sm text-gray-500">
+            <p className="text-sm text-primary-600">
               {session?.passengers.length || 0} participant{(session?.passengers.length || 0) > 1 ? 's' : ''}
             </p>
           </div>
@@ -169,15 +169,15 @@ export function GroupPage() {
       {/* Participants without car */}
       {participantsWithoutCar && participantsWithoutCar.length > 0 && (
         <div className="mb-4">
-          <h2 className="text-lg font-medium mb-2">En attente de voiture</h2>
+          <h2 className="text-lg font-medium mb-2 text-primary-800">En attente de voiture</h2>
           <div className="flex flex-wrap gap-3">
             {participantsWithoutCar.map((p) => (
               <div
                 key={p.id}
-                className="flex items-center gap-2 bg-gray-50 rounded-full pl-1 pr-4 py-1.5"
+                className="flex items-center gap-2 bg-primary-50 rounded-full pl-1 pr-4 py-1.5 border border-primary-200"
               >
                 <Avatar user={p.user} size="md" />
-                <span className="text-base">{p.user.name}</span>
+                <span className="text-base text-primary-800">{p.user.name}</span>
               </div>
             ))}
           </div>
@@ -200,7 +200,7 @@ export function GroupPage() {
       {/* Cars */}
       {session && session.cars.length > 0 && (
         <div className="mb-4">
-          <h2 className="text-lg font-medium mb-3">Voitures</h2>
+          <h2 className="text-lg font-medium mb-3 text-primary-800">Voitures</h2>
           <div className="space-y-3">
             {session.cars.map((car) => (
               <CarCard
@@ -216,14 +216,14 @@ export function GroupPage() {
 
       {/* Members */}
       <div className="mb-4">
-        <h2 className="text-lg font-medium mb-3">Membres du groupe</h2>
-        <div className="card divide-y divide-gray-100">
+        <h2 className="text-lg font-medium mb-3 text-primary-800">Membres du groupe</h2>
+        <div className="card divide-y divide-primary-200">
           {currentGroup.members.map((member) => (
             <div key={member.id} className="p-3 flex items-center gap-3">
               <Avatar user={member} size="md" />
               <div className="flex-1">
-                <p className="font-medium">{member.name}</p>
-                <p className="text-sm text-gray-500">{member.role}</p>
+                <p className="font-medium text-primary-800">{member.name}</p>
+                <p className="text-sm text-primary-600">{member.role}</p>
               </div>
             </div>
           ))}
@@ -233,13 +233,13 @@ export function GroupPage() {
       {/* Invite Modal */}
       {showInvite && (
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center p-4 z-50">
-          <div className="bg-white rounded-xl p-6 w-full max-w-sm">
-            <h2 className="text-xl font-bold mb-4">Inviter des potes</h2>
-            <p className="text-gray-600 mb-4">
+          <div className="bg-white rounded-warm p-6 w-full max-w-sm shadow-warm-xl border-2 border-primary-300">
+            <h2 className="text-xl font-bold mb-4 text-primary-800">Inviter des potes</h2>
+            <p className="text-primary-700 mb-4">
               Partage ce code pour inviter tes potes :
             </p>
-            <div className="bg-gray-100 p-4 rounded-lg text-center mb-4">
-              <p className="text-2xl font-mono font-bold tracking-wider">
+            <div className="bg-primary-100 p-4 rounded-warm text-center mb-4 border-2 border-primary-300">
+              <p className="text-2xl font-mono font-bold tracking-wider text-primary-800">
                 {currentGroup.inviteCode}
               </p>
             </div>

@@ -7,40 +7,51 @@ export default {
   theme: {
     extend: {
       colors: {
-        // REMPLACEMENT: On passe du Bleu à un Orange "Coucher de soleil" (Chaud)
+        // Palette beige/pêche/orange chaleureuse
         primary: {
-          50: '#fff7ed',  // Crème très léger
-          100: '#ffedd5', // Pêche pâle
-          200: '#fed7aa',
-          300: '#fdba74',
-          400: '#fb923c',
-          500: '#f97316', // Ton orange principal (Vif)
-          600: '#ea580c',
-          700: '#c2410c',
-          800: '#9a3412',
-          900: '#7c2d12', // Marron chaud
-          950: '#431407', // Presque noir, mais teinte chocolat
+          50: '#fffbf5',   // Très léger crème
+          100: '#fff4e6',  // Crème pâle
+          200: '#fee6b8',  // Beige pêche (header actuel)
+          300: '#fdd89f',  // Beige doré
+          400: '#f5c57d',  // Pêche moyen
+          500: '#e8a855',  // Orange doux
+          600: '#d48d3a',  // Orange moyen
+          700: '#c66e24',  // Orange/marron chaud (texte actuel)
+          800: '#a85a1f',  // Marron terracotta
+          900: '#8a481a',  // Marron foncé
+          950: '#6d3814',  // Marron très foncé
         },
-        // AJOUT: Une couleur secondaire Jaune pour le coté "Cartoon/Fun"
-        secondary: '#FCD34D', // Un jaune d'or
-        // AJOUT: Une couleur de fond cassée (évite le blanc pur froid)
-        paper: '#FFFDF5', 
-        // AJOUT: Une couleur sombre pour les contours (plus chaud que le noir #000)
-        dark: '#292524', // Un gris très chaud / noir charbon
+        // Accent complémentaire pour les highlights
+        accent: {
+          50: '#fffbeb',
+          100: '#fef3c7',
+          200: '#fde68a',
+          300: '#fcd34d',  // Jaune d'or
+          400: '#fbbf24',
+          500: '#f59e0b',
+          600: '#d97706',
+          700: '#b45309',
+          800: '#92400e',
+          900: '#78350f',
+        },
+        // Fond cassé pour éviter le blanc pur
+        paper: '#fffdf5',
+        warm: '#fee6b8',    // Beige pêche
+        warmDark: '#f5d89e', // Beige foncé pour bordures
+        // Couleur sombre chaleureuse
+        dark: '#3d2517',    // Marron foncé chaud
       },
       fontFamily: {
-        // Changement suggéré : 'Nunito' ou 'Fredoka' font plus cartoon que 'Inter'
-        sans: ['"Nunito"', 'sans-serif'], 
-        cartoon: ['"Fredoka"', 'cursive'], // Optionnel pour les gros titres
+        sans: ['Inter', 'system-ui', 'sans-serif'],
       },
-      // LE SECRET DU CARTOON : Les ombres dures (Hard Shadows)
       boxShadow: {
-        'comic': '4px 4px 0px 0px #292524', // Ombre noire décalée sans flou
-        'comic-hover': '2px 2px 0px 0px #292524', // Effet enfoncé
+        'warm': '0 1px 3px 0 rgba(198, 110, 36, 0.1), 0 1px 2px 0 rgba(198, 110, 36, 0.06)',
+        'warm-md': '0 4px 6px -1px rgba(198, 110, 36, 0.1), 0 2px 4px -1px rgba(198, 110, 36, 0.06)',
+        'warm-lg': '0 10px 15px -3px rgba(198, 110, 36, 0.1), 0 4px 6px -2px rgba(198, 110, 36, 0.05)',
+        'warm-xl': '0 20px 25px -5px rgba(198, 110, 36, 0.1), 0 10px 10px -5px rgba(198, 110, 36, 0.04)',
       },
-      // Des bordures bien rondes
       borderRadius: {
-        'box': '1rem',
+        'warm': '0.75rem',
       }
     },
   },

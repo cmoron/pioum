@@ -76,13 +76,13 @@ export function CarCard({ car, isBanned, onRefresh }: CarCardProps) {
     <>
       <div className={clsx(
         'card p-4',
-        isBanned && 'opacity-60 border-red-200 bg-red-50'
+        isBanned && 'opacity-60 border-red-300 bg-red-50'
       )}>
         {/* Driver */}
         <div className="flex items-center justify-between mb-3">
           <div className="flex items-center gap-3">
             {car.userCar ? (
-              <div className="w-16 h-16 rounded-full bg-gradient-to-br from-primary-400 to-primary-600 flex items-center justify-center text-3xl flex-shrink-0">
+              <div className="w-16 h-16 rounded-full bg-gradient-to-br from-primary-400 to-primary-700 flex items-center justify-center text-3xl flex-shrink-0 border-2 border-primary-300">
                 {isImageUrl(car.userCar.avatar.imageUrl) ? (
                   <img src={car.userCar.avatar.imageUrl} alt={car.userCar.avatar.name} className="w-full h-full object-cover rounded-full" />
                 ) : (
@@ -93,8 +93,8 @@ export function CarCard({ car, isBanned, onRefresh }: CarCardProps) {
               <Avatar user={car.driver} size="md" />
             )}
             <div>
-              <p className="font-medium">{car.driver.name}</p>
-              <p className="text-sm text-gray-500">
+              <p className="font-medium text-primary-800">{car.driver.name}</p>
+              <p className="text-sm text-primary-600">
                 {car.userCar ? (car.userCar.name || car.userCar.avatar.name) : 'Conducteur'}
               </p>
             </div>
@@ -106,34 +106,34 @@ export function CarCard({ car, isBanned, onRefresh }: CarCardProps) {
             )}>
               {availableSeats}/{car.seats}
             </p>
-            <p className="text-xs text-gray-500">places</p>
+            <p className="text-xs text-primary-600">places</p>
           </div>
         </div>
 
         {/* Passengers */}
         {car.passengers.length > 0 && (
-          <div className="border-t border-gray-100 pt-3 mb-3">
-            <p className="text-sm text-gray-500 mb-2">Passagers</p>
+          <div className="border-t border-primary-200 pt-3 mb-3">
+            <p className="text-sm text-primary-600 mb-2">Passagers</p>
             <div className="flex flex-wrap gap-2">
               {car.passengers.map((passenger) => (
                 <div
                   key={passenger.id}
-                  className="flex items-center gap-2 bg-gray-50 rounded-full pl-1 pr-3 py-1"
+                  className="flex items-center gap-2 bg-primary-50 rounded-full pl-1 pr-3 py-1 border border-primary-200"
                 >
                   <Avatar user={passenger.user} size="sm" />
-                  <span className="text-sm">{passenger.user.name}</span>
+                  <span className="text-sm text-primary-800">{passenger.user.name}</span>
                   {isDriver && passenger.userId !== user?.id && (
                     <div className="flex gap-1 ml-1">
                       <button
                         onClick={() => handleKick(passenger.userId)}
-                        className="text-gray-400 hover:text-red-500 p-1"
+                        className="text-primary-400 hover:text-red-500 p-1 transition-colors"
                         title="Éjecter"
                       >
                         <XIcon className="w-5 h-5" />
                       </button>
                       <button
                         onClick={() => setBanTarget(passenger.user)}
-                        className="text-gray-400 hover:text-red-500 p-1"
+                        className="text-primary-400 hover:text-red-500 p-1 transition-colors"
                         title="Bannir"
                       >
                         <BanIcon className="w-5 h-5" />

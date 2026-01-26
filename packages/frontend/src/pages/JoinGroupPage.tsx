@@ -28,7 +28,7 @@ export function JoinGroupPage() {
     <div className="p-4">
       <Link
         to="/"
-        className="flex items-center gap-2 text-gray-600 hover:text-gray-900 mb-4"
+        className="flex items-center gap-2 text-primary-600 hover:text-primary-800 mb-4 transition-colors"
       >
         <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
@@ -36,11 +36,11 @@ export function JoinGroupPage() {
         Retour
       </Link>
 
-      <h1 className="text-2xl font-bold mb-6">Rejoindre un groupe</h1>
+      <h1 className="text-2xl font-bold mb-6 text-primary-800">Rejoindre un groupe</h1>
 
       <form onSubmit={handleSubmit} className="card p-6">
         <div className="mb-4">
-          <label className="block text-sm font-medium text-gray-700 mb-2">
+          <label className="block text-sm font-medium text-primary-800 mb-2">
             Code d'invitation
           </label>
           <input

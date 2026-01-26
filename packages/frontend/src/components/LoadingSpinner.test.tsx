@@ -28,8 +28,8 @@ describe('LoadingSpinner', () => {
       const { container } = render(<LoadingSpinner />)
       const spinner = container.firstChild
       expect(spinner).toHaveClass('border-2')
-      expect(spinner).toHaveClass('border-gray-300')
-      expect(spinner).toHaveClass('border-t-primary-600')
+      expect(spinner).toHaveClass('border-primary-200')
+      expect(spinner).toHaveClass('border-t-primary-700')
     })
   })
 

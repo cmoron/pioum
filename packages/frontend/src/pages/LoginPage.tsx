@@ -85,12 +85,21 @@ export function LoginPage() {
   }
 
   return (
-    <div className="min-h-screen flex flex-col items-center justify-center p-4 bg-gradient-to-b from-primary-50 to-white">
+    <div className="min-h-screen flex flex-col items-center justify-center p-4 bg-gradient-to-b from-primary-100 to-primary-50">
       <div className="w-full max-w-sm">
         {/* Logo */}
         <div className="text-center mb-8">
-          <h1 className="text-4xl font-bold text-primary-600 mb-2">Pioum</h1>
-          <p className="text-gray-600">Qui vient ??</p>
+          <div className="flex justify-center mb-4">
+            <div className="h-32 bg-warm px-6 py-4 rounded-warm shadow-warm-lg border-2 border-warmDark">
+              <img
+                src="/logo.png"
+                alt="Pioum Logo"
+                className="h-full w-auto object-contain"
+              />
+            </div>
+          </div>
+          <h1 className="text-5xl font-bold text-primary-700 mb-2">Pioum</h1>
+          <p className="text-primary-600 text-lg">Qui vient ??</p>
         </div>
 
         <div className="card p-6">
@@ -101,8 +110,8 @@ export function LoginPage() {
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
                 </svg>
               </div>
-              <h2 className="text-xl font-bold mb-2">Check tes mails !</h2>
-              <p className="text-gray-600 mb-4">
+              <h2 className="text-xl font-bold mb-2 text-primary-800">Check tes mails !</h2>
+              <p className="text-primary-700 mb-4">
                 Un lien magique a été envoyé à <strong>{email}</strong>
               </p>
               <button
@@ -110,17 +119,17 @@ export function LoginPage() {
                   setMagicLinkSent(false)
                   setEmail('')
                 }}
-                className="text-primary-600 hover:underline"
+                className="text-primary-700 hover:text-primary-800 hover:underline font-medium"
               >
                 Utiliser une autre adresse
               </button>
             </div>
           ) : mode === 'choose' ? (
             <>
-              <h2 className="text-xl font-bold text-center mb-6">Connexion</h2>
+              <h2 className="text-xl font-bold text-center mb-6 text-primary-800">Connexion</h2>
 
               {error && (
-                <div className="bg-red-50 text-red-600 p-3 rounded-lg mb-4 text-sm">
+                <div className="bg-red-50 text-red-600 p-3 rounded-warm mb-4 text-sm border border-red-200">
                   {error}
                 </div>
               )}
@@ -128,7 +137,7 @@ export function LoginPage() {
               <button
                 onClick={handleGoogleLogin}
                 disabled={loading}
-                className="w-full flex items-center justify-center gap-3 px-4 py-3 border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors mb-3"
+                className="w-full flex items-center justify-center gap-3 px-4 py-3 border-2 border-primary-300 rounded-warm hover:bg-primary-50 transition-all mb-3 bg-white shadow-warm hover:shadow-warm-md"
               >
                 <svg className="w-5 h-5" viewBox="0 0 24 24">
                   <path
@@ -152,9 +161,9 @@ export function LoginPage() {
               </button>
 
               <div className="flex items-center gap-3 my-4">
-                <div className="flex-1 h-px bg-gray-200" />
-                <span className="text-sm text-gray-500">ou</span>
-                <div className="flex-1 h-px bg-gray-200" />
+                <div className="flex-1 h-px bg-primary-300" />
+                <span className="text-sm text-primary-600">ou</span>
+                <div className="flex-1 h-px bg-primary-300" />
               </div>
 
               <button
@@ -174,7 +183,7 @@ export function LoginPage() {
 
                   <button
                     onClick={() => setMode('dev')}
-                    className="w-full px-4 py-2 bg-yellow-100 text-yellow-800 rounded-lg hover:bg-yellow-200 transition-colors text-sm"
+                    className="w-full px-4 py-2 bg-accent-100 text-accent-800 rounded-warm hover:bg-accent-200 transition-all text-sm shadow-warm"
                   >
                     Connexion rapide (dev)
                   </button>
@@ -185,7 +194,7 @@ export function LoginPage() {
             <>
               <button
                 onClick={() => setMode('choose')}
-                className="flex items-center gap-2 text-gray-600 hover:text-gray-900 mb-4"
+                className="flex items-center gap-2 text-primary-600 hover:text-primary-800 mb-4 transition-colors"
               >
                 <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
@@ -220,14 +229,14 @@ export function LoginPage() {
                 <button
                   type="submit"
                   disabled={loading || !devName}
-                  className="w-full bg-yellow-500 text-white py-2 px-4 rounded-lg hover:bg-yellow-600 transition-colors"
+                  className="w-full bg-accent-500 text-white py-2 px-4 rounded-warm hover:bg-accent-600 transition-all shadow-warm hover:shadow-warm-md font-medium"
                 >
                   {loading ? 'Connexion...' : 'Se connecter'}
                 </button>
               </form>
 
-              <div className="mt-4 p-3 bg-gray-50 rounded-lg">
-                <p className="text-xs text-gray-500">
+              <div className="mt-4 p-3 bg-primary-100 rounded-warm">
+                <p className="text-xs text-primary-700">
                   Utilisateurs créés : <code>prénom@test.local</code>
                 </p>
               </div>
@@ -236,7 +245,7 @@ export function LoginPage() {
             <>
               <button
                 onClick={() => setMode('choose')}
-                className="flex items-center gap-2 text-gray-600 hover:text-gray-900 mb-4"
+                className="flex items-center gap-2 text-primary-600 hover:text-primary-800 mb-4 transition-colors"
               >
                 <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />

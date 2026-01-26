@@ -39,7 +39,7 @@ export function GroupSettingsModal({ group, onSave, onDelete, onClose }: GroupSe
       if (avatarId !== group.avatarId) data.avatarId = avatarId
 
       if (Object.keys(data).length > 0) {
-        await onSave(data)
+        onSave(data)
       }
       onClose()
     } catch (err) {
@@ -53,7 +53,7 @@ export function GroupSettingsModal({ group, onSave, onDelete, onClose }: GroupSe
     setDeleting(true)
     setError(null)
     try {
-      await onDelete()
+      onDelete()
       onClose()
     } catch (err) {
       setError((err as Error).message)
@@ -63,13 +63,13 @@ export function GroupSettingsModal({ group, onSave, onDelete, onClose }: GroupSe
 
   return (
     <div className="fixed inset-0 bg-black/50 flex items-center justify-center p-4 z-50">
-      <div className="bg-white rounded-xl p-6 w-full max-w-md max-h-[90vh] overflow-y-auto">
-        <h2 className="text-xl font-bold mb-4">Paramètres du groupe</h2>
+      <div className="bg-white rounded-warm p-6 w-full max-w-md max-h-[90vh] overflow-y-auto shadow-warm-xl border-2 border-primary-300">
+        <h2 className="text-xl font-bold mb-4 text-primary-800">Paramètres du groupe</h2>
 
         {showDeleteConfirm ? (
           // Confirmation de suppression
           <div>
-            <div className="bg-red-50 border border-red-200 rounded-lg p-4 mb-4">
+            <div className="bg-red-50 border-2 border-red-200 rounded-warm p-4 mb-4">
               <p className="text-red-800 font-medium mb-2">Supprimer ce groupe ?</p>
               <p className="text-red-600 text-sm">
                 Cette action est irréversible. Toutes les sessions et données du groupe seront supprimées.
@@ -90,7 +90,7 @@ export function GroupSettingsModal({ group, onSave, onDelete, onClose }: GroupSe
               </button>
               <button
                 onClick={handleDelete}
-                className="bg-red-600 text-white px-4 py-2 rounded-lg font-medium hover:bg-red-700 transition-colors flex-1"
+                className="bg-red-500 text-white px-4 py-2 rounded-warm font-medium hover:bg-red-600 transition-all shadow-warm hover:shadow-warm-md flex-1"
                 disabled={deleting}
               >
                 {deleting ? 'Suppression...' : 'Confirmer'}
@@ -101,7 +101,7 @@ export function GroupSettingsModal({ group, onSave, onDelete, onClose }: GroupSe
           // Formulaire normal
           <>
             <div className="mb-4">
-              <label className="block text-sm font-medium text-gray-700 mb-2">
+              <label className="block text-sm font-medium text-primary-800 mb-2">
                 Nom du groupe
               </label>
               <input
@@ -115,7 +115,7 @@ export function GroupSettingsModal({ group, onSave, onDelete, onClose }: GroupSe
             </div>
 
             <div className="mb-6">
-              <label className="block text-sm font-medium text-gray-700 mb-3">
+              <label className="block text-sm font-medium text-primary-800 mb-3">
                 Avatar du groupe
               </label>
               <div className="grid grid-cols-3 gap-3 mb-2">
@@ -124,10 +124,10 @@ export function GroupSettingsModal({ group, onSave, onDelete, onClose }: GroupSe
                     key={avatar.id}
                     type="button"
                     onClick={() => setAvatarId(avatar.id)}
-                    className={`aspect-square flex items-center justify-center text-4xl rounded-lg border-2 transition-all overflow-hidden ${
+                    className={`aspect-square flex items-center justify-center text-4xl rounded-warm border-2 transition-all overflow-hidden ${
                       avatarId === avatar.id
-                        ? 'border-primary-600 bg-primary-50'
-                        : 'border-gray-200 hover:border-gray-300'
+                        ? 'border-primary-700 bg-primary-100 shadow-warm'
+                        : 'border-primary-300 hover:border-primary-400'
                     }`}
                   >
                     {isImageUrl(avatar.imageUrl) ? (
@@ -141,7 +141,7 @@ export function GroupSettingsModal({ group, onSave, onDelete, onClose }: GroupSe
               <button
                 type="button"
                 onClick={() => setAvatarId(null)}
-                className="text-sm text-gray-600 hover:text-gray-800"
+                className="text-sm text-primary-600 hover:text-primary-800 font-medium"
               >
                 Supprimer l'avatar
               </button>

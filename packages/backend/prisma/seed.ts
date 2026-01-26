@@ -4,16 +4,16 @@ const prisma = new PrismaClient()
 
 const avatars = [
   // Users category - photos de profil
-  { name: 'Melon', imageUrl: '/avatars/users/Avatar_Melon.jpeg', category: 'users' },
-  { name: 'Piou', imageUrl: '/avatars/users/Avatar_Piou.jpeg', category: 'users' },
-  { name: 'Saucisse', imageUrl: '/avatars/users/Avatar_Saucisse.jpeg', category: 'users' },
-  { name: 'Seb', imageUrl: '/avatars/users/Avatar_Seb.jpeg', category: 'users' },
-  { name: 'TheB', imageUrl: '/avatars/users/Avatar_TheB.jpeg', category: 'users' },
-  { name: 'Clovi', imageUrl: '/avatars/users/Avatar_Clovi.jpeg', category: 'users' },
-  { name: 'Lion', imageUrl: '/avatars/users/Avatar_lion.png', category: 'users' },
-  { name: 'Gorilla', imageUrl: '/avatars/users/Avatar_gorilla.png', category: 'users' },
-  { name: 'Wolf', imageUrl: '/avatars/users/Avatar_wolf.png', category: 'users' },
-  { name: 'Bear', imageUrl: '/avatars/users/Avatar_bear.png', category: 'users' },
+  { name: 'gMelon', imageUrl: '/avatars/users/avatar_grolem_melon.jpeg', category: 'users' },
+  { name: 'gPiou', imageUrl: '/avatars/users/avatar_grolem_piou.jpeg', category: 'users' },
+  { name: 'gSaucisse', imageUrl: '/avatars/users/avatar_grolem_saucisse.jpeg', category: 'users' },
+  { name: 'gSeb', imageUrl: '/avatars/users/avatar_grolem_seb.jpeg', category: 'users' },
+  { name: 'gTheB', imageUrl: '/avatars/users/avatar_grolem_b.jpeg', category: 'users' },
+  { name: 'gClovi', imageUrl: '/avatars/users/avatar_grolem_clovi.jpeg', category: 'users' },
+  { name: 'aLion', imageUrl: '/avatars/users/avatar_animal_lion.jpeg', category: 'users' },
+  { name: 'aGorilla', imageUrl: '/avatars/users/avatar_animal_gorilla.jpeg', category: 'users' },
+  { name: 'aWolf', imageUrl: '/avatars/users/avatar_animal_wolf.jpeg', category: 'users' },
+  { name: 'aBear', imageUrl: '/avatars/users/avatar_animal_bear.jpeg', category: 'users' },
 
   // Cars category - avatars pour les voitures
   { name: 'Van', imageUrl: '/avatars/cars/cars_van.png', category: 'cars' },

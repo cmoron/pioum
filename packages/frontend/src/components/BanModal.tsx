@@ -37,19 +37,19 @@ export function BanModal({ user, onClose, onBanned }: BanModalProps) {
 
   return (
     <div className="fixed inset-0 bg-black/50 flex items-center justify-center p-4 z-50">
-      <div className="bg-white rounded-xl p-6 w-full max-w-sm">
-        <h2 className="text-xl font-bold mb-4">Bannir un passager</h2>
+      <div className="bg-white rounded-warm p-6 w-full max-w-sm shadow-warm-xl border-2 border-primary-300">
+        <h2 className="text-xl font-bold mb-4 text-primary-800">Bannir un passager</h2>
 
-        <div className="flex items-center gap-3 mb-4 p-3 bg-gray-50 rounded-lg">
+        <div className="flex items-center gap-3 mb-4 p-3 bg-primary-50 rounded-warm border border-primary-200">
           <Avatar user={user} size="md" />
           <div>
-            <p className="font-medium">{user.name}</p>
-            <p className="text-sm text-gray-500">Sera banni de ta voiture</p>
+            <p className="font-medium text-primary-800">{user.name}</p>
+            <p className="text-sm text-primary-600">Sera banni de ta voiture</p>
           </div>
         </div>
 
         <div className="mb-4">
-          <label className="block text-sm font-medium text-gray-700 mb-2">
+          <label className="block text-sm font-medium text-primary-800 mb-2">
             Durée du ban
           </label>
           <div className="grid grid-cols-2 gap-2">
@@ -58,10 +58,10 @@ export function BanModal({ user, onClose, onBanned }: BanModalProps) {
                 key={d.value}
                 type="button"
                 onClick={() => setDuration(d.value)}
-                className={`px-3 py-2 rounded-lg text-sm font-medium transition-colors ${
+                className={`px-3 py-2 rounded-warm text-sm font-medium transition-all ${
                   duration === d.value
-                    ? 'bg-primary-600 text-white'
-                    : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                    ? 'bg-primary-700 text-white shadow-warm'
+                    : 'bg-primary-100 text-primary-700 hover:bg-primary-200'
                 }`}
               >
                 {d.label}
@@ -71,7 +71,7 @@ export function BanModal({ user, onClose, onBanned }: BanModalProps) {
         </div>
 
         <div className="mb-4">
-          <label className="block text-sm font-medium text-gray-700 mb-2">
+          <label className="block text-sm font-medium text-primary-800 mb-2">
             Raison (optionnel)
           </label>
           <input

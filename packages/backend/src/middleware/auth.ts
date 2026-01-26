@@ -3,6 +3,7 @@ import { verifyToken, JWTPayload } from '../lib/jwt.js'
 import { AppError } from './errorHandler.js'
 
 declare global {
+  // eslint-disable-next-line @typescript-eslint/no-namespace
   namespace Express {
     interface Request {
       user?: JWTPayload

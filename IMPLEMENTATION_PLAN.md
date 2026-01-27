@@ -90,30 +90,29 @@ Car + Passenger (existants, inchangés)
 
 ---
 
-## Stage 3: Recurrence Pattern Model
+## Stage 3: Create One-Off Session UI
 
-**Goal**: Permettre de définir des séances récurrentes (template).
+**Goal**: Permettre de créer une séance ponctuelle avec date et horaires.
 
 **Success Criteria**:
-- Un utilisateur peut créer un pattern "tous les lundi-vendredi 11h30-14h"
-- Le pattern génère automatiquement des instances de sessions
-- Les instances sont créées pour les 90 prochains jours
+- Un utilisateur peut créer une séance pour une date future
+- Il peut définir les horaires de début et fin
+- La séance créée apparaît dans la liste
+- Validation : date future, endTime > startTime
 
 **Tests**:
-- [ ] API `POST /recurrence-patterns` crée un pattern
-- [ ] Pattern génère les bonnes dates (respect des jours de la semaine)
-- [ ] Instances générées ont le bon groupId, startTime, endTime
-- [ ] Pattern avec endDate ne génère pas au-delà
+- [ ] API `POST /sessions` crée une séance avec horaires
+- [ ] Validation des horaires (endTime > startTime)
+- [ ] UI permet de sélectionner date et horaires
+- [ ] Nouvelle séance visible après création
 
 **Tasks**:
-1. [ ] Créer modèle Prisma `RecurrencePattern`
-2. [ ] Créer modèle Prisma `RecurrenceException` (pour les annulations)
-3. [ ] Ajouter `recurrencePatternId` et `isException` sur Session
-4. [ ] Créer service `RecurrenceService` avec logique de génération
-5. [ ] Créer endpoint `POST /groups/:id/recurrence-patterns`
-6. [ ] Créer endpoint `GET /groups/:id/recurrence-patterns`
-7. [ ] Créer endpoint `DELETE /recurrence-patterns/:id`
-8. [ ] Tests unitaires pour la génération d'occurrences
+1. [ ] Créer composant `CreateSessionModal` avec formulaire
+2. [ ] Ajouter date picker et time pickers
+3. [ ] Intégrer avec l'API existante `POST /sessions`
+4. [ ] Ajouter bouton "Nouvelle séance" dans GroupPage
+5. [ ] Validation côté client
+6. [ ] Afficher feedback de succès/erreur
 
 **Status**: Not Started
 

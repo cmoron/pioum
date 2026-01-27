@@ -10,6 +10,7 @@ import { Avatar } from '../components/Avatar'
 import { CarCard } from '../components/CarCard'
 import { UserCarSelector } from '../components/UserCarSelector'
 import { GroupSettingsModal } from '../components/GroupSettingsModal'
+import { CreateSessionModal } from '../components/CreateSessionModal'
 import { format, parseISO } from 'date-fns'
 import { fr } from 'date-fns/locale'
 
@@ -29,6 +30,7 @@ export function GroupPage() {
   const [showInvite, setShowInvite] = useState(false)
   const [showCarSelector, setShowCarSelector] = useState(false)
   const [showSettings, setShowSettings] = useState(false)
+  const [showCreateSession, setShowCreateSession] = useState(false)
   const [bansReceived, setBansReceived] = useState<string[]>([])
   const [isLocked, setIsLocked] = useState(false)
   const [canModify, setCanModify] = useState(true)
@@ -166,6 +168,15 @@ export function GroupPage() {
               </svg>
             </button>
           )}
+          <button
+            onClick={() => setShowCreateSession(true)}
+            className="p-2 rounded-warm hover:bg-primary-100 transition-colors text-primary-700"
+            title="Nouvelle séance"
+          >
+            <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+            </svg>
+          </button>
           <button
             onClick={() => setShowInvite(true)}
             className="p-2 rounded-warm hover:bg-primary-100 transition-colors text-primary-700"
@@ -322,6 +333,15 @@ export function GroupPage() {
           onSave={handleUpdateGroup}
           onDelete={handleDeleteGroup}
           onClose={() => setShowSettings(false)}
+        />
+      )}
+
+      {/* Create Session Modal */}
+      {showCreateSession && groupId && (
+        <CreateSessionModal
+          groupId={groupId}
+          onClose={() => setShowCreateSession(false)}
+          onCreated={refresh}
         />
       )}
     </div>

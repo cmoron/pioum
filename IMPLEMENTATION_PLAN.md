@@ -86,7 +86,7 @@ Car + Passenger (existants, inchangés)
 5. [ ] Mettre à jour le frontend avec indicateur de verrouillage
 6. [ ] Permettre bypass admin (vérifier rôle dans middleware)
 
-**Status**: Not Started
+**Status**: Complete
 
 ---
 

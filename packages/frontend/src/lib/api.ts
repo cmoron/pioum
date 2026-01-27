@@ -376,6 +376,8 @@ export interface Session {
   id: string
   groupId: string
   date: string
+  startTime: string
+  endTime: string
   cars: Car[]
   passengers: Passenger[]
 }

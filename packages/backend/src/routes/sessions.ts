@@ -9,13 +9,26 @@ export const sessionsRouter = Router()
 
 const createSessionSchema = z.object({
   groupId: z.string(),
-  date: z.string().optional() // ISO date string, defaults to today
+  date: z.string().optional(), // ISO date string, defaults to today
+  startTime: z.string().optional(), // ISO datetime string
+  endTime: z.string().optional() // ISO datetime string
 })
 
 // Helper to get today's date at midnight UTC
 function getTodayDate(): Date {
   const now = new Date()
   return new Date(Date.UTC(now.getFullYear(), now.getMonth(), now.getDate()))
+}
+
+// Helper to get default start/end times for a date (full day: 00:00 - 23:59)
+function getDefaultTimes(date: Date): { startTime: Date; endTime: Date } {
+  const startTime = new Date(date)
+  startTime.setUTCHours(0, 0, 0, 0)
+
+  const endTime = new Date(date)
+  endTime.setUTCHours(23, 59, 59, 999)
+
+  return { startTime, endTime }
 }
 
 // Get or create today's session for a group
@@ -72,10 +85,13 @@ sessionsRouter.get('/today/:groupId', authenticate, async (req, res, next) => {
     })
 
     if (!session) {
+      const { startTime, endTime } = getDefaultTimes(today)
       session = await prisma.session.create({
         data: {
           groupId,
-          date: today
+          date: today,
+          startTime,
+          endTime
         },
         include: {
           cars: {
@@ -253,7 +269,7 @@ sessionsRouter.delete('/:id/leave', authenticate, async (req, res, next) => {
 // Create a session for a specific date
 sessionsRouter.post('/', authenticate, async (req, res, next) => {
   try {
-    const { groupId, date } = createSessionSchema.parse(req.body)
+    const { groupId, date, startTime, endTime } = createSessionSchema.parse(req.body)
 
     // Verify membership
     const membership = await prisma.groupMember.findUnique({
@@ -270,6 +286,9 @@ sessionsRouter.post('/', authenticate, async (req, res, next) => {
     }
 
     const sessionDate = date ? new Date(date) : getTodayDate()
+    const defaultTimes = getDefaultTimes(sessionDate)
+    const sessionStartTime = startTime ? new Date(startTime) : defaultTimes.startTime
+    const sessionEndTime = endTime ? new Date(endTime) : defaultTimes.endTime
 
     const session = await prisma.session.upsert({
       where: {
@@ -280,7 +299,9 @@ sessionsRouter.post('/', authenticate, async (req, res, next) => {
       },
       create: {
         groupId,
-        date: sessionDate
+        date: sessionDate,
+        startTime: sessionStartTime,
+        endTime: sessionEndTime
       },
       update: {},
       include: {

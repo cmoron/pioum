@@ -89,6 +89,8 @@ model Session {
   id        String   @id @default(cuid())
   groupId   String
   date      DateTime @db.Date
+  startTime DateTime
+  endTime   DateTime
   createdAt DateTime @default(now())
 
   group      Group       @relation(fields: [groupId], references: [id], onDelete: Cascade)
@@ -96,7 +98,9 @@ model Session {
   passengers Passenger[]
 
   @@unique([groupId, date])
+  @@unique([groupId, startTime])
   @@index([groupId, date])
+  @@index([groupId, startTime])
 }
 
 model Car {

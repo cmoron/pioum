@@ -58,7 +58,7 @@ Car + Passenger (existants, inchangés)
 4. [ ] Adapter l'API sessions pour inclure les horaires
 5. [ ] Adapter le frontend pour afficher startTime/endTime
 
-**Status**: Not Started
+**Status**: Complete
 
 ---
 

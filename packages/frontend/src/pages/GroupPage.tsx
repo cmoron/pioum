@@ -13,18 +13,10 @@ import { GroupSettingsModal } from '../components/GroupSettingsModal'
 import { format, parseISO } from 'date-fns'
 import { fr } from 'date-fns/locale'
 
-// Helper to format session time range (only if not a full day)
-function formatSessionTime(startTime: string, endTime: string): string | null {
+// Helper to format session time range
+function formatSessionTime(startTime: string, endTime: string): string {
   const start = parseISO(startTime)
   const end = parseISO(endTime)
-
-  // Check if it's a full day (00:00 - 23:59)
-  const isFullDay =
-    start.getHours() === 0 && start.getMinutes() === 0 &&
-    end.getHours() === 23 && end.getMinutes() === 59
-
-  if (isFullDay) return null
-
   return `${format(start, 'HH:mm')} - ${format(end, 'HH:mm')}`
 }
 
@@ -144,7 +136,7 @@ export function GroupPage() {
             <h1 className="text-2xl font-bold text-primary-800">{currentGroup.name}</h1>
             <p className="text-primary-600">
               {format(new Date(), 'EEEE d MMMM', { locale: fr })}
-              {session && formatSessionTime(session.startTime, session.endTime) && (
+              {session && (
                 <span className="ml-2 font-medium">
                   • {formatSessionTime(session.startTime, session.endTime)}
                 </span>

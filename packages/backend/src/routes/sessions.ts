@@ -20,13 +20,13 @@ function getTodayDate(): Date {
   return new Date(Date.UTC(now.getFullYear(), now.getMonth(), now.getDate()))
 }
 
-// Helper to get default start/end times for a date (full day: 00:00 - 23:59)
+// Helper to get default start/end times for a date (12:00 - 14:00 local time)
 function getDefaultTimes(date: Date): { startTime: Date; endTime: Date } {
   const startTime = new Date(date)
-  startTime.setUTCHours(0, 0, 0, 0)
+  startTime.setHours(12, 0, 0, 0)
 
   const endTime = new Date(date)
-  endTime.setUTCHours(23, 59, 59, 999)
+  endTime.setHours(14, 0, 0, 0)
 
   return { startTime, endTime }
 }

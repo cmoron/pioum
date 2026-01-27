@@ -114,32 +114,34 @@ Car + Passenger (existants, inchangés)
 5. [ ] Validation côté client
 6. [ ] Afficher feedback de succès/erreur
 
-**Status**: Not Started
+**Status**: Complete
 
 ---
 
-## Stage 4: Session Instance Generation Job
+## Stage 4: Recurrence Pattern Model
 
-**Goal**: Générer automatiquement les instances de sessions futures.
+**Goal**: Permettre de définir des séances récurrentes (template).
 
 **Success Criteria**:
-- Un job tourne quotidiennement pour maintenir 90 jours d'instances
-- Les nouvelles instances respectent les patterns actifs
-- Les exceptions (annulations) sont respectées
+- Un utilisateur peut créer un pattern "tous les lundi-vendredi 11h30-14h"
+- Le pattern génère automatiquement des instances de sessions
+- Les instances sont créées pour les 90 prochains jours
 
 **Tests**:
-- [ ] Job génère les instances manquantes
-- [ ] Job ne crée pas de doublons
-- [ ] Instances ignorées si date dans RecurrenceException
-- [ ] Job peut être déclenché manuellement (pour tests)
+- [ ] API `POST /groups/:id/recurrence-patterns` crée un pattern
+- [ ] Pattern génère les bonnes dates (respect des jours de la semaine)
+- [ ] Instances générées ont le bon groupId, startTime, endTime
+- [ ] API `GET /groups/:id/recurrence-patterns` liste les patterns
 
 **Tasks**:
-1. [ ] Créer `SessionGeneratorJob` (node-cron ou similar)
-2. [ ] Logique de calcul des dates selon RRULE simplifié
-3. [ ] Vérification des exceptions avant création
-4. [ ] Endpoint admin `POST /admin/generate-sessions` (debug)
-5. [ ] Logging et monitoring du job
-6. [ ] Configuration de la fenêtre de génération (env var)
+1. [ ] Créer modèle Prisma `RecurrencePattern`
+2. [ ] Ajouter `recurrencePatternId` sur Session
+3. [ ] Créer service `RecurrenceService` avec logique de génération
+4. [ ] Créer endpoint `POST /groups/:id/recurrence-patterns`
+5. [ ] Créer endpoint `GET /groups/:id/recurrence-patterns`
+6. [ ] Créer endpoint `DELETE /recurrence-patterns/:id`
+7. [ ] UI formulaire de création de récurrence
+8. [ ] Tests unitaires pour la génération d'occurrences
 
 **Status**: Not Started
 

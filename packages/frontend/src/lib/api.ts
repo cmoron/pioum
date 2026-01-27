@@ -165,6 +165,13 @@ export const api = {
     return handleResponse<{ session: Session }>(res)
   },
 
+  async getSessionLockStatus(sessionId: string) {
+    const res = await fetch(`${API_BASE}/sessions/${sessionId}/lock-status`, {
+      credentials: 'include'
+    })
+    return handleResponse<{ isLocked: boolean; canModify: boolean; locksAt: string }>(res)
+  },
+
   async joinSession(sessionId: string) {
     const res = await fetch(`${API_BASE}/sessions/${sessionId}/join`, {
       method: 'POST',

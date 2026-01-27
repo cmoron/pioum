@@ -38,6 +38,8 @@ export function GroupPage() {
   const [showCarSelector, setShowCarSelector] = useState(false)
   const [showSettings, setShowSettings] = useState(false)
   const [bansReceived, setBansReceived] = useState<string[]>([])
+  const [isLocked, setIsLocked] = useState(false)
+  const [canModify, setCanModify] = useState(true)
 
   // Fetch bans to know which cars user is banned from
   useEffect(() => {
@@ -45,6 +47,16 @@ export function GroupPage() {
       setBansReceived(bansReceived.map((b) => b.giverId))
     })
   }, [])
+
+  // Fetch lock status when session changes
+  useEffect(() => {
+    if (session?.id) {
+      api.getSessionLockStatus(session.id).then(({ isLocked, canModify }) => {
+        setIsLocked(isLocked)
+        setCanModify(canModify)
+      })
+    }
+  }, [session?.id])
 
   useEffect(() => {
     if (groupId) {
@@ -138,6 +150,15 @@ export function GroupPage() {
                 </span>
               )}
             </p>
+            {isLocked && (
+              <p className="text-sm text-amber-600 flex items-center gap-1 mt-1">
+                <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
+                </svg>
+                Inscriptions fermées
+                {canModify && <span className="text-xs">(admin)</span>}
+              </p>
+            )}
           </div>
         </div>
         <div className="flex gap-2">
@@ -176,13 +197,24 @@ export function GroupPage() {
               {session?.passengers.length || 0} participant{(session?.passengers.length || 0) > 1 ? 's' : ''}
             </p>
           </div>
-          <button
-            onClick={isParticipating ? handleLeaveSession : handleJoinSession}
-            disabled={sessionLoading}
-            className={isParticipating ? 'btn-secondary' : 'btn-primary'}
-          >
-            {isParticipating ? 'Je ne viens plus' : 'Je viens !'}
-          </button>
+          {isParticipating ? (
+            <button
+              onClick={handleLeaveSession}
+              disabled={sessionLoading}
+              className="btn-secondary"
+            >
+              Je ne viens plus
+            </button>
+          ) : (
+            <button
+              onClick={handleJoinSession}
+              disabled={sessionLoading || (isLocked && !canModify)}
+              className="btn-primary disabled:opacity-50 disabled:cursor-not-allowed"
+              title={isLocked && !canModify ? 'Inscriptions fermées' : undefined}
+            >
+              Je viens !
+            </button>
+          )}
         </div>
       </div>
 
@@ -208,7 +240,9 @@ export function GroupPage() {
       {isParticipating && !myCar && (
         <button
           onClick={() => setShowCarSelector(true)}
-          className="w-full btn-secondary mb-4 flex items-center justify-center gap-2"
+          disabled={isLocked && !canModify}
+          className="w-full btn-secondary mb-4 flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
+          title={isLocked && !canModify ? 'Inscriptions fermées' : undefined}
         >
           <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />

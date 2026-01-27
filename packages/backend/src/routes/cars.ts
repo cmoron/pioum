@@ -17,6 +17,11 @@ const updateCarSchema = z.object({
   seats: z.number().int().min(1).max(10)
 })
 
+// Helper to check if a session is locked (startTime has passed)
+function isSessionLocked(session: { startTime: Date }): boolean {
+  return new Date() >= session.startTime
+}
+
 // Add a car to a session
 carsRouter.post('/', authenticate, async (req, res, next) => {
   try {
@@ -42,6 +47,11 @@ carsRouter.post('/', authenticate, async (req, res, next) => {
 
     if (!membership) {
       throw new AppError(403, 'Not a member of this group')
+    }
+
+    // Check if session is locked (admin can bypass)
+    if (isSessionLocked(session) && membership.role !== 'admin') {
+      throw new AppError(403, 'Les inscriptions sont fermées pour cette séance')
     }
 
     // Check if already has a car in this session
@@ -240,6 +250,11 @@ carsRouter.post('/:id/join', authenticate, async (req, res, next) => {
 
     if (!membership) {
       throw new AppError(403, 'Not a member of this group')
+    }
+
+    // Check if session is locked (admin can bypass)
+    if (isSessionLocked(car.session) && membership.role !== 'admin') {
+      throw new AppError(403, 'Les inscriptions sont fermées pour cette séance')
     }
 
     // Check for active ban from this driver

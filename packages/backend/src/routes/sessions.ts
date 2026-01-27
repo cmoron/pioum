@@ -31,6 +31,11 @@ function getDefaultTimes(date: Date): { startTime: Date; endTime: Date } {
   return { startTime, endTime }
 }
 
+// Helper to check if a session is locked (startTime has passed)
+function isSessionLocked(session: { startTime: Date }): boolean {
+  return new Date() >= session.startTime
+}
+
 // Get or create today's session for a group
 sessionsRouter.get('/today/:groupId', authenticate, async (req, res, next) => {
   try {
@@ -180,6 +185,45 @@ sessionsRouter.get('/:id', authenticate, async (req, res, next) => {
   }
 })
 
+// Get session lock status
+sessionsRouter.get('/:id/lock-status', authenticate, async (req, res, next) => {
+  try {
+    const session = await prisma.session.findUnique({
+      where: { id: req.params.id as string },
+      select: { id: true, groupId: true, startTime: true }
+    })
+
+    if (!session) {
+      throw new AppError(404, 'Session not found')
+    }
+
+    // Verify membership
+    const membership = await prisma.groupMember.findUnique({
+      where: {
+        userId_groupId: {
+          userId: req.user!.userId,
+          groupId: session.groupId
+        }
+      }
+    })
+
+    if (!membership) {
+      throw new AppError(403, 'Not a member of this group')
+    }
+
+    const isLocked = isSessionLocked(session)
+    const isAdmin = membership.role === 'admin'
+
+    res.json({
+      isLocked,
+      canModify: !isLocked || isAdmin,
+      locksAt: session.startTime
+    })
+  } catch (error) {
+    next(error)
+  }
+})
+
 // Join session (participate)
 sessionsRouter.post('/:id/join', authenticate, async (req, res, next) => {
   try {
@@ -203,6 +247,11 @@ sessionsRouter.post('/:id/join', authenticate, async (req, res, next) => {
 
     if (!membership) {
       throw new AppError(403, 'Not a member of this group')
+    }
+
+    // Check if session is locked (admin can bypass)
+    if (isSessionLocked(session) && membership.role !== 'admin') {
+      throw new AppError(403, 'Les inscriptions sont fermées pour cette séance')
     }
 
     // Check if already participating

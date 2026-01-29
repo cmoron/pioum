@@ -12,6 +12,7 @@ import { carsRouter } from './routes/cars.js'
 import { bansRouter } from './routes/bans.js'
 import { avatarsRouter } from './routes/avatars.js'
 import { userCarsRouter } from './routes/userCars.js'
+import { recurrencePatternsRouter } from './routes/recurrencePatterns.js'
 
 const app = express()
 const PORT = process.env.PORT || 3000
@@ -58,6 +59,7 @@ app.use('/api/cars', carsRouter)
 app.use('/api/bans', bansRouter)
 app.use('/api/avatars', avatarsRouter)
 app.use('/api/user-cars', userCarsRouter)
+app.use('/api', recurrencePatternsRouter)
 
 // Error handler
 app.use(errorHandler)

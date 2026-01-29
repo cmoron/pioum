@@ -128,22 +128,22 @@ Car + Passenger (existants, inchangés)
 - Les instances sont créées pour les 90 prochains jours
 
 **Tests**:
-- [ ] API `POST /groups/:id/recurrence-patterns` crée un pattern
-- [ ] Pattern génère les bonnes dates (respect des jours de la semaine)
-- [ ] Instances générées ont le bon groupId, startTime, endTime
-- [ ] API `GET /groups/:id/recurrence-patterns` liste les patterns
+- [x] API `POST /groups/:id/recurrence-patterns` crée un pattern
+- [x] Pattern génère les bonnes dates (respect des jours de la semaine)
+- [x] Instances générées ont le bon groupId, startTime, endTime
+- [x] API `GET /groups/:id/recurrence-patterns` liste les patterns
 
 **Tasks**:
-1. [ ] Créer modèle Prisma `RecurrencePattern`
-2. [ ] Ajouter `recurrencePatternId` sur Session
-3. [ ] Créer service `RecurrenceService` avec logique de génération
-4. [ ] Créer endpoint `POST /groups/:id/recurrence-patterns`
-5. [ ] Créer endpoint `GET /groups/:id/recurrence-patterns`
-6. [ ] Créer endpoint `DELETE /recurrence-patterns/:id`
-7. [ ] UI formulaire de création de récurrence
+1. [x] Créer modèle Prisma `RecurrencePattern`
+2. [x] Ajouter `recurrencePatternId` sur Session
+3. [x] Créer service `RecurrenceService` avec logique de génération
+4. [x] Créer endpoint `POST /groups/:id/recurrence-patterns`
+5. [x] Créer endpoint `GET /groups/:id/recurrence-patterns`
+6. [x] Créer endpoint `DELETE /recurrence-patterns/:id`
+7. [x] UI formulaire de création de récurrence
 8. [ ] Tests unitaires pour la génération d'occurrences
 
-**Status**: Not Started
+**Status**: Complete
 
 ---
 
@@ -177,28 +177,38 @@ Car + Passenger (existants, inchangés)
 
 ## Stage 6: Cancel Sessions
 
-**Goal**: Permettre d'annuler une séance (individuelle ou récurrente).
+**Goal**: Permettre à l'admin du groupe ou au créateur d'une session de la supprimer.
 
 **Success Criteria**:
-- Annuler une instance la marque comme `cancelled`
-- Annuler "toutes les futures" ajoute endDate au pattern
-- Les participants sont notifiés (préparation pour notifications)
-- Les sessions annulées restent visibles (grises) dans l'historique
+- Créateur peut supprimer uniquement si aucun participant
+- Admin du groupe peut supprimer même avec participants (confirmation)
+- Suppression directe (hard delete), la session disparaît de la liste
+- Erreur claire si tentative de créer une séance sur un créneau existant
 
 **Tests**:
-- [ ] DELETE session met status=cancelled (pas de suppression physique)
-- [ ] Participants toujours visibles sur session annulée
-- [ ] Pattern avec endDate ne génère plus après cette date
-- [ ] UI affiche sessions annulées différemment
+- [x] DELETE session supprime physiquement (cascade cars/passengers)
+- [x] Créateur sans participants → suppression OK
+- [x] Créateur avec participants → suppression refusée (403)
+- [x] Admin avec participants → confirmation puis suppression OK
+- [x] Erreur 409 si créneau déjà pris
 
 **Tasks**:
-1. [ ] Ajouter `status` enum sur Session (planned/completed/cancelled)
-2. [ ] Endpoint `DELETE /sessions/:id` (soft delete)
-3. [ ] Logique de terminaison de pattern (scope=future)
-4. [ ] Frontend : affichage différencié des sessions annulées
-5. [ ] Préparer hook pour notifications futures
+1. [x] Ajouter `createdById` sur Session (nullable) + relation User
+2. [x] Migration Prisma
+3. [x] POST /sessions définit `createdById`
+4. [x] Recurrence service passe `createdById` du pattern
+5. [x] Endpoint `DELETE /sessions/:id` avec vérification permissions
+6. [x] Catch erreur P2002 → 409 "Une séance existe déjà sur ce créneau"
+7. [x] Frontend : `cancelSession()` dans api.ts
+8. [x] Frontend : bouton "Annuler la séance" dans SessionCard
+9. [x] Supprimer `@@unique([groupId, date])` pour multiple sessions/jour
+10. [x] Changer POST /sessions de `upsert` vers `create`
 
-**Status**: Not Started
+**Bugfixes** :
+- [x] Polling 10s restauré dans UpcomingSessionsList
+- [x] onRefresh appelé après join/leave/kick dans CarCard
+
+**Status**: Complete
 
 ---
 
@@ -213,20 +223,20 @@ Car + Passenger (existants, inchangés)
 - Scroll infini pour charger plus de séances
 
 **Tests**:
-- [ ] API `GET /groups/:id/sessions/upcoming` paginé
-- [ ] Sessions triées par startTime croissant
-- [ ] Sessions passées non incluses (sauf si en cours)
-- [ ] UI permet join/leave sans navigation
+- [x] API `GET /groups/:id/sessions/upcoming` paginé
+- [x] Sessions triées par startTime croissant
+- [x] Sessions passées non incluses (sauf si en cours)
+- [x] UI permet join/leave sans navigation
 
 **Tasks**:
-1. [ ] Endpoint `GET /groups/:id/sessions/upcoming?limit=10&cursor=`
-2. [ ] Frontend : composant `UpcomingSessionsList`
-3. [ ] Frontend : composant `SessionCard` (compact)
-4. [ ] Actions rapides : "Je viens" / "Je viens pas"
-5. [ ] Scroll infini avec chargement progressif
-6. [ ] Indicateur de session verrouillée sur la carte
+1. [x] Endpoint `GET /groups/:id/sessions/upcoming?limit=10&cursor=`
+2. [x] Frontend : composant `UpcomingSessionsList`
+3. [x] Frontend : composant `SessionCard` (compact)
+4. [x] Actions rapides : "Je viens" / "Je viens pas"
+5. [x] Scroll infini avec chargement progressif
+6. [x] Indicateur de session verrouillée sur la carte
 
-**Status**: Not Started
+**Status**: Complete
 
 ---
 
@@ -406,17 +416,15 @@ model Session {
   // ... champs existants ...
   startTime           DateTime
   endTime             DateTime
-  status              SessionStatus @default(PLANNED)
+  createdById         String?
   recurrencePatternId String?
   isException         Boolean       @default(false)
 
+  createdBy           User?              @relation("sessionsCreated", fields: [createdById], references: [id], onDelete: SetNull)
   recurrencePattern   RecurrencePattern? @relation(fields: [recurrencePatternId], references: [id], onDelete: SetNull)
-}
 
-enum SessionStatus {
-  PLANNED
-  COMPLETED
-  CANCELLED
+  @@unique([groupId, startTime])
+  @@index([groupId, date])
 }
 
 model Group {
@@ -436,7 +444,7 @@ model Group {
 | `/groups/:id/recurrence-patterns` | POST | Créer un pattern |
 | `/recurrence-patterns/:id` | DELETE | Supprimer un pattern |
 | `/sessions/:id` | PATCH | Modifier (scope=single|future) |
-| `/sessions/:id` | DELETE | Annuler (soft delete) |
+| `/sessions/:id` | DELETE | Supprimer (hard delete, permissions admin/creator) |
 | `/sessions/:id/lock-status` | GET | État de verrouillage |
 
 ### Indexes Required

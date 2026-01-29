@@ -34,13 +34,13 @@ Un système complet de planification avec :
 | 5 | Edit Recurring Sessions | ❌ Not Started |
 | 6 | Cancel Sessions | ✅ Complete |
 | 7 | Upcoming Sessions List View | ✅ Complete |
-| 8 | Calendar Week View | ❌ Not Started |
+| 8 | Calendar Week View | ✅ Complete |
 | 9 | Session Detail Page | ❌ Not Started |
 | 10 | Create/Edit Session Forms | ❌ Not Started |
 | 11 | Historical Sessions View | ❌ Not Started |
 | 12 | Polish & Edge Cases | ❌ Not Started |
 
-**Progression : 6/12 stages terminés (50%)**
+**Progression : 7/12 stages terminés (58%)**
 
 ---
 
@@ -93,6 +93,20 @@ Un système complet de planification avec :
   - Toggle "Afficher/masquer la semaine prochaine"
   - Polling toutes les 10 secondes pour les mises à jour
 
+### Stage 8: Calendar Week View
+- Composant `WeekCalendar` avec :
+  - Affichage des 7 jours de la semaine (lun-dim)
+  - Navigation semaine précédente/suivante
+  - Bouton "Revenir à aujourd'hui"
+  - Indicateurs de sessions sur chaque jour (points)
+  - Sélection d'un jour pour voir les sessions
+  - Jour actuel mis en évidence
+  - Jours passés grisés
+- Toggle liste/calendrier dans GroupPage
+  - Préférence sauvegardée dans localStorage
+  - Icônes distinctes pour chaque mode
+- Sessions affichées en mode compact sous le calendrier
+
 ---
 
 ## Fichiers clés créés/modifiés
@@ -110,6 +124,7 @@ packages/backend/src/services/recurrence.ts    # Génération d'occurrences
 packages/frontend/src/lib/api.ts               # Méthodes API
 packages/frontend/src/components/SessionCard.tsx
 packages/frontend/src/components/UpcomingSessionsList.tsx
+packages/frontend/src/components/WeekCalendar.tsx
 packages/frontend/src/components/CreateSessionModal.tsx
 packages/frontend/src/components/CreateRecurrenceModal.tsx
 packages/frontend/src/pages/GroupPage.tsx
@@ -121,9 +136,9 @@ packages/frontend/src/pages/GroupPage.tsx
 
 1. **Stage 5 - Edit Recurring Sessions** : Modifier une séance ou toutes les futures
 
-2. **Stage 11 - Historical Sessions View** : Voir l'historique des séances passées
+2. **Stage 9 - Session Detail Page** : Page dédiée avec détail complet d'une séance
 
-3. **Stage 8 - Calendar Week View** : Vue calendrier en complément de la liste
+3. **Stage 11 - Historical Sessions View** : Voir l'historique des séances passées
 
 ---
 
@@ -136,4 +151,4 @@ packages/frontend/src/pages/GroupPage.tsx
 
 ---
 
-*Dernière mise à jour : 29 janvier 2026*
+*Dernière mise à jour : 29 janvier 2026 - Stage 8 ajouté*

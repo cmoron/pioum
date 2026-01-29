@@ -8,6 +8,9 @@ import { GroupSettingsModal } from '../components/GroupSettingsModal'
 import { CreateSessionModal } from '../components/CreateSessionModal'
 import { CreateRecurrenceModal } from '../components/CreateRecurrenceModal'
 import { UpcomingSessionsList } from '../components/UpcomingSessionsList'
+import { WeekCalendar } from '../components/WeekCalendar'
+
+type ViewMode = 'list' | 'calendar'
 
 export function GroupPage() {
   const { groupId } = useParams<{ groupId: string }>()
@@ -18,6 +21,10 @@ export function GroupPage() {
   const [showCreateSession, setShowCreateSession] = useState(false)
   const [showCreateRecurrence, setShowCreateRecurrence] = useState(false)
   const [showSessionMenu, setShowSessionMenu] = useState(false)
+  const [viewMode, setViewMode] = useState<ViewMode>(() => {
+    const saved = localStorage.getItem('pioum-view-mode')
+    return (saved === 'calendar' || saved === 'list') ? saved : 'list'
+  })
 
   // Ref to trigger refresh of upcoming sessions
   const refreshKeyRef = useRef(0)
@@ -157,9 +164,55 @@ export function GroupPage() {
 
       {/* Upcoming Sessions */}
       <div className="mb-6">
-        <h2 className="text-lg font-medium mb-3 text-primary-800">Prochaines séances</h2>
-        {groupId && (
+        <div className="flex items-center justify-between mb-3">
+          <h2 className="text-lg font-medium text-primary-800">Prochaines séances</h2>
+          {/* View Mode Toggle */}
+          <div className="flex bg-primary-100 rounded-warm p-0.5">
+            <button
+              onClick={() => {
+                setViewMode('list')
+                localStorage.setItem('pioum-view-mode', 'list')
+              }}
+              className={`px-3 py-1 text-sm rounded-warm transition-colors ${
+                viewMode === 'list'
+                  ? 'bg-white text-primary-800 shadow-warm'
+                  : 'text-primary-600 hover:text-primary-800'
+              }`}
+              aria-label="Vue liste"
+              title="Vue liste"
+            >
+              <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
+              </svg>
+            </button>
+            <button
+              onClick={() => {
+                setViewMode('calendar')
+                localStorage.setItem('pioum-view-mode', 'calendar')
+              }}
+              className={`px-3 py-1 text-sm rounded-warm transition-colors ${
+                viewMode === 'calendar'
+                  ? 'bg-white text-primary-800 shadow-warm'
+                  : 'text-primary-600 hover:text-primary-800'
+              }`}
+              aria-label="Vue calendrier"
+              title="Vue calendrier"
+            >
+              <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+              </svg>
+            </button>
+          </div>
+        </div>
+        {groupId && viewMode === 'list' && (
           <UpcomingSessionsList
+            groupId={groupId}
+            refreshTrigger={refreshKey}
+            isAdmin={isAdmin}
+          />
+        )}
+        {groupId && viewMode === 'calendar' && (
+          <WeekCalendar
             groupId={groupId}
             refreshTrigger={refreshKey}
             isAdmin={isAdmin}

@@ -251,20 +251,20 @@ Car + Passenger (existants, inchangés)
 - Tap sur un jour affiche les sessions de ce jour
 
 **Tests**:
-- [ ] Calendrier affiche les bons jours (lun-dim)
-- [ ] Sessions correctement positionnées sur les jours
-- [ ] Navigation semaine fonctionne
-- [ ] Tap jour ouvre détail
+- [x] Calendrier affiche les bons jours (lun-dim)
+- [x] Sessions correctement positionnées sur les jours
+- [x] Navigation semaine fonctionne
+- [x] Tap jour ouvre détail
 
 **Tasks**:
-1. [ ] Frontend : composant `WeekCalendar`
-2. [ ] Frontend : composant `DayCell` avec indicateurs de sessions
-3. [ ] Récupérer sessions de la semaine en une requête
-4. [ ] Toggle liste/calendrier dans l'UI
-5. [ ] Navigation semaine (prev/next)
-6. [ ] Responsive : adaptation mobile/desktop
+1. [x] Frontend : composant `WeekCalendar`
+2. [x] Frontend : composant `DayCell` avec indicateurs de sessions (intégré dans WeekCalendar)
+3. [x] Récupérer sessions de la semaine en une requête (utilise getUpcomingSessions)
+4. [x] Toggle liste/calendrier dans l'UI
+5. [x] Navigation semaine (prev/next)
+6. [x] Responsive : adaptation mobile/desktop (grid 7 colonnes adaptable)
 
-**Status**: Not Started
+**Status**: Complete
 
 ---
 

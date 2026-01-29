@@ -1,5 +1,6 @@
 import { Router } from 'express'
 import { z } from 'zod'
+import { Prisma } from '@prisma/client'
 import { prisma } from '../lib/prisma.js'
 import { USER_SELECT } from '../lib/prismaSelects.js'
 import { authenticate } from '../middleware/auth.js'
@@ -36,6 +37,84 @@ function isSessionLocked(session: { startTime: Date }): boolean {
   return new Date() >= session.startTime
 }
 
+// Get upcoming sessions for a group
+sessionsRouter.get('/upcoming/:groupId', authenticate, async (req, res, next) => {
+  try {
+    const groupId = req.params.groupId as string
+    const limit = Math.min(parseInt(req.query.limit as string) || 10, 50)
+    const cursor = req.query.cursor as string | undefined
+
+    // Verify membership
+    const membership = await prisma.groupMember.findUnique({
+      where: {
+        userId_groupId: {
+          userId: req.user!.userId,
+          groupId
+        }
+      }
+    })
+
+    if (!membership) {
+      throw new AppError(403, 'Not a member of this group')
+    }
+
+    const now = new Date()
+
+    const sessions = await prisma.session.findMany({
+      where: {
+        groupId,
+        // Sessions that haven't ended yet (endTime > now)
+        endTime: { gt: now },
+        // If cursor provided, get sessions after that one
+        ...(cursor && {
+          id: { not: cursor },
+          startTime: { gte: (await prisma.session.findUnique({ where: { id: cursor } }))?.startTime }
+        })
+      },
+      include: {
+        cars: {
+          include: {
+            driver: {
+              select: USER_SELECT
+            },
+            userCar: {
+              include: { avatar: true }
+            },
+            passengers: {
+              include: {
+                user: {
+                  select: USER_SELECT
+                }
+              }
+            }
+          }
+        },
+        passengers: {
+          include: {
+            user: {
+              select: USER_SELECT
+            }
+          }
+        }
+      },
+      orderBy: { startTime: 'asc' },
+      take: limit + 1 // Take one extra to know if there are more
+    })
+
+    const hasMore = sessions.length > limit
+    const resultSessions = hasMore ? sessions.slice(0, limit) : sessions
+    const nextCursor = hasMore ? resultSessions[resultSessions.length - 1]?.id : undefined
+
+    res.json({
+      sessions: resultSessions,
+      hasMore,
+      nextCursor
+    })
+  } catch (error) {
+    next(error)
+  }
+})
+
 // Get or create today's session for a group
 sessionsRouter.get('/today/:groupId', authenticate, async (req, res, next) => {
   try {
@@ -57,13 +136,12 @@ sessionsRouter.get('/today/:groupId', authenticate, async (req, res, next) => {
 
     const today = getTodayDate()
 
-    let session = await prisma.session.findUnique({
+    let session = await prisma.session.findFirst({
       where: {
-        groupId_date: {
-          groupId,
-          date: today
-        }
+        groupId,
+        date: today
       },
+      orderBy: { startTime: 'asc' },
       include: {
         cars: {
           include: {
@@ -339,20 +417,14 @@ sessionsRouter.post('/', authenticate, async (req, res, next) => {
     const sessionStartTime = startTime ? new Date(startTime) : defaultTimes.startTime
     const sessionEndTime = endTime ? new Date(endTime) : defaultTimes.endTime
 
-    const session = await prisma.session.upsert({
-      where: {
-        groupId_date: {
-          groupId,
-          date: sessionDate
-        }
-      },
-      create: {
+    const session = await prisma.session.create({
+      data: {
         groupId,
         date: sessionDate,
         startTime: sessionStartTime,
-        endTime: sessionEndTime
+        endTime: sessionEndTime,
+        createdById: req.user!.userId
       },
-      update: {},
       include: {
         cars: {
           include: {
@@ -369,6 +441,59 @@ sessionsRouter.post('/', authenticate, async (req, res, next) => {
     })
 
     res.json({ session })
+  } catch (error) {
+    if (error instanceof Prisma.PrismaClientKnownRequestError && error.code === 'P2002') {
+      return next(new AppError(409, 'Une séance existe déjà sur ce créneau'))
+    }
+    next(error)
+  }
+})
+
+// Delete a session
+sessionsRouter.delete('/:id', authenticate, async (req, res, next) => {
+  try {
+    const session = await prisma.session.findUnique({
+      where: { id: req.params.id as string },
+      include: {
+        _count: { select: { passengers: true } }
+      }
+    })
+
+    if (!session) {
+      throw new AppError(404, 'Session not found')
+    }
+
+    // Verify membership and get role
+    const membership = await prisma.groupMember.findUnique({
+      where: {
+        userId_groupId: {
+          userId: req.user!.userId,
+          groupId: session.groupId
+        }
+      }
+    })
+
+    if (!membership) {
+      throw new AppError(403, 'Not a member of this group')
+    }
+
+    const isAdmin = membership.role === 'admin'
+    const isCreator = session.createdById === req.user!.userId
+    const hasParticipants = session._count.passengers > 0
+
+    if (!isAdmin && !isCreator) {
+      throw new AppError(403, 'Seul le créateur ou un admin peut supprimer cette séance')
+    }
+
+    if (isCreator && !isAdmin && hasParticipants) {
+      throw new AppError(403, 'Impossible de supprimer une séance avec des participants')
+    }
+
+    await prisma.session.delete({
+      where: { id: session.id }
+    })
+
+    res.json({ message: 'Séance supprimée', hadParticipants: hasParticipants })
   } catch (error) {
     next(error)
   }

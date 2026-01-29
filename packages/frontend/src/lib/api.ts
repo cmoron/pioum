@@ -158,6 +158,15 @@ export const api = {
     return handleResponse<{ session: Session }>(res)
   },
 
+  async getUpcomingSessions(groupId: string, limit: number = 10, cursor?: string) {
+    const params = new URLSearchParams({ limit: limit.toString() })
+    if (cursor) params.append('cursor', cursor)
+    const res = await fetch(`${API_BASE}/sessions/upcoming/${groupId}?${params}`, {
+      credentials: 'include'
+    })
+    return handleResponse<{ sessions: Session[]; hasMore: boolean; nextCursor?: string }>(res)
+  },
+
   async getSession(id: string) {
     const res = await fetch(`${API_BASE}/sessions/${id}`, {
       credentials: 'include'
@@ -186,6 +195,14 @@ export const api = {
       credentials: 'include'
     })
     return handleResponse<{ message: string }>(res)
+  },
+
+  async cancelSession(sessionId: string) {
+    const res = await fetch(`${API_BASE}/sessions/${sessionId}`, {
+      method: 'DELETE',
+      credentials: 'include'
+    })
+    return handleResponse<{ message: string; hadParticipants: boolean }>(res)
   },
 
   // Cars
@@ -315,6 +332,38 @@ export const api = {
       credentials: 'include'
     })
     return handleResponse<{ message: string }>(res)
+  },
+
+  // Recurrence Patterns
+  async getRecurrencePatterns(groupId: string) {
+    const res = await fetch(`${API_BASE}/groups/${groupId}/recurrence-patterns`, {
+      credentials: 'include'
+    })
+    return handleResponse<{ patterns: RecurrencePattern[] }>(res)
+  },
+
+  async createRecurrencePattern(groupId: string, data: {
+    startTime: string
+    endTime: string
+    daysOfWeek: number[]
+    startDate: string
+    endDate?: string
+  }) {
+    const res = await fetch(`${API_BASE}/groups/${groupId}/recurrence-patterns`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(data),
+      credentials: 'include'
+    })
+    return handleResponse<{ pattern: RecurrencePattern; sessionsCreated: number }>(res)
+  },
+
+  async deleteRecurrencePattern(patternId: string, deleteFutureSessions: boolean = false) {
+    const res = await fetch(`${API_BASE}/recurrence-patterns/${patternId}?deleteFutureSessions=${deleteFutureSessions}`, {
+      method: 'DELETE',
+      credentials: 'include'
+    })
+    return handleResponse<{ message: string }>(res)
   }
 }
 
@@ -385,8 +434,29 @@ export interface Session {
   date: string
   startTime: string
   endTime: string
+  recurrencePatternId?: string
+  createdById?: string
   cars: Car[]
   passengers: Passenger[]
+}
+
+export interface RecurrencePattern {
+  id: string
+  groupId: string
+  createdById: string
+  startTime: string
+  endTime: string
+  daysOfWeek: number[]
+  startDate: string
+  endDate?: string
+  createdAt: string
+  createdBy: {
+    id: string
+    name: string
+  }
+  _count: {
+    sessions: number
+  }
 }
 
 export interface Ban {

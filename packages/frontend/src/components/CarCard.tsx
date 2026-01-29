@@ -30,6 +30,7 @@ export function CarCard({ car, isBanned, onRefresh }: CarCardProps) {
     setError(null)
     try {
       await joinCar(car.id)
+      onRefresh?.()
     } catch (err) {
       setError((err as Error).message)
     } finally {
@@ -42,6 +43,7 @@ export function CarCard({ car, isBanned, onRefresh }: CarCardProps) {
     setError(null)
     try {
       await leaveCar(car.id)
+      onRefresh?.()
     } catch (err) {
       setError((err as Error).message)
     } finally {
@@ -54,6 +56,7 @@ export function CarCard({ car, isBanned, onRefresh }: CarCardProps) {
     setLoading(true)
     try {
       await removeCar(car.id)
+      onRefresh?.()
     } catch (err) {
       setError((err as Error).message)
     } finally {
@@ -65,6 +68,7 @@ export function CarCard({ car, isBanned, onRefresh }: CarCardProps) {
     setLoading(true)
     try {
       await kickPassenger(car.id, passengerId)
+      onRefresh?.()
     } catch (err) {
       setError((err as Error).message)
     } finally {

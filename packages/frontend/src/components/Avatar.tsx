@@ -4,11 +4,12 @@ import clsx from 'clsx'
 
 interface AvatarProps {
   user: User
-  size?: 'sm' | 'md' | 'lg' | 'xl'
+  size?: 'xs' | 'sm' | 'md' | 'lg' | 'xl'
   className?: string
 }
 
 const sizeClasses = {
+  xs: 'w-6 h-6 text-xs',        // 24px (compact mode)
   sm: 'w-10 h-10 text-sm',      // 40px (était 32px)
   md: 'w-14 h-14 text-base',    // 56px (était 48px)
   lg: 'w-20 h-20 text-xl',      // 80px (était 64px)

@@ -1,75 +1,38 @@
-import { useEffect, useState, useCallback } from 'react'
+import { useEffect, useState, useCallback, useRef } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
 import { useGroupsStore } from '../stores/groups'
-import { useSessionStore } from '../stores/session'
-import { useAuthStore } from '../stores/auth'
-import { api } from '../lib/api'
 import { isImageUrl } from '../lib/utils'
 import { LoadingSpinner } from '../components/LoadingSpinner'
 import { Avatar } from '../components/Avatar'
-import { CarCard } from '../components/CarCard'
-import { UserCarSelector } from '../components/UserCarSelector'
 import { GroupSettingsModal } from '../components/GroupSettingsModal'
 import { CreateSessionModal } from '../components/CreateSessionModal'
-import { format, parseISO } from 'date-fns'
-import { fr } from 'date-fns/locale'
-
-// Helper to format session time range
-function formatSessionTime(startTime: string, endTime: string): string {
-  const start = parseISO(startTime)
-  const end = parseISO(endTime)
-  return `${format(start, 'HH:mm')} - ${format(end, 'HH:mm')}`
-}
+import { CreateRecurrenceModal } from '../components/CreateRecurrenceModal'
+import { UpcomingSessionsList } from '../components/UpcomingSessionsList'
 
 export function GroupPage() {
   const { groupId } = useParams<{ groupId: string }>()
   const { currentGroup, currentUserRole, fetchGroup, updateGroup, deleteGroup, loading: groupLoading, error: groupError } = useGroupsStore()
   const navigate = useNavigate()
-  const { session, fetchTodaySession, joinSession, leaveSession, addCar, loading: sessionLoading } = useSessionStore()
-  const { user } = useAuthStore()
   const [showInvite, setShowInvite] = useState(false)
-  const [showCarSelector, setShowCarSelector] = useState(false)
   const [showSettings, setShowSettings] = useState(false)
   const [showCreateSession, setShowCreateSession] = useState(false)
-  const [bansReceived, setBansReceived] = useState<string[]>([])
-  const [isLocked, setIsLocked] = useState(false)
-  const [canModify, setCanModify] = useState(true)
+  const [showCreateRecurrence, setShowCreateRecurrence] = useState(false)
+  const [showSessionMenu, setShowSessionMenu] = useState(false)
 
-  // Fetch bans to know which cars user is banned from
-  useEffect(() => {
-    api.getActiveBans().then(({ bansReceived }) => {
-      setBansReceived(bansReceived.map((b) => b.giverId))
-    })
-  }, [])
-
-  // Fetch lock status when session changes
-  useEffect(() => {
-    if (session?.id) {
-      api.getSessionLockStatus(session.id).then(({ isLocked, canModify }) => {
-        setIsLocked(isLocked)
-        setCanModify(canModify)
-      })
-    }
-  }, [session?.id])
+  // Ref to trigger refresh of upcoming sessions
+  const refreshKeyRef = useRef(0)
+  const [refreshKey, setRefreshKey] = useState(0)
 
   useEffect(() => {
     if (groupId) {
       fetchGroup(groupId)
-      fetchTodaySession(groupId)
     }
-  }, [groupId]) // eslint-disable-line react-hooks/exhaustive-deps
+  }, [groupId, fetchGroup])
 
-  // Polling for real-time updates
-  const refresh = useCallback(() => {
-    if (groupId) {
-      fetchTodaySession(groupId)
-    }
-  }, [groupId]) // eslint-disable-line react-hooks/exhaustive-deps
-
-  useEffect(() => {
-    const interval = setInterval(refresh, 10000) // Poll every 10 seconds
-    return () => clearInterval(interval)
-  }, [refresh])
+  const handleRefreshSessions = useCallback(() => {
+    refreshKeyRef.current += 1
+    setRefreshKey(refreshKeyRef.current)
+  }, [])
 
   if (groupLoading) {
     return (
@@ -86,25 +49,6 @@ export function GroupPage() {
         <a href="/" className="btn-primary">Retour à l'accueil</a>
       </div>
     )
-  }
-
-  const isParticipating = session?.passengers.some((p) => p.userId === user?.id)
-  const myCar = session?.cars.find((c) => c.driverId === user?.id)
-  const participantsWithoutCar = session?.passengers.filter(
-    (p) => !p.carId && !session.cars.some((c) => c.driverId === p.userId)
-  )
-
-  const handleJoinSession = async () => {
-    await joinSession()
-  }
-
-  const handleLeaveSession = async () => {
-    await leaveSession()
-  }
-
-  const handleCarSelected = async (userCarId: string | null, seats: number) => {
-    await addCar(seats, userCarId || undefined)
-    setShowCarSelector(false)
   }
 
   const handleUpdateGroup = async (data: { name?: string; avatarId?: string | null }) => {
@@ -126,7 +70,7 @@ export function GroupPage() {
       <div className="flex items-center justify-between mb-6">
         <div className="flex items-center gap-3">
           {currentGroup.avatar && (
-            <div className="w-20 h-20 flex items-center justify-center text-5xl bg-primary-100 rounded-full overflow-hidden border-2 border-primary-300">
+            <div className="w-16 h-16 flex items-center justify-center text-4xl bg-primary-100 rounded-full overflow-hidden border-2 border-primary-300">
               {isImageUrl(currentGroup.avatar.imageUrl) ? (
                 <img src={currentGroup.avatar.imageUrl} alt={currentGroup.avatar.name} className="w-full h-full object-cover" />
               ) : (
@@ -136,23 +80,9 @@ export function GroupPage() {
           )}
           <div>
             <h1 className="text-2xl font-bold text-primary-800">{currentGroup.name}</h1>
-            <p className="text-primary-600">
-              {format(new Date(), 'EEEE d MMMM', { locale: fr })}
-              {session && (
-                <span className="ml-2 font-medium">
-                  • {formatSessionTime(session.startTime, session.endTime)}
-                </span>
-              )}
+            <p className="text-sm text-primary-600">
+              {currentGroup.members.length} membre{currentGroup.members.length > 1 ? 's' : ''}
             </p>
-            {isLocked && (
-              <p className="text-sm text-amber-600 flex items-center gap-1 mt-1">
-                <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
-                </svg>
-                Inscriptions fermées
-                {canModify && <span className="text-xs">(admin)</span>}
-              </p>
-            )}
           </div>
         </div>
         <div className="flex gap-2">
@@ -168,15 +98,51 @@ export function GroupPage() {
               </svg>
             </button>
           )}
-          <button
-            onClick={() => setShowCreateSession(true)}
-            className="p-2 rounded-warm hover:bg-primary-100 transition-colors text-primary-700"
-            title="Nouvelle séance"
-          >
-            <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
-            </svg>
-          </button>
+          <div className="relative">
+            <button
+              onClick={() => setShowSessionMenu(!showSessionMenu)}
+              className="p-2 rounded-warm hover:bg-primary-100 transition-colors text-primary-700"
+              title="Nouvelle séance"
+            >
+              <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
+              </svg>
+            </button>
+            {showSessionMenu && (
+              <>
+                <div
+                  className="fixed inset-0 z-40"
+                  onClick={() => setShowSessionMenu(false)}
+                />
+                <div className="absolute right-0 top-full mt-1 bg-white rounded-warm shadow-warm-lg border-2 border-primary-200 py-1 z-50 min-w-[180px]">
+                  <button
+                    onClick={() => {
+                      setShowSessionMenu(false)
+                      setShowCreateSession(true)
+                    }}
+                    className="w-full text-left px-4 py-2 text-sm text-primary-800 hover:bg-primary-50 flex items-center gap-2"
+                  >
+                    <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                    </svg>
+                    Séance ponctuelle
+                  </button>
+                  <button
+                    onClick={() => {
+                      setShowSessionMenu(false)
+                      setShowCreateRecurrence(true)
+                    }}
+                    className="w-full text-left px-4 py-2 text-sm text-primary-800 hover:bg-primary-50 flex items-center gap-2"
+                  >
+                    <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+                    </svg>
+                    Récurrence
+                  </button>
+                </div>
+              </>
+            )}
+          </div>
           <button
             onClick={() => setShowInvite(true)}
             className="p-2 rounded-warm hover:bg-primary-100 transition-colors text-primary-700"
@@ -189,87 +155,17 @@ export function GroupPage() {
         </div>
       </div>
 
-      {/* Participation toggle */}
-      <div className="card p-4 mb-4">
-        <div className="flex items-center justify-between">
-          <div>
-            <p className="font-medium text-primary-800">
-              {isParticipating ? 'Tu participes !' : 'Tu viens à la muscu ?'}
-            </p>
-            <p className="text-sm text-primary-600">
-              {session?.passengers.length || 0} participant{(session?.passengers.length || 0) > 1 ? 's' : ''}
-            </p>
-          </div>
-          {isParticipating ? (
-            <button
-              onClick={handleLeaveSession}
-              disabled={sessionLoading}
-              className="btn-secondary"
-            >
-              Je ne viens plus
-            </button>
-          ) : (
-            <button
-              onClick={handleJoinSession}
-              disabled={sessionLoading || (isLocked && !canModify)}
-              className="btn-primary disabled:opacity-50 disabled:cursor-not-allowed"
-              title={isLocked && !canModify ? 'Inscriptions fermées' : undefined}
-            >
-              Je viens !
-            </button>
-          )}
-        </div>
+      {/* Upcoming Sessions */}
+      <div className="mb-6">
+        <h2 className="text-lg font-medium mb-3 text-primary-800">Prochaines séances</h2>
+        {groupId && (
+          <UpcomingSessionsList
+            groupId={groupId}
+            refreshTrigger={refreshKey}
+            isAdmin={isAdmin}
+          />
+        )}
       </div>
-
-      {/* Participants without car */}
-      {participantsWithoutCar && participantsWithoutCar.length > 0 && (
-        <div className="mb-4">
-          <h2 className="text-lg font-medium mb-2 text-primary-800">En attente de voiture</h2>
-          <div className="flex flex-wrap gap-3">
-            {participantsWithoutCar.map((p) => (
-              <div
-                key={p.id}
-                className="flex items-center gap-2 bg-primary-50 rounded-full pl-1 pr-4 py-1.5 border border-primary-200"
-              >
-                <Avatar user={p.user} size="md" />
-                <span className="text-base text-primary-800">{p.user.name}</span>
-              </div>
-            ))}
-          </div>
-        </div>
-      )}
-
-      {/* Add car button */}
-      {isParticipating && !myCar && (
-        <button
-          onClick={() => setShowCarSelector(true)}
-          disabled={isLocked && !canModify}
-          className="w-full btn-secondary mb-4 flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
-          title={isLocked && !canModify ? 'Inscriptions fermées' : undefined}
-        >
-          <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
-          </svg>
-          J'ai ma voiture
-        </button>
-      )}
-
-      {/* Cars */}
-      {session && session.cars.length > 0 && (
-        <div className="mb-4">
-          <h2 className="text-lg font-medium mb-3 text-primary-800">Voitures</h2>
-          <div className="space-y-3">
-            {session.cars.map((car) => (
-              <CarCard
-                key={car.id}
-                car={car}
-                isBanned={bansReceived.includes(car.driverId)}
-                onRefresh={refresh}
-              />
-            ))}
-          </div>
-        </div>
-      )}
 
       {/* Members */}
       <div className="mb-4">
@@ -318,14 +214,6 @@ export function GroupPage() {
         </div>
       )}
 
-      {/* Car Selector Modal */}
-      {showCarSelector && (
-        <UserCarSelector
-          onSelect={handleCarSelected}
-          onClose={() => setShowCarSelector(false)}
-        />
-      )}
-
       {/* Group Settings Modal */}
       {showSettings && currentGroup && (
         <GroupSettingsModal
@@ -341,7 +229,16 @@ export function GroupPage() {
         <CreateSessionModal
           groupId={groupId}
           onClose={() => setShowCreateSession(false)}
-          onCreated={refresh}
+          onCreated={handleRefreshSessions}
+        />
+      )}
+
+      {/* Create Recurrence Modal */}
+      {showCreateRecurrence && groupId && (
+        <CreateRecurrenceModal
+          groupId={groupId}
+          onClose={() => setShowCreateRecurrence(false)}
+          onCreated={handleRefreshSessions}
         />
       )}
     </div>

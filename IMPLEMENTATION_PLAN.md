@@ -240,9 +240,9 @@ Car + Passenger (existants, inchangés)
 
 ---
 
-## Stage 8: Calendar Week View
+## Stage 8: Calendar Month View
 
-**Goal**: Afficher un calendrier semaine en complément de la liste.
+**Goal**: Afficher un calendrier mois en complément de la liste.
 
 **Success Criteria**:
 - L'utilisateur peut basculer entre vue liste et calendrier
@@ -257,11 +257,11 @@ Car + Passenger (existants, inchangés)
 - [x] Tap jour ouvre détail
 
 **Tasks**:
-1. [x] Frontend : composant `WeekCalendar`
-2. [x] Frontend : composant `DayCell` avec indicateurs de sessions (intégré dans WeekCalendar)
-3. [x] Récupérer sessions de la semaine en une requête (utilise getUpcomingSessions)
+1. [x] Frontend : composant `MonthCalendar`
+2. [x] Frontend : affichage grille mois avec indicateurs de sessions
+3. [x] Récupérer sessions du mois en une requête (utilise getUpcomingSessions)
 4. [x] Toggle liste/calendrier dans l'UI
-5. [x] Navigation semaine (prev/next)
+5. [x] Navigation mois (prev/next)
 6. [x] Responsive : adaptation mobile/desktop (grid 7 colonnes adaptable)
 
 **Status**: Complete

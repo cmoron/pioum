@@ -1,12 +1,15 @@
 import { useState, useEffect, useCallback, useMemo } from 'react'
 import {
+  startOfMonth,
+  endOfMonth,
   startOfWeek,
   endOfWeek,
-  addWeeks,
-  subWeeks,
+  addMonths,
+  subMonths,
   eachDayOfInterval,
   format,
   isSameDay,
+  isSameMonth,
   isToday,
   parseISO,
   isBefore,
@@ -17,7 +20,7 @@ import { Session, api } from '../lib/api'
 import { SessionCard } from './SessionCard'
 import { LoadingSpinner } from './LoadingSpinner'
 
-interface WeekCalendarProps {
+interface MonthCalendarProps {
   groupId: string
   refreshTrigger?: number
   isAdmin?: boolean
@@ -25,27 +28,28 @@ interface WeekCalendarProps {
 
 const DAY_NAMES = ['lun', 'mar', 'mer', 'jeu', 'ven', 'sam', 'dim']
 
-export function WeekCalendar({ groupId, refreshTrigger = 0, isAdmin = false }: WeekCalendarProps) {
-  const [currentWeekStart, setCurrentWeekStart] = useState(() =>
-    startOfWeek(new Date(), { weekStartsOn: 1 })
-  )
+export function MonthCalendar({ groupId, refreshTrigger = 0, isAdmin = false }: MonthCalendarProps) {
+  const [currentMonth, setCurrentMonth] = useState(() => startOfMonth(new Date()))
   const [sessions, setSessions] = useState<Session[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
   const [selectedDate, setSelectedDate] = useState<Date | null>(null)
   const [bansReceived, setBansReceived] = useState<string[]>([])
 
-  const weekEnd = useMemo(() => endOfWeek(currentWeekStart, { weekStartsOn: 1 }), [currentWeekStart])
-  const weekDays = useMemo(
-    () => eachDayOfInterval({ start: currentWeekStart, end: weekEnd }),
-    [currentWeekStart, weekEnd]
-  )
+  // Get all days to display (including padding days from prev/next month)
+  const calendarDays = useMemo(() => {
+    const monthStart = startOfMonth(currentMonth)
+    const monthEnd = endOfMonth(currentMonth)
+    const calendarStart = startOfWeek(monthStart, { weekStartsOn: 1 })
+    const calendarEnd = endOfWeek(monthEnd, { weekStartsOn: 1 })
+    return eachDayOfInterval({ start: calendarStart, end: calendarEnd })
+  }, [currentMonth])
 
   const fetchSessions = useCallback(async (showLoading = true) => {
     try {
       if (showLoading) setLoading(true)
-      // Fetch sessions for the visible week range
-      const result = await api.getUpcomingSessions(groupId, 50)
+      // Fetch enough sessions for the month view
+      const result = await api.getUpcomingSessions(groupId, 100)
       setSessions(result.sessions)
       setError(null)
     } catch (err) {
@@ -85,18 +89,18 @@ export function WeekCalendar({ groupId, refreshTrigger = 0, isAdmin = false }: W
     fetchSessions(false)
   }, [fetchSessions])
 
-  const goToPreviousWeek = () => {
-    setCurrentWeekStart(prev => subWeeks(prev, 1))
+  const goToPreviousMonth = () => {
+    setCurrentMonth(prev => subMonths(prev, 1))
     setSelectedDate(null)
   }
 
-  const goToNextWeek = () => {
-    setCurrentWeekStart(prev => addWeeks(prev, 1))
+  const goToNextMonth = () => {
+    setCurrentMonth(prev => addMonths(prev, 1))
     setSelectedDate(null)
   }
 
   const goToToday = () => {
-    setCurrentWeekStart(startOfWeek(new Date(), { weekStartsOn: 1 }))
+    setCurrentMonth(startOfMonth(new Date()))
     setSelectedDate(null)
   }
 
@@ -112,9 +116,8 @@ export function WeekCalendar({ groupId, refreshTrigger = 0, isAdmin = false }: W
     return map
   }, [sessions])
 
-  // Check if current week contains today
-  const isCurrentWeek = weekDays.some(day => isToday(day))
-  const isPastWeek = isBefore(weekEnd, startOfDay(new Date()))
+  // Check if current month contains today
+  const isCurrentMonth = isSameMonth(currentMonth, new Date())
 
   if (loading && sessions.length === 0) {
     return (
@@ -139,15 +142,21 @@ export function WeekCalendar({ groupId, refreshTrigger = 0, isAdmin = false }: W
     ? sessionsByDate.get(format(selectedDate, 'yyyy-MM-dd')) || []
     : []
 
+  // Split days into weeks for rendering
+  const weeks: Date[][] = []
+  for (let i = 0; i < calendarDays.length; i += 7) {
+    weeks.push(calendarDays.slice(i, i + 7))
+  }
+
   return (
     <div className="space-y-3">
-      {/* Week Navigation */}
+      {/* Month Navigation */}
       <div className="card p-3">
         <div className="flex items-center justify-between mb-3">
           <button
-            onClick={goToPreviousWeek}
+            onClick={goToPreviousMonth}
             className="p-2 rounded-warm hover:bg-primary-100 transition-colors text-primary-700"
-            aria-label="Semaine précédente"
+            aria-label="Mois précédent"
           >
             <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
@@ -155,10 +164,10 @@ export function WeekCalendar({ groupId, refreshTrigger = 0, isAdmin = false }: W
           </button>
 
           <div className="text-center">
-            <p className="font-medium text-primary-800">
-              {format(currentWeekStart, 'd', { locale: fr })} - {format(weekEnd, 'd MMMM yyyy', { locale: fr })}
+            <p className="font-medium text-primary-800 capitalize">
+              {format(currentMonth, 'MMMM yyyy', { locale: fr })}
             </p>
-            {!isCurrentWeek && (
+            {!isCurrentMonth && (
               <button
                 onClick={goToToday}
                 className="text-xs text-primary-600 hover:text-primary-800 underline"
@@ -169,9 +178,9 @@ export function WeekCalendar({ groupId, refreshTrigger = 0, isAdmin = false }: W
           </div>
 
           <button
-            onClick={goToNextWeek}
+            onClick={goToNextMonth}
             className="p-2 rounded-warm hover:bg-primary-100 transition-colors text-primary-700"
-            aria-label="Semaine suivante"
+            aria-label="Mois suivant"
           >
             <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
@@ -179,60 +188,65 @@ export function WeekCalendar({ groupId, refreshTrigger = 0, isAdmin = false }: W
           </button>
         </div>
 
-        {/* Days Grid */}
-        <div className="grid grid-cols-7 gap-1">
-          {weekDays.map((day, index) => {
-            const dateKey = format(day, 'yyyy-MM-dd')
-            const daySessions = sessionsByDate.get(dateKey) || []
-            const hasSession = daySessions.length > 0
-            const isSelected = selectedDate && isSameDay(day, selectedDate)
-            const isDayToday = isToday(day)
-            const isPast = isBefore(day, startOfDay(new Date()))
+        {/* Day names header */}
+        <div className="grid grid-cols-7 gap-1 mb-1">
+          {DAY_NAMES.map(name => (
+            <div key={name} className="text-center text-xs uppercase text-primary-500 py-1">
+              {name}
+            </div>
+          ))}
+        </div>
 
-            return (
-              <button
-                key={dateKey}
-                onClick={() => setSelectedDate(isSelected ? null : day)}
-                className={`
-                  flex flex-col items-center p-2 rounded-warm transition-all
-                  ${isSelected
-                    ? 'bg-primary-600 text-white shadow-warm'
-                    : isDayToday
-                      ? 'bg-primary-100 text-primary-800'
-                      : 'hover:bg-primary-50'
-                  }
-                  ${isPast && !isDayToday && !isSelected ? 'opacity-50' : ''}
-                `}
-              >
-                <span className={`text-xs uppercase ${isSelected ? 'text-primary-100' : 'text-primary-500'}`}>
-                  {DAY_NAMES[index]}
-                </span>
-                <span className={`text-lg font-medium ${isSelected ? 'text-white' : 'text-primary-800'}`}>
-                  {format(day, 'd')}
-                </span>
-                {/* Session indicators */}
-                <div className="flex gap-0.5 mt-1 h-2">
-                  {hasSession ? (
-                    daySessions.slice(0, 3).map((_, i) => (
-                      <span
-                        key={i}
-                        className={`w-1.5 h-1.5 rounded-full ${
-                          isSelected ? 'bg-primary-200' : 'bg-primary-500'
-                        }`}
-                      />
-                    ))
-                  ) : (
-                    <span className="w-1.5 h-1.5" /> // Placeholder for alignment
-                  )}
-                  {daySessions.length > 3 && (
-                    <span className={`text-xs ${isSelected ? 'text-primary-200' : 'text-primary-500'}`}>
-                      +{daySessions.length - 3}
+        {/* Calendar Grid */}
+        <div className="space-y-1">
+          {weeks.map((week, weekIndex) => (
+            <div key={weekIndex} className="grid grid-cols-7 gap-1">
+              {week.map(day => {
+                const dateKey = format(day, 'yyyy-MM-dd')
+                const daySessions = sessionsByDate.get(dateKey) || []
+                const hasSession = daySessions.length > 0
+                const isSelected = selectedDate && isSameDay(day, selectedDate)
+                const isDayToday = isToday(day)
+                const isCurrentMonthDay = isSameMonth(day, currentMonth)
+                const isPast = isBefore(day, startOfDay(new Date()))
+
+                return (
+                  <button
+                    key={dateKey}
+                    onClick={() => setSelectedDate(isSelected ? null : day)}
+                    className={`
+                      flex flex-col items-center p-1.5 rounded-warm transition-all min-h-[48px]
+                      ${isSelected
+                        ? 'bg-primary-600 text-white shadow-warm'
+                        : isDayToday
+                          ? 'bg-primary-100 text-primary-800'
+                          : 'hover:bg-primary-50'
+                      }
+                      ${!isCurrentMonthDay ? 'opacity-30' : ''}
+                      ${isPast && !isDayToday && !isSelected && isCurrentMonthDay ? 'opacity-50' : ''}
+                    `}
+                  >
+                    <span className={`text-sm font-medium ${isSelected ? 'text-white' : 'text-primary-800'}`}>
+                      {format(day, 'd')}
                     </span>
-                  )}
-                </div>
-              </button>
-            )
-          })}
+                    {/* Session indicators */}
+                    <div className="flex gap-0.5 mt-0.5 h-1.5">
+                      {hasSession && isCurrentMonthDay ? (
+                        daySessions.slice(0, 3).map((_, i) => (
+                          <span
+                            key={i}
+                            className={`w-1 h-1 rounded-full ${
+                              isSelected ? 'bg-primary-200' : 'bg-primary-500'
+                            }`}
+                          />
+                        ))
+                      ) : null}
+                    </div>
+                  </button>
+                )
+              })}
+            </div>
+          ))}
         </div>
       </div>
 
@@ -253,7 +267,7 @@ export function WeekCalendar({ groupId, refreshTrigger = 0, isAdmin = false }: W
 
           {selectedDateSessions.length === 0 ? (
             <div className="card p-4 text-center text-primary-500">
-              {isPastWeek || isBefore(selectedDate, startOfDay(new Date()))
+              {isBefore(selectedDate, startOfDay(new Date()))
                 ? 'Aucune séance ce jour-là'
                 : 'Aucune séance prévue'}
             </div>

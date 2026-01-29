@@ -93,15 +93,15 @@ Un système complet de planification avec :
   - Toggle "Afficher/masquer la semaine prochaine"
   - Polling toutes les 10 secondes pour les mises à jour
 
-### Stage 8: Calendar Week View
-- Composant `WeekCalendar` avec :
-  - Affichage des 7 jours de la semaine (lun-dim)
-  - Navigation semaine précédente/suivante
+### Stage 8: Calendar Month View
+- Composant `MonthCalendar` avec :
+  - Affichage du mois complet avec jours de remplissage
+  - Navigation mois précédent/suivant
   - Bouton "Revenir à aujourd'hui"
   - Indicateurs de sessions sur chaque jour (points)
   - Sélection d'un jour pour voir les sessions
   - Jour actuel mis en évidence
-  - Jours passés grisés
+  - Jours passés et hors mois grisés
 - Toggle liste/calendrier dans GroupPage
   - Préférence sauvegardée dans localStorage
   - Icônes distinctes pour chaque mode
@@ -135,7 +135,7 @@ packages/backend/src/services/recurrence.ts    # Génération d'occurrences
 packages/frontend/src/lib/api.ts               # Méthodes API
 packages/frontend/src/components/SessionCard.tsx
 packages/frontend/src/components/UpcomingSessionsList.tsx
-packages/frontend/src/components/WeekCalendar.tsx
+packages/frontend/src/components/MonthCalendar.tsx
 packages/frontend/src/components/CreateSessionModal.tsx
 packages/frontend/src/components/CreateRecurrenceModal.tsx
 packages/frontend/src/components/EditSessionModal.tsx

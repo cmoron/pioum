@@ -8,7 +8,7 @@ import { GroupSettingsModal } from '../components/GroupSettingsModal'
 import { CreateSessionModal } from '../components/CreateSessionModal'
 import { CreateRecurrenceModal } from '../components/CreateRecurrenceModal'
 import { UpcomingSessionsList } from '../components/UpcomingSessionsList'
-import { WeekCalendar } from '../components/WeekCalendar'
+import { MonthCalendar } from '../components/MonthCalendar'
 
 type ViewMode = 'list' | 'calendar'
 
@@ -212,7 +212,7 @@ export function GroupPage() {
           />
         )}
         {groupId && viewMode === 'calendar' && (
-          <WeekCalendar
+          <MonthCalendar
             groupId={groupId}
             refreshTrigger={refreshKey}
             isAdmin={isAdmin}

@@ -118,6 +118,17 @@ Un système complet de planification avec :
 - Bouton "Modifier" dans `SessionCard` (3 modes)
 - Permissions : admin ou créateur peut modifier (hors séance verrouillée)
 
+### Suppression avec scope (Extension Stage 6)
+- Endpoint `DELETE /sessions/:id` étendu avec paramètre `scope`:
+  - `scope=single` : supprime uniquement la séance sélectionnée (défaut)
+  - `scope=future` : supprime cette séance et toutes les futures de la récurrence
+  - `scope=all` : supprime toutes les séances ET le pattern de récurrence
+- Composant `DeleteSessionModal` avec :
+  - Confirmation simple pour les séances non-récurrentes
+  - Choix du scope pour les séances récurrentes
+  - Avertissement si la séance a des participants
+- Réponse enrichie avec `deletedCount` et `patternDeleted`
+
 ---
 
 ## Fichiers clés créés/modifiés
@@ -139,6 +150,7 @@ packages/frontend/src/components/MonthCalendar.tsx
 packages/frontend/src/components/CreateSessionModal.tsx
 packages/frontend/src/components/CreateRecurrenceModal.tsx
 packages/frontend/src/components/EditSessionModal.tsx
+packages/frontend/src/components/DeleteSessionModal.tsx
 packages/frontend/src/pages/GroupPage.tsx
 ```
 
@@ -146,11 +158,13 @@ packages/frontend/src/pages/GroupPage.tsx
 
 ## Prochaines étapes suggérées
 
-1. **Stage 5 - Edit Recurring Sessions** : Modifier une séance ou toutes les futures
+1. **Stage 9 - Session Detail Page** : Page dédiée avec détail complet d'une séance
 
-2. **Stage 9 - Session Detail Page** : Page dédiée avec détail complet d'une séance
+2. **Stage 10 - Create/Edit Session Forms** : Améliorer les formulaires de création
 
 3. **Stage 11 - Historical Sessions View** : Voir l'historique des séances passées
+
+4. **Stage 12 - Polish & Edge Cases** : Timezone, sessions cross-midnight, optimisations
 
 ---
 
@@ -163,4 +177,4 @@ packages/frontend/src/pages/GroupPage.tsx
 
 ---
 
-*Dernière mise à jour : 29 janvier 2026 - Stages 5 et 8 ajoutés*
+*Dernière mise à jour : 29 janvier 2026 - Suppression avec scope ajoutée (Extension Stage 6)*

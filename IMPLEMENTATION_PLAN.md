@@ -443,8 +443,8 @@ model Group {
 | `/groups/:id/recurrence-patterns` | GET | Patterns du groupe |
 | `/groups/:id/recurrence-patterns` | POST | Créer un pattern |
 | `/recurrence-patterns/:id` | DELETE | Supprimer un pattern |
-| `/sessions/:id` | PATCH | Modifier (scope=single|future) |
-| `/sessions/:id` | DELETE | Supprimer (hard delete, permissions admin/creator) |
+| `/sessions/:id` | PATCH | Modifier (scope=single\|future) |
+| `/sessions/:id` | DELETE | Supprimer (scope=single\|future\|all) |
 | `/sessions/:id/lock-status` | GET | État de verrouillage |
 
 ### Indexes Required

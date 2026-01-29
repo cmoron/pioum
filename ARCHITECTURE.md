@@ -62,12 +62,15 @@ pioum/
 │   │   │   ├── routes/       # Endpoints REST
 │   │   │   │   ├── auth.ts       # OAuth Google + Magic Link
 │   │   │   │   ├── groups.ts     # CRUD groupes
-│   │   │   │   ├── sessions.ts   # Sessions quotidiennes
+│   │   │   │   ├── sessions.ts   # Sessions avec horaires et récurrences
+│   │   │   │   ├── recurrencePatterns.ts  # Patterns de récurrence
 │   │   │   │   ├── cars.ts       # Voitures et passagers
 │   │   │   │   ├── bans.ts       # Système de ban
 │   │   │   │   ├── avatars.ts    # Banque d'avatars
 │   │   │   │   ├── users.ts      # Profils utilisateurs
 │   │   │   │   └── userCars.ts   # Voitures personnelles
+│   │   │   ├── services/
+│   │   │   │   └── recurrence.ts # Génération d'occurrences
 │   │   │   ├── middleware/
 │   │   │   │   ├── auth.ts       # JWT verification
 │   │   │   │   └── errorHandler.ts
@@ -87,6 +90,13 @@ pioum/
 │       │   ├── components/   # Composants réutilisables
 │       │   │   ├── Avatar.tsx
 │       │   │   ├── CarCard.tsx
+│       │   │   ├── SessionCard.tsx
+│       │   │   ├── UpcomingSessionsList.tsx
+│       │   │   ├── MonthCalendar.tsx
+│       │   │   ├── CreateSessionModal.tsx
+│       │   │   ├── CreateRecurrenceModal.tsx
+│       │   │   ├── EditSessionModal.tsx
+│       │   │   ├── DeleteSessionModal.tsx
 │       │   │   ├── BanModal.tsx
 │       │   │   ├── UserCarCard.tsx
 │       │   │   ├── UserCarSelector.tsx
@@ -159,24 +169,32 @@ pioum/
        │                 └──────────────┘    │
        │                        │            │
        │                        │ *          │
-       │                 ┌──────▼───────┐    │
-       │                 │   Session    │    │
-       │                 ├──────────────┤    │
-       │                 │ id           │    │
-       │                 │ date         │    │
-       │                 │ groupId      │    │
-       │                 └──────────────┘    │
-       │                   │           │     │
-       │            *──────┘           └─────│──*
-       │           │                         │
-       │    ┌──────▼───────┐    ┌────────────▼──┐
-       │    │     Car      │    │   Passenger   │
-       │    ├──────────────┤    ├───────────────┤
-       └───►│ driverId     │    │ userId        │
-            │ seats        │◄───│ carId (opt)   │
-            │ sessionId    │  * │ sessionId     │
-            │ userCarId    │    └───────────────┘
-            └──────┬───────┘
+       │       ┌────────────────┼────────────┘
+       │       │                │
+       │       ▼                ▼
+       │  ┌────────────────┐  ┌──────────────┐
+       │  │ Recurrence     │  │   Session    │
+       │  │ Pattern        │  ├──────────────┤
+       │  ├────────────────┤  │ id           │
+       │  │ id             │  │ date         │
+       │  │ groupId        │  │ startTime    │
+       │  │ startTime      │  │ endTime      │
+       │  │ endTime        │  │ groupId      │
+       │  │ daysOfWeek[]   │◄─│ recurrence   │
+       │  │ startDate      │  │ PatternId?   │
+       │  │ endDate?       │  │ createdById? │
+       │  │ createdById    │  └──────────────┘
+       │  └────────────────┘    │           │
+       │                 *──────┘           └────*
+       │                │                        │
+       │    ┌───────────▼───┐    ┌───────────────┐
+       │    │     Car       │    │   Passenger   │
+       │    ├───────────────┤    ├───────────────┤
+       └───►│ driverId      │    │ userId        │
+            │ seats         │◄───│ carId (opt)   │
+            │ sessionId     │  * │ sessionId     │
+            │ userCarId     │    └───────────────┘
+            └──────┬────────┘
                    │
                    │ 0..1
             ┌──────▼───────┐

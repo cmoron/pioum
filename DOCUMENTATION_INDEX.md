@@ -1,6 +1,6 @@
 # Index de la Documentation - Pioum
 
-## Fichiers de Documentation (9 fichiers, 2,920 lignes)
+## Fichiers de Documentation (7 fichiers)
 
 ### 1. README.md (372 lignes)
 **Point d'entrée principal du projet**
@@ -153,48 +153,7 @@ Contenu:
 
 ---
 
-### 8. UPDATES.md (182 lignes)
-**Résumé des mises à jour documentation**
-
-Contenu:
-- Résumé changements
-- Fichiers créés/mis à jour/supprimés
-- Structure de documentation recommandée
-- Points clés à retenir
-- Vérification complétude
-- Avantages nouvelle structure
-- Checklist pour mainteneurs
-- Prochaines étapes (optional)
-
-**Taille** : 6.3 KB | **Durée lecture** : 10 min
-**Audience** : Mainteneurs de documentation
-**Usage** : Comprendre les changements
-
----
-
-### 9. DOCUMENTATION_AUDIT.md (321 lignes)
-**Audit complet de couverture documentation**
-
-Contenu:
-- Résumé exécutif
-- Audit de couverture (13 catégories)
-- Audit de qualité
-- Distribution de contenu
-- Vérification des links
-- Checklist de suppression
-- Recommandations maintenance
-- Métriques documentation
-- Migration checklist
-- Documents finaux
-- Signature audit
-
-**Taille** : ~7 KB | **Durée lecture** : 15 min
-**Audience** : Mainteneurs, Leads
-**Usage** : Audit complet, vérification couverture
-
----
-
-### 10. DOCUMENTATION_INDEX.md (Ce fichier)
+### 8. DOCUMENTATION_INDEX.md (Ce fichier)
 **Index et guide des fichiers documentation**
 
 Contenu:
@@ -333,12 +292,9 @@ Contenu:
 
 | Métrique | Valeur |
 |----------|--------|
-| Fichiers | 10 (index inclus) |
-| Lignes totales | 2,920 |
-| Taille | ~95 KB |
+| Fichiers | 8 (index inclus) |
 | Duplication | 0% |
 | Coverage | 100% |
-| Lisibilité | 8/10 |
 
 ---
 
@@ -377,8 +333,6 @@ Contenu:
 ### Metadata Documentation (Interne)
 - [DOCUMENTATION_STRUCTURE.md](./DOCUMENTATION_STRUCTURE.md) - Navigation
 - [DOCUMENTATION_INDEX.md](./DOCUMENTATION_INDEX.md) - Ce fichier
-- [UPDATES.md](./UPDATES.md) - Changelog doc
-- [DOCUMENTATION_AUDIT.md](./DOCUMENTATION_AUDIT.md) - Audit
 
 ### Code Documentation
 - [.github/workflows/README.md](./.github/workflows/README.md) - CI/CD
@@ -395,5 +349,5 @@ Pour un accès rapide, marque en favoris:
 
 ---
 
-**Dernière mise à jour** : 2026-01-26
-**Statut** : Documentation complète et organisée ✅
+**Dernière mise à jour** : 2026-01-29
+**Statut** : Documentation complète et organisée

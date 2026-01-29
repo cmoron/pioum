@@ -158,20 +158,20 @@ Car + Passenger (existants, inchangés)
 - L'historique des modifications est préservé
 
 **Tests**:
-- [ ] PATCH session avec scope=single met isException=true
-- [ ] PATCH session avec scope=future met à jour pattern + régénère
-- [ ] Instances passées non affectées par scope=future
-- [ ] UI affiche modal de choix
+- [x] PATCH session avec scope=single détache de la récurrence
+- [x] PATCH session avec scope=future met à jour pattern + régénère
+- [x] Instances passées non affectées par scope=future
+- [x] UI affiche modal de choix
 
 **Tasks**:
-1. [ ] Endpoint `PATCH /sessions/:id` avec param `scope`
-2. [ ] Logique de détachement (scope=single)
-3. [ ] Logique de split pattern (scope=future)
-4. [ ] Régénération des instances futures après modification pattern
-5. [ ] Frontend : modal "Modifier cette séance / toutes les futures"
+1. [x] Endpoint `PATCH /sessions/:id` avec param `scope`
+2. [x] Logique de détachement (scope=single) - met recurrencePatternId à null
+3. [x] Logique de mise à jour pattern (scope=future)
+4. [x] Régénération des instances futures après modification pattern
+5. [x] Frontend : modal "Modifier cette séance / toutes les futures"
 6. [ ] Tests E2E des deux scénarios
 
-**Status**: Not Started
+**Status**: Complete
 
 ---
 

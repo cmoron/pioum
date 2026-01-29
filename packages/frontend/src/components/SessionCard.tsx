@@ -6,6 +6,7 @@ import { useAuthStore } from '../stores/auth'
 import { Avatar } from './Avatar'
 import { CarCard } from './CarCard'
 import { UserCarSelector } from './UserCarSelector'
+import { EditSessionModal } from './EditSessionModal'
 
 interface SessionCardProps {
   session: Session
@@ -45,6 +46,7 @@ export function SessionCard({
   const [internalExpanded, setInternalExpanded] = useState(false)
   const [loading, setLoading] = useState(false)
   const [showCarSelector, setShowCarSelector] = useState(false)
+  const [showEditModal, setShowEditModal] = useState(false)
 
   // Support both controlled and uncontrolled modes
   const isControlled = controlledExpanded !== undefined && onToggleExpand !== undefined
@@ -62,6 +64,8 @@ export function SessionCard({
   const hasParticipants = session.passengers.length > 0
   // Admin can always cancel; creator can cancel only if no participants
   const canCancel = isAdmin || (isCreator && !hasParticipants)
+  // Admin or creator can edit (if not locked, or admin can bypass)
+  const canEdit = !isLocked && (isAdmin || isCreator)
 
   const handleJoin = async () => {
     setLoading(true)
@@ -198,20 +202,43 @@ export function SessionCard({
               </div>
             )}
 
-            {canCancel && (
-              <button
-                onClick={handleCancel}
-                disabled={loading}
-                className="w-full text-sm text-red-600 hover:text-red-700 hover:bg-red-50 rounded-warm py-1.5 transition-colors disabled:opacity-50"
-              >
-                Annuler la séance
-              </button>
-            )}
+            {/* Edit and Cancel buttons */}
+            <div className="flex gap-2">
+              {canEdit && (
+                <button
+                  onClick={() => setShowEditModal(true)}
+                  disabled={loading}
+                  className="flex-1 text-sm text-primary-600 hover:text-primary-700 hover:bg-primary-50 rounded-warm py-1.5 transition-colors disabled:opacity-50 flex items-center justify-center gap-1"
+                >
+                  <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+                  </svg>
+                  Modifier
+                </button>
+              )}
+              {canCancel && (
+                <button
+                  onClick={handleCancel}
+                  disabled={loading}
+                  className="flex-1 text-sm text-red-600 hover:text-red-700 hover:bg-red-50 rounded-warm py-1.5 transition-colors disabled:opacity-50"
+                >
+                  Annuler
+                </button>
+              )}
+            </div>
           </div>
         )}
 
         {showCarSelector && (
           <UserCarSelector onSelect={handleCarSelected} onClose={() => setShowCarSelector(false)} />
+        )}
+
+        {showEditModal && (
+          <EditSessionModal
+            session={session}
+            onClose={() => setShowEditModal(false)}
+            onUpdated={onRefresh}
+          />
         )}
       </div>
     )
@@ -312,19 +339,44 @@ export function SessionCard({
             </div>
           )}
 
-          {canCancel && (
-            <button
-              onClick={handleCancel}
-              disabled={loading}
-              className="w-full mt-4 text-sm text-red-600 hover:text-red-700 hover:bg-red-50 rounded-warm py-2 transition-colors disabled:opacity-50"
-            >
-              Annuler la séance
-            </button>
+          {/* Edit and Cancel buttons */}
+          {(canEdit || canCancel) && (
+            <div className="flex gap-2 mt-4">
+              {canEdit && (
+                <button
+                  onClick={() => setShowEditModal(true)}
+                  disabled={loading}
+                  className="flex-1 text-sm text-primary-600 hover:text-primary-700 hover:bg-primary-50 rounded-warm py-2 transition-colors disabled:opacity-50 flex items-center justify-center gap-1"
+                >
+                  <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+                  </svg>
+                  Modifier
+                </button>
+              )}
+              {canCancel && (
+                <button
+                  onClick={handleCancel}
+                  disabled={loading}
+                  className="flex-1 text-sm text-red-600 hover:text-red-700 hover:bg-red-50 rounded-warm py-2 transition-colors disabled:opacity-50"
+                >
+                  Annuler la séance
+                </button>
+              )}
+            </div>
           )}
         </div>
 
         {showCarSelector && (
           <UserCarSelector onSelect={handleCarSelected} onClose={() => setShowCarSelector(false)} />
+        )}
+
+        {showEditModal && (
+          <EditSessionModal
+            session={session}
+            onClose={() => setShowEditModal(false)}
+            onUpdated={onRefresh}
+          />
         )}
       </div>
     )
@@ -431,20 +483,45 @@ export function SessionCard({
             </div>
           )}
 
-          {canCancel && (
-            <button
-              onClick={handleCancel}
-              disabled={loading}
-              className="w-full text-sm text-red-600 hover:text-red-700 hover:bg-red-50 rounded-warm py-2 transition-colors disabled:opacity-50"
-            >
-              Annuler la séance
-            </button>
+          {/* Edit and Cancel buttons */}
+          {(canEdit || canCancel) && (
+            <div className="flex gap-2">
+              {canEdit && (
+                <button
+                  onClick={() => setShowEditModal(true)}
+                  disabled={loading}
+                  className="flex-1 text-sm text-primary-600 hover:text-primary-700 hover:bg-primary-50 rounded-warm py-2 transition-colors disabled:opacity-50 flex items-center justify-center gap-1"
+                >
+                  <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+                  </svg>
+                  Modifier
+                </button>
+              )}
+              {canCancel && (
+                <button
+                  onClick={handleCancel}
+                  disabled={loading}
+                  className="flex-1 text-sm text-red-600 hover:text-red-700 hover:bg-red-50 rounded-warm py-2 transition-colors disabled:opacity-50"
+                >
+                  Annuler la séance
+                </button>
+              )}
+            </div>
           )}
         </div>
       )}
 
       {showCarSelector && (
         <UserCarSelector onSelect={handleCarSelected} onClose={() => setShowCarSelector(false)} />
+      )}
+
+      {showEditModal && (
+        <EditSessionModal
+          session={session}
+          onClose={() => setShowEditModal(false)}
+          onUpdated={onRefresh}
+        />
       )}
     </div>
   )

@@ -15,6 +15,12 @@ const createSessionSchema = z.object({
   endTime: z.string().optional() // ISO datetime string
 })
 
+const updateSessionSchema = z.object({
+  startTime: z.string(), // ISO datetime string
+  endTime: z.string(), // ISO datetime string
+  scope: z.enum(['single', 'future']).optional() // For recurring sessions
+})
+
 // Helper to get today's date at midnight UTC
 function getTodayDate(): Date {
   const now = new Date()
@@ -441,6 +447,144 @@ sessionsRouter.post('/', authenticate, async (req, res, next) => {
     })
 
     res.json({ session })
+  } catch (error) {
+    if (error instanceof Prisma.PrismaClientKnownRequestError && error.code === 'P2002') {
+      return next(new AppError(409, 'Une séance existe déjà sur ce créneau'))
+    }
+    next(error)
+  }
+})
+
+// Update a session (edit times, with scope for recurring sessions)
+sessionsRouter.patch('/:id', authenticate, async (req, res, next) => {
+  try {
+    const { startTime, endTime, scope } = updateSessionSchema.parse(req.body)
+    const sessionId = req.params.id as string
+
+    const session = await prisma.session.findUnique({
+      where: { id: sessionId },
+      include: {
+        recurrencePattern: true
+      }
+    })
+
+    if (!session) {
+      throw new AppError(404, 'Session not found')
+    }
+
+    // Verify membership and get role
+    const membership = await prisma.groupMember.findUnique({
+      where: {
+        userId_groupId: {
+          userId: req.user!.userId,
+          groupId: session.groupId
+        }
+      }
+    })
+
+    if (!membership) {
+      throw new AppError(403, 'Not a member of this group')
+    }
+
+    // Check if session is locked (admin can bypass)
+    if (isSessionLocked(session) && membership.role !== 'admin') {
+      throw new AppError(403, 'Cette séance a déjà commencé')
+    }
+
+    // Permission check: admin or creator can edit
+    const isAdmin = membership.role === 'admin'
+    const isCreator = session.createdById === req.user!.userId
+    if (!isAdmin && !isCreator) {
+      throw new AppError(403, 'Seul le créateur ou un admin peut modifier cette séance')
+    }
+
+    const newStartTime = new Date(startTime)
+    const newEndTime = new Date(endTime)
+
+    // Validate times
+    if (newEndTime <= newStartTime) {
+      throw new AppError(400, "L'heure de fin doit être après l'heure de début")
+    }
+
+    // If session is part of a recurrence and scope is 'future', update the pattern
+    if (session.recurrencePatternId && scope === 'future') {
+      // Extract time from the new dates
+      const newStartHour = newStartTime.getHours().toString().padStart(2, '0')
+      const newStartMin = newStartTime.getMinutes().toString().padStart(2, '0')
+      const newEndHour = newEndTime.getHours().toString().padStart(2, '0')
+      const newEndMin = newEndTime.getMinutes().toString().padStart(2, '0')
+
+      // Update the pattern
+      await prisma.recurrencePattern.update({
+        where: { id: session.recurrencePatternId },
+        data: {
+          startTime: `${newStartHour}:${newStartMin}`,
+          endTime: `${newEndHour}:${newEndMin}`
+        }
+      })
+
+      // Update all future sessions from this pattern (that haven't started yet)
+      const now = new Date()
+      const futureSessions = await prisma.session.findMany({
+        where: {
+          recurrencePatternId: session.recurrencePatternId,
+          startTime: { gt: now }
+        }
+      })
+
+      for (const futureSession of futureSessions) {
+        // Create new times using the session's date but new times
+        const sessionDate = new Date(futureSession.date)
+        const updatedStart = new Date(sessionDate)
+        updatedStart.setHours(parseInt(newStartHour), parseInt(newStartMin), 0, 0)
+        const updatedEnd = new Date(sessionDate)
+        updatedEnd.setHours(parseInt(newEndHour), parseInt(newEndMin), 0, 0)
+
+        await prisma.session.update({
+          where: { id: futureSession.id },
+          data: {
+            startTime: updatedStart,
+            endTime: updatedEnd
+          }
+        })
+      }
+
+      res.json({
+        message: 'Pattern et séances futures mis à jour',
+        updatedCount: futureSessions.length
+      })
+    } else {
+      // Single session update - detach from pattern if it was part of one
+      const updateData: { startTime: Date; endTime: Date; recurrencePatternId?: null } = {
+        startTime: newStartTime,
+        endTime: newEndTime
+      }
+
+      // If this session was part of a recurrence and scope is 'single' (or not specified),
+      // detach it from the pattern
+      if (session.recurrencePatternId) {
+        updateData.recurrencePatternId = null
+      }
+
+      const updatedSession = await prisma.session.update({
+        where: { id: sessionId },
+        data: updateData,
+        include: {
+          cars: {
+            include: {
+              driver: { select: USER_SELECT },
+              passengers: { include: { user: { select: USER_SELECT } } }
+            }
+          },
+          passengers: { include: { user: { select: USER_SELECT } } }
+        }
+      })
+
+      res.json({
+        session: updatedSession,
+        detachedFromPattern: !!session.recurrencePatternId
+      })
+    }
   } catch (error) {
     if (error instanceof Prisma.PrismaClientKnownRequestError && error.code === 'P2002') {
       return next(new AppError(409, 'Une séance existe déjà sur ce créneau'))

@@ -205,6 +205,25 @@ export const api = {
     return handleResponse<{ message: string; hadParticipants: boolean }>(res)
   },
 
+  async updateSession(sessionId: string, data: {
+    startTime: string
+    endTime: string
+    scope?: 'single' | 'future'
+  }) {
+    const res = await fetch(`${API_BASE}/sessions/${sessionId}`, {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(data),
+      credentials: 'include'
+    })
+    return handleResponse<{
+      session?: Session
+      message?: string
+      updatedCount?: number
+      detachedFromPattern?: boolean
+    }>(res)
+  },
+
   // Cars
   async addCar(sessionId: string, seats?: number, userCarId?: string) {
     const res = await fetch(`${API_BASE}/cars`, {

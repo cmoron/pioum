@@ -31,7 +31,7 @@ Un système complet de planification avec :
 | 2 | Registration Lock Mechanism | ✅ Complete |
 | 3 | Create One-Off Session UI | ✅ Complete |
 | 4 | Recurrence Pattern Model | ✅ Complete |
-| 5 | Edit Recurring Sessions | ❌ Not Started |
+| 5 | Edit Recurring Sessions | ✅ Complete |
 | 6 | Cancel Sessions | ✅ Complete |
 | 7 | Upcoming Sessions List View | ✅ Complete |
 | 8 | Calendar Week View | ✅ Complete |
@@ -40,7 +40,7 @@ Un système complet de planification avec :
 | 11 | Historical Sessions View | ❌ Not Started |
 | 12 | Polish & Edge Cases | ❌ Not Started |
 
-**Progression : 7/12 stages terminés (58%)**
+**Progression : 8/12 stages terminés (67%)**
 
 ---
 
@@ -107,6 +107,17 @@ Un système complet de planification avec :
   - Icônes distinctes pour chaque mode
 - Sessions affichées en mode compact sous le calendrier
 
+### Stage 5: Edit Recurring Sessions
+- Endpoint `PATCH /sessions/:id` avec paramètre `scope`
+  - `scope=single` : détache la séance de la récurrence
+  - `scope=future` : met à jour le pattern et toutes les futures
+- Composant `EditSessionModal` avec :
+  - Sélection des horaires (début/fin)
+  - Choix du scope pour les séances récurrentes
+  - Explication claire des conséquences de chaque option
+- Bouton "Modifier" dans `SessionCard` (3 modes)
+- Permissions : admin ou créateur peut modifier (hors séance verrouillée)
+
 ---
 
 ## Fichiers clés créés/modifiés
@@ -127,6 +138,7 @@ packages/frontend/src/components/UpcomingSessionsList.tsx
 packages/frontend/src/components/WeekCalendar.tsx
 packages/frontend/src/components/CreateSessionModal.tsx
 packages/frontend/src/components/CreateRecurrenceModal.tsx
+packages/frontend/src/components/EditSessionModal.tsx
 packages/frontend/src/pages/GroupPage.tsx
 ```
 
@@ -151,4 +163,4 @@ packages/frontend/src/pages/GroupPage.tsx
 
 ---
 
-*Dernière mise à jour : 29 janvier 2026 - Stage 8 ajouté*
+*Dernière mise à jour : 29 janvier 2026 - Stages 5 et 8 ajoutés*

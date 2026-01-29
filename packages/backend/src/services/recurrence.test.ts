@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest'
-import { addDays, startOfDay, format } from 'date-fns'
+import { addDays, startOfDay } from 'date-fns'
 
 // Mock prisma before importing the module
 vi.mock('../lib/prisma.js', () => ({

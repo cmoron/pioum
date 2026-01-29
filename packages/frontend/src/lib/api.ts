@@ -197,12 +197,19 @@ export const api = {
     return handleResponse<{ message: string }>(res)
   },
 
-  async cancelSession(sessionId: string) {
-    const res = await fetch(`${API_BASE}/sessions/${sessionId}`, {
+  async cancelSession(sessionId: string, scope?: 'single' | 'future' | 'all') {
+    const params = scope ? `?scope=${scope}` : ''
+    const res = await fetch(`${API_BASE}/sessions/${sessionId}${params}`, {
       method: 'DELETE',
       credentials: 'include'
     })
-    return handleResponse<{ message: string; hadParticipants: boolean }>(res)
+    return handleResponse<{
+      message: string
+      hadParticipants?: boolean
+      deletedCount: number
+      patternDeleted?: boolean
+      scope: string
+    }>(res)
   },
 
   async updateSession(sessionId: string, data: {

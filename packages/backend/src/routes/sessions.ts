@@ -593,13 +593,17 @@ sessionsRouter.patch('/:id', authenticate, async (req, res, next) => {
   }
 })
 
-// Delete a session
+// Delete a session (with optional scope for recurring sessions)
+// scope: 'single' (default), 'future', 'all'
 sessionsRouter.delete('/:id', authenticate, async (req, res, next) => {
   try {
+    const scope = (req.query.scope as string) || 'single'
+
     const session = await prisma.session.findUnique({
       where: { id: req.params.id as string },
       include: {
-        _count: { select: { passengers: true } }
+        _count: { select: { passengers: true } },
+        recurrencePattern: true
       }
     })
 
@@ -629,15 +633,60 @@ sessionsRouter.delete('/:id', authenticate, async (req, res, next) => {
       throw new AppError(403, 'Seul le créateur ou un admin peut supprimer cette séance')
     }
 
-    if (isCreator && !isAdmin && hasParticipants) {
+    // For single session deletion, check participants
+    if (scope === 'single' && isCreator && !isAdmin && hasParticipants) {
       throw new AppError(403, 'Impossible de supprimer une séance avec des participants')
     }
 
-    await prisma.session.delete({
-      where: { id: session.id }
-    })
+    // Handle different scopes for recurring sessions
+    if (session.recurrencePatternId && (scope === 'future' || scope === 'all')) {
+      if (scope === 'future') {
+        // Delete this session and all future sessions from the pattern
+        const deleted = await prisma.session.deleteMany({
+          where: {
+            recurrencePatternId: session.recurrencePatternId,
+            startTime: { gte: session.startTime }
+          }
+        })
 
-    res.json({ message: 'Séance supprimée', hadParticipants: hasParticipants })
+        res.json({
+          message: `${deleted.count} séance(s) supprimée(s)`,
+          deletedCount: deleted.count,
+          scope: 'future'
+        })
+      } else if (scope === 'all') {
+        // Delete all sessions from the pattern and the pattern itself
+        const deleted = await prisma.session.deleteMany({
+          where: {
+            recurrencePatternId: session.recurrencePatternId
+          }
+        })
+
+        // Also delete the pattern
+        await prisma.recurrencePattern.delete({
+          where: { id: session.recurrencePatternId }
+        })
+
+        res.json({
+          message: `${deleted.count} séance(s) et la récurrence supprimées`,
+          deletedCount: deleted.count,
+          patternDeleted: true,
+          scope: 'all'
+        })
+      }
+    } else {
+      // Single session deletion
+      await prisma.session.delete({
+        where: { id: session.id }
+      })
+
+      res.json({
+        message: 'Séance supprimée',
+        hadParticipants: hasParticipants,
+        deletedCount: 1,
+        scope: 'single'
+      })
+    }
   } catch (error) {
     next(error)
   }

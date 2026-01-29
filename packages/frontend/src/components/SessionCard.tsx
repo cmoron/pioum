@@ -7,6 +7,7 @@ import { Avatar } from './Avatar'
 import { CarCard } from './CarCard'
 import { UserCarSelector } from './UserCarSelector'
 import { EditSessionModal } from './EditSessionModal'
+import { DeleteSessionModal } from './DeleteSessionModal'
 
 interface SessionCardProps {
   session: Session
@@ -47,6 +48,7 @@ export function SessionCard({
   const [loading, setLoading] = useState(false)
   const [showCarSelector, setShowCarSelector] = useState(false)
   const [showEditModal, setShowEditModal] = useState(false)
+  const [showDeleteModal, setShowDeleteModal] = useState(false)
 
   // Support both controlled and uncontrolled modes
   const isControlled = controlledExpanded !== undefined && onToggleExpand !== undefined
@@ -62,8 +64,10 @@ export function SessionCard({
 
   const isCreator = session.createdById === user?.id
   const hasParticipants = session.passengers.length > 0
-  // Admin can always cancel; creator can cancel only if no participants
-  const canCancel = isAdmin || (isCreator && !hasParticipants)
+  const isRecurring = !!session.recurrencePatternId
+  // Admin can always cancel; creator can cancel only if no participants (for single sessions)
+  // For recurring sessions, show delete modal which handles permissions
+  const canCancel = isAdmin || isCreator
   // Admin or creator can edit (if not locked, or admin can bypass)
   const canEdit = !isLocked && (isAdmin || isCreator)
 
@@ -98,18 +102,18 @@ export function SessionCard({
     }
   }
 
-  const handleCancel = async () => {
-    const message = hasParticipants
-      ? `Cette séance a ${session.passengers.length} participant${session.passengers.length > 1 ? 's' : ''}. Supprimer quand même ?`
-      : 'Supprimer cette séance ?'
-    if (!window.confirm(message)) return
-
-    setLoading(true)
-    try {
-      await api.cancelSession(session.id)
-      onRefresh()
-    } finally {
-      setLoading(false)
+  const handleCancelClick = () => {
+    // For recurring sessions or sessions with participants, show the modal
+    if (isRecurring || hasParticipants) {
+      setShowDeleteModal(true)
+    } else {
+      // Simple confirmation for non-recurring sessions without participants
+      if (window.confirm('Supprimer cette séance ?')) {
+        setLoading(true)
+        api.cancelSession(session.id)
+          .then(() => onRefresh())
+          .finally(() => setLoading(false))
+      }
     }
   }
 
@@ -218,7 +222,7 @@ export function SessionCard({
               )}
               {canCancel && (
                 <button
-                  onClick={handleCancel}
+                  onClick={handleCancelClick}
                   disabled={loading}
                   className="flex-1 text-sm text-red-600 hover:text-red-700 hover:bg-red-50 rounded-warm py-1.5 transition-colors disabled:opacity-50"
                 >
@@ -238,6 +242,14 @@ export function SessionCard({
             session={session}
             onClose={() => setShowEditModal(false)}
             onUpdated={onRefresh}
+          />
+        )}
+
+        {showDeleteModal && (
+          <DeleteSessionModal
+            session={session}
+            onClose={() => setShowDeleteModal(false)}
+            onDeleted={onRefresh}
           />
         )}
       </div>
@@ -356,7 +368,7 @@ export function SessionCard({
               )}
               {canCancel && (
                 <button
-                  onClick={handleCancel}
+                  onClick={handleCancelClick}
                   disabled={loading}
                   className="flex-1 text-sm text-red-600 hover:text-red-700 hover:bg-red-50 rounded-warm py-2 transition-colors disabled:opacity-50"
                 >
@@ -376,6 +388,14 @@ export function SessionCard({
             session={session}
             onClose={() => setShowEditModal(false)}
             onUpdated={onRefresh}
+          />
+        )}
+
+        {showDeleteModal && (
+          <DeleteSessionModal
+            session={session}
+            onClose={() => setShowDeleteModal(false)}
+            onDeleted={onRefresh}
           />
         )}
       </div>
@@ -500,7 +520,7 @@ export function SessionCard({
               )}
               {canCancel && (
                 <button
-                  onClick={handleCancel}
+                  onClick={handleCancelClick}
                   disabled={loading}
                   className="flex-1 text-sm text-red-600 hover:text-red-700 hover:bg-red-50 rounded-warm py-2 transition-colors disabled:opacity-50"
                 >
@@ -521,6 +541,14 @@ export function SessionCard({
           session={session}
           onClose={() => setShowEditModal(false)}
           onUpdated={onRefresh}
+        />
+      )}
+
+      {showDeleteModal && (
+        <DeleteSessionModal
+          session={session}
+          onClose={() => setShowDeleteModal(false)}
+          onDeleted={onRefresh}
         />
       )}
     </div>

@@ -11,9 +11,10 @@ interface CarCardProps {
   car: Car
   isBanned?: boolean
   onRefresh?: () => void
+  readOnly?: boolean
 }
 
-export function CarCard({ car, isBanned, onRefresh }: CarCardProps) {
+export function CarCard({ car, isBanned, onRefresh, readOnly = false }: CarCardProps) {
   const { user } = useAuthStore()
   const { joinCar, leaveCar, removeCar, kickPassenger } = useSessionStore()
   const [loading, setLoading] = useState(false)
@@ -126,7 +127,7 @@ export function CarCard({ car, isBanned, onRefresh }: CarCardProps) {
                 >
                   <Avatar user={passenger.user} size="sm" />
                   <span className="text-sm text-primary-800">{passenger.user.name}</span>
-                  {isDriver && passenger.userId !== user?.id && (
+                  {!readOnly && isDriver && passenger.userId !== user?.id && (
                     <div className="flex gap-1 ml-1">
                       <button
                         onClick={() => handleKick(passenger.userId)}
@@ -155,42 +156,44 @@ export function CarCard({ car, isBanned, onRefresh }: CarCardProps) {
           <p className="text-sm text-red-500 mb-3">{error}</p>
         )}
 
-        {/* Actions */}
-        <div className="flex gap-2">
-          {isDriver ? (
-            <button
-              onClick={handleRemoveCar}
-              disabled={loading}
-              className="btn-danger flex-1"
-            >
-              Retirer ma voiture
-            </button>
-          ) : isPassenger ? (
-            <button
-              onClick={handleLeave}
-              disabled={loading}
-              className="btn-secondary flex-1"
-            >
-              Quitter
-            </button>
-          ) : isBanned ? (
-            <button disabled className="btn-secondary flex-1 opacity-50">
-              Banni de cette voiture
-            </button>
-          ) : isFull ? (
-            <button disabled className="btn-secondary flex-1 opacity-50">
-              Complet
-            </button>
-          ) : (
-            <button
-              onClick={handleJoin}
-              disabled={loading}
-              className="btn-primary flex-1"
-            >
-              Rejoindre
-            </button>
-          )}
-        </div>
+        {/* Actions - hidden in read-only mode */}
+        {!readOnly && (
+          <div className="flex gap-2">
+            {isDriver ? (
+              <button
+                onClick={handleRemoveCar}
+                disabled={loading}
+                className="btn-danger flex-1"
+              >
+                Retirer ma voiture
+              </button>
+            ) : isPassenger ? (
+              <button
+                onClick={handleLeave}
+                disabled={loading}
+                className="btn-secondary flex-1"
+              >
+                Quitter
+              </button>
+            ) : isBanned ? (
+              <button disabled className="btn-secondary flex-1 opacity-50">
+                Banni de cette voiture
+              </button>
+            ) : isFull ? (
+              <button disabled className="btn-secondary flex-1 opacity-50">
+                Complet
+              </button>
+            ) : (
+              <button
+                onClick={handleJoin}
+                disabled={loading}
+                className="btn-primary flex-1"
+              >
+                Rejoindre
+              </button>
+            )}
+          </div>
+        )}
       </div>
 
       {/* Ban Modal */}

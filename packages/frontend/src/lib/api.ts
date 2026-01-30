@@ -167,6 +167,15 @@ export const api = {
     return handleResponse<{ sessions: Session[]; hasMore: boolean; nextCursor?: string }>(res)
   },
 
+  async getPastSessions(groupId: string, limit: number = 15, cursor?: string) {
+    const params = new URLSearchParams({ limit: limit.toString() })
+    if (cursor) params.append('cursor', cursor)
+    const res = await fetch(`${API_BASE}/sessions/past/${groupId}?${params}`, {
+      credentials: 'include'
+    })
+    return handleResponse<{ sessions: Session[]; hasMore: boolean; nextCursor?: string }>(res)
+  },
+
   async getSession(id: string) {
     const res = await fetch(`${API_BASE}/sessions/${id}`, {
       credentials: 'include'

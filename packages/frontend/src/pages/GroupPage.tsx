@@ -9,8 +9,9 @@ import { CreateSessionModal } from '../components/CreateSessionModal'
 import { CreateRecurrenceModal } from '../components/CreateRecurrenceModal'
 import { UpcomingSessionsList } from '../components/UpcomingSessionsList'
 import { MonthCalendar } from '../components/MonthCalendar'
+import { PastSessionsList } from '../components/PastSessionsList'
 
-type ViewMode = 'list' | 'calendar'
+type ViewMode = 'list' | 'calendar' | 'history'
 
 export function GroupPage() {
   const { groupId } = useParams<{ groupId: string }>()
@@ -162,10 +163,12 @@ export function GroupPage() {
         </div>
       </div>
 
-      {/* Upcoming Sessions */}
+      {/* Sessions */}
       <div className="mb-6">
         <div className="flex items-center justify-between mb-3">
-          <h2 className="text-lg font-medium text-primary-800">Prochaines séances</h2>
+          <h2 className="text-lg font-medium text-primary-800">
+            {viewMode === 'history' ? 'Historique' : 'Prochaines séances'}
+          </h2>
           {/* View Mode Toggle */}
           <div className="flex bg-primary-100 rounded-warm p-0.5">
             <button
@@ -202,6 +205,23 @@ export function GroupPage() {
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
               </svg>
             </button>
+            <button
+              onClick={() => {
+                setViewMode('history')
+                localStorage.setItem('pioum-view-mode', 'history')
+              }}
+              className={`px-3 py-1 text-sm rounded-warm transition-colors ${
+                viewMode === 'history'
+                  ? 'bg-white text-primary-800 shadow-warm'
+                  : 'text-primary-600 hover:text-primary-800'
+              }`}
+              aria-label="Historique"
+              title="Historique"
+            >
+              <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+              </svg>
+            </button>
           </div>
         </div>
         {groupId && viewMode === 'list' && (
@@ -216,6 +236,12 @@ export function GroupPage() {
             groupId={groupId}
             refreshTrigger={refreshKey}
             isAdmin={isAdmin}
+          />
+        )}
+        {groupId && viewMode === 'history' && (
+          <PastSessionsList
+            groupId={groupId}
+            refreshTrigger={refreshKey}
           />
         )}
       </div>

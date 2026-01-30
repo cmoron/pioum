@@ -18,6 +18,7 @@ interface SessionCardProps {
   expanded?: boolean
   onToggleExpand?: () => void
   isAdmin?: boolean
+  isPast?: boolean
 }
 
 function formatSessionDate(dateStr: string): string {
@@ -41,7 +42,8 @@ export function SessionCard({
   alwaysExpanded = false,
   expanded: controlledExpanded,
   onToggleExpand,
-  isAdmin = false
+  isAdmin = false,
+  isPast = false
 }: SessionCardProps) {
   const { user } = useAuthStore()
   const [internalExpanded, setInternalExpanded] = useState(false)
@@ -120,27 +122,34 @@ export function SessionCard({
   // Compact mode - collapsible single line
   if (compact) {
     return (
-      <div className="card overflow-hidden">
+      <div className={`card overflow-hidden ${isPast ? 'bg-primary-50' : ''}`}>
         <button
           onClick={() => setExpanded(!expanded)}
-          className="w-full p-3 flex items-center justify-between hover:bg-primary-50 transition-colors text-left"
+          className={`w-full p-3 flex items-center justify-between transition-colors text-left ${isPast ? 'hover:bg-primary-100' : 'hover:bg-primary-50'}`}
         >
           <div className="flex items-center gap-3 flex-1 min-w-0">
             <div className="flex-1 min-w-0">
               <div className="flex items-center gap-2">
-                <span className="font-medium text-primary-800 capitalize text-sm">
+                <span className={`font-medium capitalize text-sm ${isPast ? 'text-primary-600' : 'text-primary-800'}`}>
                   {formatSessionDate(session.date)}
                 </span>
-                <span className="text-xs text-primary-500">
+                <span className={`text-xs ${isPast ? 'text-primary-400' : 'text-primary-500'}`}>
                   {formatSessionTime(session.startTime, session.endTime)}
                 </span>
-                {isLocked && (
+                {isPast ? (
+                  <span className="text-xs text-primary-400 flex items-center gap-1">
+                    <svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                    </svg>
+                    Terminée
+                  </span>
+                ) : isLocked && (
                   <svg className="w-3.5 h-3.5 text-amber-500 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
                   </svg>
                 )}
               </div>
-              <div className="flex items-center gap-2 text-xs text-primary-500">
+              <div className={`flex items-center gap-2 text-xs ${isPast ? 'text-primary-400' : 'text-primary-500'}`}>
                 <span>{session.passengers.length} participant{session.passengers.length > 1 ? 's' : ''}</span>
                 <span>•</span>
                 <span>{session.cars.length} voiture{session.cars.length > 1 ? 's' : ''}</span>
@@ -150,7 +159,7 @@ export function SessionCard({
 
           <div className="flex items-center gap-2">
             {isParticipating && (
-              <span className="w-2 h-2 rounded-full bg-green-500 flex-shrink-0" title="Tu participes" />
+              <span className={`w-2 h-2 rounded-full flex-shrink-0 ${isPast ? 'bg-green-400' : 'bg-green-500'}`} title="Tu as participé" />
             )}
             <svg
               className={`w-4 h-4 text-primary-400 transition-transform ${expanded ? 'rotate-180' : ''}`}
@@ -165,34 +174,37 @@ export function SessionCard({
 
         {/* Expanded content */}
         {expanded && (
-          <div className="border-t border-primary-200 p-3 space-y-3">
-            <div className="flex gap-2">
-              {isParticipating ? (
-                <button onClick={handleLeave} disabled={loading} className="btn-secondary flex-1 text-sm py-1.5">
-                  Je ne viens plus
-                </button>
-              ) : (
-                <button
-                  onClick={handleJoin}
-                  disabled={loading || isLocked}
-                  className="btn-primary flex-1 text-sm py-1.5 disabled:opacity-50"
-                >
-                  {isLocked ? 'Fermé' : 'Je viens !'}
-                </button>
-              )}
-              {isParticipating && !myCar && !isLocked && (
-                <button onClick={() => setShowCarSelector(true)} disabled={loading} className="btn-secondary text-sm py-1.5">
-                  + Voiture
-                </button>
-              )}
-            </div>
+          <div className={`border-t p-3 space-y-3 ${isPast ? 'border-primary-100' : 'border-primary-200'}`}>
+            {/* Action buttons - only for upcoming sessions */}
+            {!isPast && (
+              <div className="flex gap-2">
+                {isParticipating ? (
+                  <button onClick={handleLeave} disabled={loading} className="btn-secondary flex-1 text-sm py-1.5">
+                    Je ne viens plus
+                  </button>
+                ) : (
+                  <button
+                    onClick={handleJoin}
+                    disabled={loading || isLocked}
+                    className="btn-primary flex-1 text-sm py-1.5 disabled:opacity-50"
+                  >
+                    {isLocked ? 'Fermé' : 'Je viens !'}
+                  </button>
+                )}
+                {isParticipating && !myCar && !isLocked && (
+                  <button onClick={() => setShowCarSelector(true)} disabled={loading} className="btn-secondary text-sm py-1.5">
+                    + Voiture
+                  </button>
+                )}
+              </div>
+            )}
 
             {participantsWithoutCar.length > 0 && (
               <div className="flex flex-wrap gap-1.5">
                 {participantsWithoutCar.map(p => (
-                  <div key={p.id} className="flex items-center gap-1 bg-primary-50 rounded-full pl-0.5 pr-2 py-0.5 border border-primary-200">
+                  <div key={p.id} className={`flex items-center gap-1 rounded-full pl-0.5 pr-2 py-0.5 border ${isPast ? 'bg-primary-100 border-primary-100' : 'bg-primary-50 border-primary-200'}`}>
                     <Avatar user={p.user} size="xs" />
-                    <span className="text-xs text-primary-700">{p.user.name}</span>
+                    <span className={`text-xs ${isPast ? 'text-primary-600' : 'text-primary-700'}`}>{p.user.name}</span>
                   </div>
                 ))}
               </div>
@@ -201,35 +213,37 @@ export function SessionCard({
             {session.cars.length > 0 && (
               <div className="space-y-1.5">
                 {session.cars.map(car => (
-                  <CarCard key={car.id} car={car} isBanned={bansReceived.includes(car.driverId)} onRefresh={onRefresh} />
+                  <CarCard key={car.id} car={car} isBanned={bansReceived.includes(car.driverId)} onRefresh={onRefresh} readOnly={isPast} />
                 ))}
               </div>
             )}
 
-            {/* Edit and Cancel buttons */}
-            <div className="flex gap-2">
-              {canEdit && (
-                <button
-                  onClick={() => setShowEditModal(true)}
-                  disabled={loading}
-                  className="flex-1 text-sm text-primary-600 hover:text-primary-700 hover:bg-primary-50 rounded-warm py-1.5 transition-colors disabled:opacity-50 flex items-center justify-center gap-1"
-                >
-                  <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
-                  </svg>
-                  Modifier
-                </button>
-              )}
-              {canCancel && (
-                <button
-                  onClick={handleCancelClick}
-                  disabled={loading}
-                  className="flex-1 text-sm text-red-600 hover:text-red-700 hover:bg-red-50 rounded-warm py-1.5 transition-colors disabled:opacity-50"
-                >
-                  Annuler
-                </button>
-              )}
-            </div>
+            {/* Edit and Cancel buttons - only for upcoming sessions */}
+            {!isPast && (canEdit || canCancel) && (
+              <div className="flex gap-2">
+                {canEdit && (
+                  <button
+                    onClick={() => setShowEditModal(true)}
+                    disabled={loading}
+                    className="flex-1 text-sm text-primary-600 hover:text-primary-700 hover:bg-primary-50 rounded-warm py-1.5 transition-colors disabled:opacity-50 flex items-center justify-center gap-1"
+                  >
+                    <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+                    </svg>
+                    Modifier
+                  </button>
+                )}
+                {canCancel && (
+                  <button
+                    onClick={handleCancelClick}
+                    disabled={loading}
+                    className="flex-1 text-sm text-red-600 hover:text-red-700 hover:bg-red-50 rounded-warm py-1.5 transition-colors disabled:opacity-50"
+                  >
+                    Annuler
+                  </button>
+                )}
+              </div>
+            )}
           </div>
         )}
 

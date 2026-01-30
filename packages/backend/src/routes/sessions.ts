@@ -43,6 +43,95 @@ function isSessionLocked(session: { startTime: Date }): boolean {
   return new Date() >= session.startTime
 }
 
+// Get past sessions for a group (history)
+sessionsRouter.get('/past/:groupId', authenticate, async (req, res, next) => {
+  try {
+    const groupId = req.params.groupId as string
+    const limit = Math.min(parseInt(req.query.limit as string) || 15, 50)
+    const cursor = req.query.cursor as string | undefined
+
+    // Verify membership
+    const membership = await prisma.groupMember.findUnique({
+      where: {
+        userId_groupId: {
+          userId: req.user!.userId,
+          groupId
+        }
+      }
+    })
+
+    if (!membership) {
+      throw new AppError(403, 'Not a member of this group')
+    }
+
+    const now = new Date()
+
+    // Build cursor condition if provided
+    let cursorCondition = {}
+    if (cursor) {
+      const cursorSession = await prisma.session.findUnique({ where: { id: cursor } })
+      if (cursorSession) {
+        // Get sessions older than the cursor (pagination going back in time)
+        cursorCondition = {
+          OR: [
+            { startTime: { lt: cursorSession.startTime } },
+            { startTime: cursorSession.startTime, id: { lt: cursor } }
+          ]
+        }
+      }
+    }
+
+    const sessions = await prisma.session.findMany({
+      where: {
+        groupId,
+        // Sessions that have ended (endTime <= now)
+        endTime: { lte: now },
+        ...cursorCondition
+      },
+      include: {
+        cars: {
+          include: {
+            driver: {
+              select: USER_SELECT
+            },
+            userCar: {
+              include: { avatar: true }
+            },
+            passengers: {
+              include: {
+                user: {
+                  select: USER_SELECT
+                }
+              }
+            }
+          }
+        },
+        passengers: {
+          include: {
+            user: {
+              select: USER_SELECT
+            }
+          }
+        }
+      },
+      orderBy: [{ startTime: 'desc' }, { id: 'desc' }],
+      take: limit + 1 // Take one extra to know if there are more
+    })
+
+    const hasMore = sessions.length > limit
+    const resultSessions = hasMore ? sessions.slice(0, limit) : sessions
+    const nextCursor = hasMore ? resultSessions[resultSessions.length - 1]?.id : undefined
+
+    res.json({
+      sessions: resultSessions,
+      hasMore,
+      nextCursor
+    })
+  } catch (error) {
+    next(error)
+  }
+})
+
 // Get upcoming sessions for a group
 sessionsRouter.get('/upcoming/:groupId', authenticate, async (req, res, next) => {
   try {
@@ -655,20 +744,32 @@ sessionsRouter.delete('/:id', authenticate, async (req, res, next) => {
           scope: 'future'
         })
       } else if (scope === 'all') {
-        // Delete all sessions from the pattern and the pattern itself
+        const now = new Date()
+
+        // Delete only future sessions from the pattern
         const deleted = await prisma.session.deleteMany({
           where: {
-            recurrencePatternId: session.recurrencePatternId
+            recurrencePatternId: session.recurrencePatternId,
+            startTime: { gt: now }
           }
         })
 
-        // Also delete the pattern
+        // Detach past sessions from the pattern (preserve historical data)
+        await prisma.session.updateMany({
+          where: {
+            recurrencePatternId: session.recurrencePatternId,
+            startTime: { lte: now }
+          },
+          data: { recurrencePatternId: null }
+        })
+
+        // Delete the pattern
         await prisma.recurrencePattern.delete({
           where: { id: session.recurrencePatternId }
         })
 
         res.json({
-          message: `${deleted.count} séance(s) et la récurrence supprimées`,
+          message: `${deleted.count} séance(s) future(s) supprimée(s), récurrence supprimée (historique conservé)`,
           deletedCount: deleted.count,
           patternDeleted: true,
           scope: 'all'

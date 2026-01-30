@@ -57,12 +57,15 @@ pioum/
 │   │   │   ├── routes/           # API endpoints
 │   │   │   │   ├── auth.ts       # Authentification
 │   │   │   │   ├── groups.ts     # Gestion groupes
-│   │   │   │   ├── sessions.ts   # Sessions covoiturage
+│   │   │   │   ├── sessions.ts   # Sessions avec horaires et récurrences
+│   │   │   │   ├── recurrencePatterns.ts  # Patterns de récurrence
 │   │   │   │   ├── cars.ts       # Voitures et passagers
 │   │   │   │   ├── bans.ts       # Système de ban
 │   │   │   │   ├── avatars.ts    # Avatars
 │   │   │   │   ├── users.ts      # Profils
 │   │   │   │   └── userCars.ts   # Voitures perso
+│   │   │   ├── services/
+│   │   │   │   └── recurrence.ts # Génération d'occurrences
 │   │   │   ├── middleware/
 │   │   │   │   ├── auth.ts       # JWT verification
 │   │   │   │   └── errorHandler.ts
@@ -84,6 +87,13 @@ pioum/
 │       │   ├── components/       # Composants réutilisables
 │       │   │   ├── Avatar.tsx
 │       │   │   ├── CarCard.tsx
+│       │   │   ├── SessionCard.tsx
+│       │   │   ├── UpcomingSessionsList.tsx
+│       │   │   ├── MonthCalendar.tsx
+│       │   │   ├── CreateSessionModal.tsx
+│       │   │   ├── CreateRecurrenceModal.tsx
+│       │   │   ├── EditSessionModal.tsx
+│       │   │   ├── DeleteSessionModal.tsx
 │       │   │   ├── BanModal.tsx
 │       │   │   ├── LoadingSpinner.tsx
 │       │   │   └── ...
@@ -136,7 +146,8 @@ Voir [ARCHITECTURE.md](./ARCHITECTURE.md) pour le diagramme ER complet. Entités
 - **User** - Utilisateur avec profil et avatar
 - **Group** - Groupe de covoiturage avec code d'invitation
 - **GroupMember** - Relation User-Group avec rôle (admin/member)
-- **Session** - Instance covoiturage pour une date
+- **RecurrencePattern** - Pattern de récurrence (jours de semaine, horaires)
+- **Session** - Instance covoiturage avec startTime/endTime et lien vers pattern
 - **Car** - Voiture déclarée par un conducteur pour une session
 - **Passenger** - Relation User-Car pour une session
 - **UserCar** - Voiture personnelle d'un utilisateur
@@ -696,4 +707,4 @@ cat packages/backend/.env | grep NODE_ENV
 
 ---
 
-**Dernière mise à jour** : 2026-01-26
+**Dernière mise à jour** : 2026-01-29

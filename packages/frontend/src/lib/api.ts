@@ -158,11 +158,36 @@ export const api = {
     return handleResponse<{ session: Session }>(res)
   },
 
+  async getUpcomingSessions(groupId: string, limit: number = 10, cursor?: string) {
+    const params = new URLSearchParams({ limit: limit.toString() })
+    if (cursor) params.append('cursor', cursor)
+    const res = await fetch(`${API_BASE}/sessions/upcoming/${groupId}?${params}`, {
+      credentials: 'include'
+    })
+    return handleResponse<{ sessions: Session[]; hasMore: boolean; nextCursor?: string }>(res)
+  },
+
+  async getPastSessions(groupId: string, limit: number = 15, cursor?: string) {
+    const params = new URLSearchParams({ limit: limit.toString() })
+    if (cursor) params.append('cursor', cursor)
+    const res = await fetch(`${API_BASE}/sessions/past/${groupId}?${params}`, {
+      credentials: 'include'
+    })
+    return handleResponse<{ sessions: Session[]; hasMore: boolean; nextCursor?: string }>(res)
+  },
+
   async getSession(id: string) {
     const res = await fetch(`${API_BASE}/sessions/${id}`, {
       credentials: 'include'
     })
     return handleResponse<{ session: Session }>(res)
+  },
+
+  async getSessionLockStatus(sessionId: string) {
+    const res = await fetch(`${API_BASE}/sessions/${sessionId}/lock-status`, {
+      credentials: 'include'
+    })
+    return handleResponse<{ isLocked: boolean; canModify: boolean; locksAt: string }>(res)
   },
 
   async joinSession(sessionId: string) {
@@ -179,6 +204,40 @@ export const api = {
       credentials: 'include'
     })
     return handleResponse<{ message: string }>(res)
+  },
+
+  async cancelSession(sessionId: string, scope?: 'single' | 'future' | 'all') {
+    const params = scope ? `?scope=${scope}` : ''
+    const res = await fetch(`${API_BASE}/sessions/${sessionId}${params}`, {
+      method: 'DELETE',
+      credentials: 'include'
+    })
+    return handleResponse<{
+      message: string
+      hadParticipants?: boolean
+      deletedCount: number
+      patternDeleted?: boolean
+      scope: string
+    }>(res)
+  },
+
+  async updateSession(sessionId: string, data: {
+    startTime: string
+    endTime: string
+    scope?: 'single' | 'future'
+  }) {
+    const res = await fetch(`${API_BASE}/sessions/${sessionId}`, {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(data),
+      credentials: 'include'
+    })
+    return handleResponse<{
+      session?: Session
+      message?: string
+      updatedCount?: number
+      detachedFromPattern?: boolean
+    }>(res)
   },
 
   // Cars
@@ -308,6 +367,38 @@ export const api = {
       credentials: 'include'
     })
     return handleResponse<{ message: string }>(res)
+  },
+
+  // Recurrence Patterns
+  async getRecurrencePatterns(groupId: string) {
+    const res = await fetch(`${API_BASE}/groups/${groupId}/recurrence-patterns`, {
+      credentials: 'include'
+    })
+    return handleResponse<{ patterns: RecurrencePattern[] }>(res)
+  },
+
+  async createRecurrencePattern(groupId: string, data: {
+    startTime: string
+    endTime: string
+    daysOfWeek: number[]
+    startDate: string
+    endDate?: string
+  }) {
+    const res = await fetch(`${API_BASE}/groups/${groupId}/recurrence-patterns`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(data),
+      credentials: 'include'
+    })
+    return handleResponse<{ pattern: RecurrencePattern; sessionsCreated: number }>(res)
+  },
+
+  async deleteRecurrencePattern(patternId: string, deleteFutureSessions: boolean = false) {
+    const res = await fetch(`${API_BASE}/recurrence-patterns/${patternId}?deleteFutureSessions=${deleteFutureSessions}`, {
+      method: 'DELETE',
+      credentials: 'include'
+    })
+    return handleResponse<{ message: string }>(res)
   }
 }
 
@@ -376,8 +467,31 @@ export interface Session {
   id: string
   groupId: string
   date: string
+  startTime: string
+  endTime: string
+  recurrencePatternId?: string
+  createdById?: string
   cars: Car[]
   passengers: Passenger[]
+}
+
+export interface RecurrencePattern {
+  id: string
+  groupId: string
+  createdById: string
+  startTime: string
+  endTime: string
+  daysOfWeek: number[]
+  startDate: string
+  endDate?: string
+  createdAt: string
+  createdBy: {
+    id: string
+    name: string
+  }
+  _count: {
+    sessions: number
+  }
 }
 
 export interface Ban {

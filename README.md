@@ -5,9 +5,11 @@ Application de covoiturage pour aller à la muscu avec tes potes. Une webapp sim
 ## Fonctionnalités
 
 - **Gestion de groupes** avec code d'invitation
-- **Sessions quotidiennes** de covoiturage avec inscription en temps réel
+- **Planification de séances** avec horaires de début/fin et vue calendrier mensuel
+- **Récurrences** : créer des patterns répétitifs (ex: "tous les lundi-vendredi 11h30-14h")
 - **Gestion des voitures** avec déclaration de places disponibles
 - **Attribution automatique** des passagers aux voitures
+- **Verrouillage automatique** des inscriptions à l'heure de début de séance
 - **Système de ban** avec durée configurable (1 jour à 2 semaines)
 - **Hall of Fame** des bans (stats fun)
 - **Authentification OAuth Google** + Magic Link (sans mot de passe)
@@ -173,10 +175,19 @@ pnpm test:run     # Tests une seule fois
 - `DELETE /api/groups/:id` - Supprimer (admin)
 - `DELETE /api/groups/:id/leave` - Quitter un groupe
 
-### Sessions & Voitures
+### Sessions & Récurrences
 - `GET /api/sessions/today/:groupId` - Session du jour
+- `GET /api/sessions/upcoming/:groupId` - Prochaines sessions (paginé)
+- `POST /api/sessions` - Créer une séance ponctuelle
+- `PATCH /api/sessions/:id` - Modifier (scope=single|future)
+- `DELETE /api/sessions/:id` - Supprimer (scope=single|future|all)
 - `POST /api/sessions/:id/join` - Participer
 - `DELETE /api/sessions/:id/leave` - Ne plus participer
+- `GET /api/groups/:id/recurrence-patterns` - Patterns du groupe
+- `POST /api/groups/:id/recurrence-patterns` - Créer un pattern
+- `DELETE /api/recurrence-patterns/:id` - Supprimer un pattern
+
+### Voitures
 - `POST /api/cars` - Ajouter ma voiture
 - `PATCH /api/cars/:id` - Modifier places
 - `DELETE /api/cars/:id` - Retirer

@@ -17,14 +17,16 @@ model User {
   createdAt       DateTime  @default(now())
   updatedAt       DateTime  @updatedAt
 
-  avatar        Avatar?        @relation(fields: [avatarId], references: [id])
-  memberships   GroupMember[]
-  cars          Car[]
-  participations Passenger[]
-  bansGiven     Ban[]          @relation("BanGiver")
-  bansReceived  Ban[]          @relation("BanReceiver")
-  magicLinks    MagicLink[]
-  userCars      UserCar[]
+  avatar             Avatar?             @relation(fields: [avatarId], references: [id])
+  memberships        GroupMember[]
+  cars               Car[]
+  participations     Passenger[]
+  bansGiven          Ban[]               @relation("BanGiver")
+  bansReceived       Ban[]               @relation("BanReceiver")
+  magicLinks         MagicLink[]
+  userCars           UserCar[]
+  recurrencePatterns RecurrencePattern[]
+  sessionsCreated    Session[]           @relation("sessionsCreated")
 
   @@index([email])
   @@index([googleId])
@@ -64,9 +66,10 @@ model Group {
   createdAt  DateTime @default(now())
   updatedAt  DateTime @updatedAt
 
-  avatar   Avatar?       @relation(fields: [avatarId], references: [id])
-  members  GroupMember[]
-  sessions Session[]
+  avatar             Avatar?             @relation(fields: [avatarId], references: [id])
+  members            GroupMember[]
+  sessions           Session[]
+  recurrencePatterns RecurrencePattern[]
 
   @@index([inviteCode])
 }
@@ -85,18 +88,44 @@ model GroupMember {
   @@index([groupId])
 }
 
+model RecurrencePattern {
+  id          String    @id @default(cuid())
+  groupId     String
+  createdById String
+  startTime   String    // Time of day HH:mm format
+  endTime     String    // Time of day HH:mm format
+  daysOfWeek  Int[]     // 0=Sunday, 1=Monday, ..., 6=Saturday
+  startDate   DateTime  @db.Date
+  endDate     DateTime? @db.Date
+  createdAt   DateTime  @default(now())
+
+  group     Group     @relation(fields: [groupId], references: [id], onDelete: Cascade)
+  createdBy User      @relation(fields: [createdById], references: [id], onDelete: Cascade)
+  sessions  Session[]
+
+  @@index([groupId])
+}
+
 model Session {
-  id        String   @id @default(cuid())
-  groupId   String
-  date      DateTime @db.Date
-  createdAt DateTime @default(now())
+  id                   String   @id @default(cuid())
+  groupId              String
+  date                 DateTime @db.Date
+  startTime            DateTime
+  endTime              DateTime
+  recurrencePatternId  String?
+  createdById          String?
+  createdAt            DateTime @default(now())
 
-  group      Group       @relation(fields: [groupId], references: [id], onDelete: Cascade)
-  cars       Car[]
-  passengers Passenger[]
+  group             Group              @relation(fields: [groupId], references: [id], onDelete: Cascade)
+  recurrencePattern RecurrencePattern? @relation(fields: [recurrencePatternId], references: [id], onDelete: SetNull)
+  createdBy         User?              @relation("sessionsCreated", fields: [createdById], references: [id], onDelete: SetNull)
+  cars              Car[]
+  passengers        Passenger[]
 
-  @@unique([groupId, date])
+  @@unique([groupId, startTime])
   @@index([groupId, date])
+  @@index([groupId, startTime])
+  @@index([recurrencePatternId])
 }
 
 model Car {

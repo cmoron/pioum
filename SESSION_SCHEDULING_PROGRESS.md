@@ -34,13 +34,13 @@ Un système complet de planification avec :
 | 5 | Edit Recurring Sessions | ✅ Complete |
 | 6 | Cancel Sessions | ✅ Complete |
 | 7 | Upcoming Sessions List View | ✅ Complete |
-| 8 | Calendar Week View | ✅ Complete |
-| 9 | Session Detail Page | ❌ Not Started |
-| 10 | Create/Edit Session Forms | ❌ Not Started |
-| 11 | Historical Sessions View | ❌ Not Started |
-| 12 | Polish & Edge Cases | ❌ Not Started |
+| 8 | Calendar Month View | ✅ Complete |
+| 9 | Session Detail Page | ⏭️ Skipped (redundant) |
+| 10 | Create/Edit Session Forms | ⏭️ Skipped (redundant) |
+| 11 | Historical Sessions View | ✅ Complete |
+| 12 | Polish & Edge Cases | ✅ Complete |
 
-**Progression : 8/12 stages terminés (67%)**
+**Progression : 10/10 stages terminés (100%)** *(stages 9-10 redondants avec fonctionnalités existantes)*
 
 ---
 
@@ -129,6 +129,46 @@ Un système complet de planification avec :
   - Avertissement si la séance a des participants
 - Réponse enrichie avec `deletedCount` et `patternDeleted`
 
+### Stages 9 & 10: Skipped (Redundant)
+Ces stages ont été jugés redondants car :
+- **Stage 9 (Session Detail Page)** : `SessionCard` affiche déjà tous les détails en mode complet et compact
+- **Stage 10 (Create/Edit Session Forms)** : Les modals `CreateSessionModal`, `CreateRecurrenceModal` et `EditSessionModal` couvrent déjà ces besoins
+
+### Stage 11: Historical Sessions View
+- Endpoint `GET /sessions/past/:groupId` avec pagination cursor-based
+  - Filtre les sessions où `endTime <= now()`
+  - Tri par date décroissante (plus récentes en premier)
+  - Support de la pagination (limit + cursor)
+- Composant `PastSessionsList` avec :
+  - Regroupement par période temporelle (cette semaine, semaine dernière, ce mois-ci, plus ancien)
+  - Sessions en mode compact avec prop `isPast`
+  - Pagination "Voir plus" en bas de liste
+  - État vide avec message explicatif
+- Composant `SessionCard` mis à jour avec prop `isPast` :
+  - Fond légèrement muté (`bg-primary-50`)
+  - Badge "Terminée" au lieu du cadenas
+  - Mode lecture seule (pas de boutons join/leave/edit/cancel)
+  - Textes avec opacité réduite pour distinction visuelle
+- Composant `CarCard` mis à jour avec prop `readOnly` :
+  - Masque les boutons d'action (rejoindre, quitter, etc.)
+  - Masque les boutons kick/ban du conducteur
+- Toggle 3 vues dans `GroupPage` :
+  - Liste (icône lignes)
+  - Calendrier (icône calendrier)
+  - Historique (icône horloge)
+  - Titre de section dynamique ("Prochaines séances" / "Historique")
+  - Préférence sauvegardée dans localStorage
+
+### Stage 12: Polish & Edge Cases
+- **Fix timezone** : Ajout de `date-fns-tz` pour gestion correcte Europe/Paris
+  - Frontend (`CreateSessionModal`, `EditSessionModal`) : conversion Paris → UTC avec `fromZonedTime`
+  - Frontend (`EditSessionModal`) : conversion UTC → Paris avec `toZonedTime` pour affichage
+  - Backend (`recurrence.ts`) : génération des sessions avec DST handling correct
+- **Préservation historique** : Suppression récurrence (`scope=all`) préserve les sessions passées
+  - Sessions passées détachées du pattern au lieu d'être supprimées
+  - Seules les sessions futures sont supprimées
+  - L'historique reste consultable
+
 ---
 
 ## Fichiers clés créés/modifiés
@@ -146,35 +186,35 @@ packages/backend/src/services/recurrence.ts    # Génération d'occurrences
 packages/frontend/src/lib/api.ts               # Méthodes API
 packages/frontend/src/components/SessionCard.tsx
 packages/frontend/src/components/UpcomingSessionsList.tsx
+packages/frontend/src/components/PastSessionsList.tsx   # Stage 11
 packages/frontend/src/components/MonthCalendar.tsx
 packages/frontend/src/components/CreateSessionModal.tsx
 packages/frontend/src/components/CreateRecurrenceModal.tsx
 packages/frontend/src/components/EditSessionModal.tsx
 packages/frontend/src/components/DeleteSessionModal.tsx
+packages/frontend/src/components/CarCard.tsx           # readOnly prop ajoutée
 packages/frontend/src/pages/GroupPage.tsx
 ```
 
 ---
 
-## Prochaines étapes suggérées
+## Epic terminée
 
-1. **Stage 9 - Session Detail Page** : Page dédiée avec détail complet d'une séance
-
-2. **Stage 10 - Create/Edit Session Forms** : Améliorer les formulaires de création
-
-3. **Stage 11 - Historical Sessions View** : Voir l'historique des séances passées
-
-4. **Stage 12 - Polish & Edge Cases** : Timezone, sessions cross-midnight, optimisations
+L'epic Session Scheduling est maintenant complète. Améliorations futures possibles :
+- Sessions cross-midnight (fin après minuit)
+- Virtualisation des listes longues (react-window)
+- Tests E2E pour les parcours utilisateur
+- Timezone configurable par groupe
 
 ---
 
 ## Notes techniques
 
-- **Timezone** : Europe/Paris par défaut (configurable par groupe à terme)
+- **Timezone** : Europe/Paris (hardcodé via `date-fns-tz`)
 - **Fenêtre de génération** : Les récurrences génèrent des sessions sur 90 jours
 - **Verrouillage** : À l'heure de début (configurable via `registrationLockMinutes`)
 - **Pagination** : Cursor-based pour les listes de sessions
 
 ---
 
-*Dernière mise à jour : 29 janvier 2026 - Suppression avec scope ajoutée (Extension Stage 6)*
+*Dernière mise à jour : 30 janvier 2026 - Epic terminée (Stage 12 Polish & Edge Cases)*

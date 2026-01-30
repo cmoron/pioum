@@ -1,7 +1,10 @@
 import { useState } from 'react'
 import { format, parseISO } from 'date-fns'
 import { fr } from 'date-fns/locale'
+import { toZonedTime, fromZonedTime } from 'date-fns-tz'
 import { Session, api } from '../lib/api'
+
+const TIMEZONE = 'Europe/Paris'
 
 interface EditSessionModalProps {
   session: Session
@@ -11,11 +14,12 @@ interface EditSessionModalProps {
 
 export function EditSessionModal({ session, onClose, onUpdated }: EditSessionModalProps) {
   const sessionDate = parseISO(session.date)
-  const currentStart = parseISO(session.startTime)
-  const currentEnd = parseISO(session.endTime)
+  // Convert UTC times to Paris timezone for display
+  const currentStartParis = toZonedTime(parseISO(session.startTime), TIMEZONE)
+  const currentEndParis = toZonedTime(parseISO(session.endTime), TIMEZONE)
 
-  const [startTime, setStartTime] = useState(format(currentStart, 'HH:mm'))
-  const [endTime, setEndTime] = useState(format(currentEnd, 'HH:mm'))
+  const [startTime, setStartTime] = useState(format(currentStartParis, 'HH:mm'))
+  const [endTime, setEndTime] = useState(format(currentEndParis, 'HH:mm'))
   const [scope, setScope] = useState<'single' | 'future'>('single')
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
@@ -26,26 +30,30 @@ export function EditSessionModal({ session, onClose, onUpdated }: EditSessionMod
     e.preventDefault()
     setError(null)
 
-    // Create full datetime from date + time
+    // Create full datetime from date + time in Paris timezone
     const [startHour, startMin] = startTime.split(':').map(Number)
     const [endHour, endMin] = endTime.split(':').map(Number)
 
-    const newStartTime = new Date(sessionDate)
-    newStartTime.setHours(startHour, startMin, 0, 0)
+    const newStartTimeParis = new Date(sessionDate)
+    newStartTimeParis.setHours(startHour, startMin, 0, 0)
 
-    const newEndTime = new Date(sessionDate)
-    newEndTime.setHours(endHour, endMin, 0, 0)
+    const newEndTimeParis = new Date(sessionDate)
+    newEndTimeParis.setHours(endHour, endMin, 0, 0)
 
-    if (newEndTime <= newStartTime) {
+    if (newEndTimeParis <= newStartTimeParis) {
       setError("L'heure de fin doit être après l'heure de début")
       return
     }
 
+    // Convert Paris time to UTC for the backend
+    const newStartTimeUTC = fromZonedTime(newStartTimeParis, TIMEZONE)
+    const newEndTimeUTC = fromZonedTime(newEndTimeParis, TIMEZONE)
+
     setLoading(true)
     try {
       await api.updateSession(session.id, {
-        startTime: newStartTime.toISOString(),
-        endTime: newEndTime.toISOString(),
+        startTime: newStartTimeUTC.toISOString(),
+        endTime: newEndTimeUTC.toISOString(),
         scope: isRecurring ? scope : undefined
       })
       onUpdated()

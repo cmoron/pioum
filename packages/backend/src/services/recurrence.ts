@@ -1,5 +1,9 @@
 import { prisma } from '../lib/prisma.js'
-import { addDays, startOfDay, setHours, setMinutes } from 'date-fns'
+import { addDays, startOfDay } from 'date-fns'
+import { fromZonedTime } from 'date-fns-tz'
+
+// All times in patterns are stored as Paris time
+const TIMEZONE = 'Europe/Paris'
 
 interface CreatePatternInput {
   groupId: string
@@ -51,9 +55,15 @@ export async function generateSessionsForPattern(
     const dayOfWeek = currentDate.getDay() // 0=Sunday, 1=Monday, etc.
 
     if (pattern.daysOfWeek.includes(dayOfWeek)) {
-      // Create session datetime from date + time
-      const sessionStartTime = setMinutes(setHours(new Date(currentDate), startHour), startMin)
-      const sessionEndTime = setMinutes(setHours(new Date(currentDate), endHour), endMin)
+      // Create session datetime in Paris timezone, then convert to UTC
+      // This ensures DST is handled correctly
+      const parisStartTime = new Date(currentDate)
+      parisStartTime.setHours(startHour, startMin, 0, 0)
+      const sessionStartTime = fromZonedTime(parisStartTime, TIMEZONE)
+
+      const parisEndTime = new Date(currentDate)
+      parisEndTime.setHours(endHour, endMin, 0, 0)
+      const sessionEndTime = fromZonedTime(parisEndTime, TIMEZONE)
 
       sessionsToCreate.push({
         groupId: pattern.groupId,

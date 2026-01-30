@@ -1,5 +1,8 @@
 import { useState } from 'react'
 import { format, addDays, parseISO } from 'date-fns'
+import { fromZonedTime } from 'date-fns-tz'
+
+const TIMEZONE = 'Europe/Paris'
 
 interface CreateSessionModalProps {
   groupId: string
@@ -48,9 +51,18 @@ export function CreateSessionModal({ groupId, onClose, onCreated }: CreateSessio
     setLoading(true)
 
     try {
-      // Combine date and time into ISO datetime strings
-      const startDateTime = `${date}T${startTime}:00`
-      const endDateTime = `${date}T${endTime}:00`
+      // Parse time components
+      const [startHour, startMin] = startTime.split(':').map(Number)
+      const [endHour, endMin] = endTime.split(':').map(Number)
+
+      // Create dates in Paris timezone and convert to UTC
+      const startDate = new Date(date)
+      startDate.setHours(startHour, startMin, 0, 0)
+      const startDateTimeUTC = fromZonedTime(startDate, TIMEZONE)
+
+      const endDate = new Date(date)
+      endDate.setHours(endHour, endMin, 0, 0)
+      const endDateTimeUTC = fromZonedTime(endDate, TIMEZONE)
 
       const response = await fetch(`${import.meta.env.VITE_API_URL || '/api'}/sessions`, {
         method: 'POST',
@@ -58,8 +70,8 @@ export function CreateSessionModal({ groupId, onClose, onCreated }: CreateSessio
         body: JSON.stringify({
           groupId,
           date,
-          startTime: startDateTime,
-          endTime: endDateTime
+          startTime: startDateTimeUTC.toISOString(),
+          endTime: endDateTimeUTC.toISOString()
         }),
         credentials: 'include'
       })

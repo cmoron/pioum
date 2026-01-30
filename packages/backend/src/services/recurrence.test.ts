@@ -1,5 +1,6 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest'
 import { addDays, startOfDay } from 'date-fns'
+import { toZonedTime } from 'date-fns-tz'
 
 // Mock prisma before importing the module
 vi.mock('../lib/prisma.js', () => ({
@@ -107,13 +108,17 @@ describe('RecurrenceService', () => {
       expect(calls.length).toBeGreaterThan(0)
 
       const firstCall = calls[0][0].data
-      const startTime = firstCall.startTime as Date
-      const endTime = firstCall.endTime as Date
+      const startTimeUTC = firstCall.startTime as Date
+      const endTimeUTC = firstCall.endTime as Date
 
-      expect(startTime.getHours()).toBe(11)
-      expect(startTime.getMinutes()).toBe(30)
-      expect(endTime.getHours()).toBe(14)
-      expect(endTime.getMinutes()).toBe(0)
+      // Times are stored in UTC, convert back to Paris for verification
+      const startTimeParis = toZonedTime(startTimeUTC, 'Europe/Paris')
+      const endTimeParis = toZonedTime(endTimeUTC, 'Europe/Paris')
+
+      expect(startTimeParis.getHours()).toBe(11)
+      expect(startTimeParis.getMinutes()).toBe(30)
+      expect(endTimeParis.getHours()).toBe(14)
+      expect(endTimeParis.getMinutes()).toBe(0)
     })
 
     it('should skip duplicate sessions (unique constraint)', async () => {

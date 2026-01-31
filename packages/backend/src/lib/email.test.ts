@@ -73,6 +73,7 @@ describe('sendMagicLinkEmail', () => {
 
     it('should handle special characters in token', async () => {
       delete process.env.SMTP_HOST
+      process.env.FRONTEND_URL = 'http://localhost:5173'
       const specialToken = 'token-with-special_chars.123'
 
       const result = await sendMagicLinkEmail('test@example.com', specialToken)

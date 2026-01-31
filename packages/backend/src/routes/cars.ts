@@ -226,80 +226,92 @@ carsRouter.delete('/:id', authenticate, async (req, res, next) => {
 // Join a car
 carsRouter.post('/:id/join', authenticate, async (req, res, next) => {
   try {
-    const car = await prisma.car.findUnique({
-      where: { id: req.params.id as string },
-      include: {
-        session: true,
-        passengers: true
+    const carId = req.params.id as string
+    const userId = req.user!.userId
+
+    const result = await prisma.$transaction(async (tx) => {
+      const car = await tx.car.findUnique({
+        where: { id: carId },
+        include: {
+          session: true,
+          passengers: true
+        }
+      })
+
+      if (!car) {
+        throw new AppError(404, 'Car not found')
       }
-    })
 
-    if (!car) {
-      throw new AppError(404, 'Car not found')
-    }
+      // Verify membership
+      const membership = await tx.groupMember.findUnique({
+        where: {
+          userId_groupId: {
+            userId,
+            groupId: car.session.groupId
+          }
+        }
+      })
 
-    // Verify membership
-    const membership = await prisma.groupMember.findUnique({
-      where: {
-        userId_groupId: {
-          userId: req.user!.userId,
-          groupId: car.session.groupId
+      if (!membership) {
+        throw new AppError(403, 'Not a member of this group')
+      }
+
+      // Check if session is locked (admin can bypass)
+      if (isSessionLocked(car.session) && membership.role !== 'admin') {
+        throw new AppError(403, 'Les inscriptions sont fermées pour cette séance')
+      }
+
+      // Check for active ban from this driver
+      const activeBan = await tx.ban.findFirst({
+        where: {
+          giverId: car.driverId,
+          receiverId: userId,
+          endsAt: { gt: new Date() },
+          liftedAt: null
+        }
+      })
+
+      if (activeBan) {
+        throw new AppError(403, 'Tu es banni de cette voiture !', 'BANNED')
+      }
+
+      // Check if user is the driver
+      if (car.driverId === userId) {
+        throw new AppError(400, 'You are the driver')
+      }
+
+      // Check if already in this car (to avoid double counting in logic if something went wrong)
+      const alreadyInThisCar = car.passengers.some(p => p.userId === userId)
+      
+      if (!alreadyInThisCar) {
+        // Check if car is full
+        if (car.passengers.length >= car.seats) {
+          throw new AppError(400, 'Car is full')
         }
       }
-    })
 
-    if (!membership) {
-      throw new AppError(403, 'Not a member of this group')
-    }
-
-    // Check if session is locked (admin can bypass)
-    if (isSessionLocked(car.session) && membership.role !== 'admin') {
-      throw new AppError(403, 'Les inscriptions sont fermées pour cette séance')
-    }
-
-    // Check for active ban from this driver
-    const activeBan = await prisma.ban.findFirst({
-      where: {
-        giverId: car.driverId,
-        receiverId: req.user!.userId,
-        endsAt: { gt: new Date() },
-        liftedAt: null
-      }
-    })
-
-    if (activeBan) {
-      throw new AppError(403, 'Tu es banni de cette voiture !', 'BANNED')
-    }
-
-    // Check if car is full
-    if (car.passengers.length >= car.seats) {
-      throw new AppError(400, 'Car is full')
-    }
-
-    // Check if user is the driver
-    if (car.driverId === req.user!.userId) {
-      throw new AppError(400, 'You are the driver')
-    }
-
-    // Ensure user is participating in the session
-    const passenger = await prisma.passenger.upsert({
-      where: {
-        sessionId_userId: {
+      // Ensure user is participating in the session and joined to this car
+      const passenger = await tx.passenger.upsert({
+        where: {
+          sessionId_userId: {
+            sessionId: car.sessionId,
+            userId
+          }
+        },
+        create: {
           sessionId: car.sessionId,
-          userId: req.user!.userId
+          userId,
+          carId: car.id
+        },
+        update: {
+          carId: car.id
         }
-      },
-      create: {
-        sessionId: car.sessionId,
-        userId: req.user!.userId,
-        carId: car.id
-      },
-      update: {
-        carId: car.id
-      }
+      })
+
+      return passenger
     })
 
-    res.json({ message: 'Joined car', passenger })
+    res.json({ message: 'Joined car', passenger: result })
   } catch (error) {
     next(error)
   }

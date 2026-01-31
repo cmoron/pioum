@@ -1,0 +1,42 @@
+name: Deploy to Staging
+
+on:
+  push:
+    branches:
+      - main
+  workflow_dispatch:  # Permet le déclenchement manuel
+
+jobs:
+  deploy:
+    name: Deploy to Staging Server
+    runs-on: ubuntu-latest
+    environment: staging
+
+    steps:
+      - name: Deploy via SSH
+        uses: appleboy/ssh-action@v1.0.3
+        with:
+          host: ${{ secrets.STAGING_SSH_HOST }}
+          username: ${{ secrets.STAGING_SSH_USER }}
+          key: ${{ secrets.STAGING_SSH_KEY }}
+          script: |
+            cd ~/src/pioum-staging
+
+            echo "=== Pulling latest changes ==="
+            git fetch origin main
+            git reset --hard origin/main
+
+            echo "=== Building images ==="
+            ./deploy-staging.sh build
+
+            echo "=== Restarting containers ==="
+            docker-compose -f docker-compose.staging.yml --env-file .env.staging up -d
+
+            echo "=== Running migrations ==="
+            docker-compose -f docker-compose.staging.yml --env-file .env.staging exec -T backend npx prisma migrate deploy
+
+            echo "=== Checking health ==="
+            sleep 10
+            ./deploy-staging.sh health
+
+            echo "=== Deployment complete ==="

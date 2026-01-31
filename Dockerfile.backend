@@ -28,14 +28,25 @@ WORKDIR /app
 
 ENV NODE_ENV=production
 
-# Copy everything needed from builder (hoisted = copyable)
-COPY --from=builder /app/packages/backend/dist ./dist
-COPY --from=builder /app/packages/backend/prisma ./prisma
-COPY --from=builder /app/packages/backend/package.json ./
-COPY --from=builder /app/node_modules ./node_modules
+# Create non-root user for security
+RUN addgroup -g 1001 -S nodejs && \
+    adduser -S nodejs -u 1001
+
+# Copy everything needed from builder with correct ownership (faster than chown)
+COPY --from=builder --chown=nodejs:nodejs /app/packages/backend/dist ./dist
+COPY --from=builder --chown=nodejs:nodejs /app/packages/backend/prisma ./prisma
+COPY --from=builder --chown=nodejs:nodejs /app/packages/backend/package.json ./
+COPY --from=builder --chown=nodejs:nodejs /app/node_modules ./node_modules
+
+# Switch to non-root user
+USER nodejs
 
 # Expose port
 EXPOSE 3000
+
+# Healthcheck
+HEALTHCHECK --interval=30s --timeout=5s --start-period=10s --retries=3 \
+  CMD node -e "fetch('http://localhost:3000/api/health').then(r => r.ok ? process.exit(0) : process.exit(1)).catch(() => process.exit(1))"
 
 # Start the server
 CMD ["node", "dist/index.js"]

@@ -193,40 +193,39 @@ authRouter.post('/logout', (_req, res) => {
 })
 
 // DEV ONLY: Quick login with test user
-authRouter.post('/dev-login', async (req, res, next) => {
-  if (process.env.NODE_ENV !== 'development') {
-    return res.status(404).json({ error: 'Not found' })
-  }
+// This route is only registered in development mode - it does not exist in production/staging
+if (process.env.NODE_ENV === 'development') {
+  authRouter.post('/dev-login', async (req, res, next) => {
+    try {
+      const { name } = z.object({ name: z.string().min(1) }).parse(req.body)
+      const email = `${name.toLowerCase().replace(/\s+/g, '.')}@test.local`
 
-  try {
-    const { name } = z.object({ name: z.string().min(1) }).parse(req.body)
-    const email = `${name.toLowerCase().replace(/\s+/g, '.')}@test.local`
+      let user = await prisma.user.findUnique({ where: { email } })
 
-    let user = await prisma.user.findUnique({ where: { email } })
+      if (!user) {
+        user = await prisma.user.create({
+          data: { email, name }
+        })
+        console.log(`[DEV] Created test user: ${name} (${email})`)
+      } else {
+        console.log(`[DEV] Logged in as: ${name} (${email})`)
+      }
 
-    if (!user) {
-      user = await prisma.user.create({
-        data: { email, name }
+      const token = signToken({ userId: user.id, email: user.email || undefined })
+
+      res.cookie('token', token, {
+        httpOnly: true,
+        secure: false,
+        sameSite: 'lax',
+        maxAge: 7 * 24 * 60 * 60 * 1000
       })
-      console.log(`[DEV] Created test user: ${name} (${email})`)
-    } else {
-      console.log(`[DEV] Logged in as: ${name} (${email})`)
+
+      res.json({ user, token })
+    } catch (error) {
+      next(error)
     }
-
-    const token = signToken({ userId: user.id, email: user.email || undefined })
-
-    res.cookie('token', token, {
-      httpOnly: true,
-      secure: false,
-      sameSite: 'lax',
-      maxAge: 7 * 24 * 60 * 60 * 1000
-    })
-
-    res.json({ user, token })
-  } catch (error) {
-    next(error)
-  }
-})
+  })
+}
 
 // Get current user
 authRouter.get('/me', async (req, res) => {

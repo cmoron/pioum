@@ -41,7 +41,8 @@ authRouter.post('/google', async (req, res, next) => {
     }
 
     let user = await prisma.user.findUnique({
-      where: { googleId: payload.sub }
+      where: { googleId: payload.sub },
+      include: { avatar: true }
     })
 
     if (!user) {
@@ -63,7 +64,8 @@ authRouter.post('/google', async (req, res, next) => {
             googleId: payload.sub,
             // Update avatar from Google if not already set
             customAvatarUrl: userByEmail.customAvatarUrl || payload.picture
-          }
+          },
+          include: { avatar: true }
         })
       } else {
         // No user by googleId or email, create a new one.
@@ -73,7 +75,8 @@ authRouter.post('/google', async (req, res, next) => {
             name: payload.name || payload.email.split('@')[0],
             googleId: payload.sub,
             customAvatarUrl: payload.picture
-          }
+          },
+          include: { avatar: true }
         })
       }
     }
@@ -147,7 +150,11 @@ authRouter.post('/magic-link/verify', async (req, res, next) => {
 
     const magicLink = await prisma.magicLink.findUnique({
       where: { token },
-      include: { user: true }
+      include: {
+        user: {
+          include: { avatar: true }
+        }
+      }
     })
 
     if (!magicLink) {
@@ -200,11 +207,15 @@ if (process.env.NODE_ENV === 'development') {
       const { name } = z.object({ name: z.string().min(1) }).parse(req.body)
       const email = `${name.toLowerCase().replace(/\s+/g, '.')}@test.local`
 
-      let user = await prisma.user.findUnique({ where: { email } })
+      let user = await prisma.user.findUnique({
+        where: { email },
+        include: { avatar: true }
+      })
 
       if (!user) {
         user = await prisma.user.create({
-          data: { email, name }
+          data: { email, name },
+          include: { avatar: true }
         })
         console.log(`[DEV] Created test user: ${name} (${email})`)
       } else {

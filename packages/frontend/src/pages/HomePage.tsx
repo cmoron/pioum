@@ -10,7 +10,8 @@ export function HomePage() {
 
   useEffect(() => {
     fetchGroups()
-  }, [fetchGroups])
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [])
 
   if (loading && groups.length === 0) {
     return (

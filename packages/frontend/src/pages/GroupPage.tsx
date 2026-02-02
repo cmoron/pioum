@@ -35,7 +35,8 @@ export function GroupPage() {
     if (groupId) {
       fetchGroup(groupId)
     }
-  }, [groupId, fetchGroup])
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [groupId])
 
   const handleRefreshSessions = useCallback(() => {
     refreshKeyRef.current += 1

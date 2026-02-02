@@ -12,7 +12,8 @@ export function SessionPage() {
     if (sessionId) {
       fetchSession(sessionId)
     }
-  }, [sessionId, fetchSession])
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [sessionId])
 
   if (loading || !session) {
     return (

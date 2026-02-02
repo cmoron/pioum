@@ -23,7 +23,8 @@ export function VerifyPage() {
       .catch((err) => {
         setError(err.message)
       })
-  }, [searchParams, verifyMagicLink, navigate])
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [searchParams, navigate])
 
   return (
     <div className="min-h-screen flex flex-col items-center justify-center p-4">

@@ -38,7 +38,7 @@ services:
       NODE_ENV: production
       # Email pour Magic Link - Resend (recommandé)
       RESEND_API_KEY: ${RESEND_API_KEY:-}
-      EMAIL_FROM: ${EMAIL_FROM:-Pioum <noreply@${STAGING_DOMAIN}>}
+      EMAIL_FROM: "${EMAIL_FROM}"
       # SMTP fallback (optionnel)
       SMTP_HOST: ${SMTP_HOST:-}
       SMTP_PORT: ${SMTP_PORT:-587}

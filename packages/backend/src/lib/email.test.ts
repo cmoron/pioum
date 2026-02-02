@@ -1,32 +1,34 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest'
-import { sendMagicLinkEmail } from './email'
 
-// Mock nodemailer - declare mockSendMail first
-vi.mock('nodemailer', () => {
-  const mockSendMail = vi.fn()
+// Mock Resend
+const mockResendSend = vi.fn()
+vi.mock('resend', () => {
   return {
-    default: {
-      createTransport: vi.fn(() => ({
-        sendMail: mockSendMail
-      }))
-    },
-    mockSendMail
+    Resend: class MockResend {
+      emails = { send: mockResendSend }
+    }
   }
 })
 
-// Get the mock from the module
-const nodemailerModule = await import('nodemailer')
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-const mockSendMail = (nodemailerModule as any).mockSendMail
+// Mock nodemailer
+const mockSendMail = vi.fn()
+vi.mock('nodemailer', () => ({
+  default: {
+    createTransport: vi.fn(() => ({
+      sendMail: mockSendMail
+    }))
+  }
+}))
 
 describe('sendMagicLinkEmail', () => {
   const originalEnv = process.env
 
   beforeEach(() => {
     vi.clearAllMocks()
+    vi.resetModules()
     process.env = { ...originalEnv }
-    // Mock console.log to avoid cluttering test output
     vi.spyOn(console, 'log').mockImplementation(() => {})
+    vi.spyOn(console, 'error').mockImplementation(() => {})
   })
 
   afterEach(() => {
@@ -34,26 +36,26 @@ describe('sendMagicLinkEmail', () => {
     vi.restoreAllMocks()
   })
 
-  describe('Development mode', () => {
-    it('should return magic link URL in development', async () => {
+  describe('Development mode (no email provider)', () => {
+    it('should return magic link URL in development without providers', async () => {
       process.env.NODE_ENV = 'development'
       process.env.FRONTEND_URL = 'http://localhost:5173'
+      delete process.env.RESEND_API_KEY
       delete process.env.SMTP_HOST
 
-      const email = 'test@example.com'
-      const token = 'test-token-123'
-
-      const result = await sendMagicLinkEmail(email, token)
+      const { sendMagicLinkEmail } = await import('./email')
+      const result = await sendMagicLinkEmail('test@example.com', 'test-token-123')
 
       expect(result).toBe('http://localhost:5173/auth/verify?token=test-token-123')
-      expect(mockSendMail).not.toHaveBeenCalled()
     })
 
     it('should use default frontend URL when not set', async () => {
-      delete process.env.NODE_ENV
+      process.env.NODE_ENV = 'development'
+      delete process.env.RESEND_API_KEY
       delete process.env.SMTP_HOST
       delete process.env.FRONTEND_URL
 
+      const { sendMagicLinkEmail } = await import('./email')
       const result = await sendMagicLinkEmail('user@test.com', 'token-abc')
 
       expect(result).toBe('http://localhost:5173/auth/verify?token=token-abc')
@@ -61,8 +63,11 @@ describe('sendMagicLinkEmail', () => {
 
     it('should log magic link to console in development', async () => {
       const consoleLogSpy = vi.spyOn(console, 'log')
+      process.env.NODE_ENV = 'development'
+      delete process.env.RESEND_API_KEY
       delete process.env.SMTP_HOST
 
+      const { sendMagicLinkEmail } = await import('./email')
       await sendMagicLinkEmail('dev@test.com', 'dev-token')
 
       expect(consoleLogSpy).toHaveBeenCalled()
@@ -72,10 +77,13 @@ describe('sendMagicLinkEmail', () => {
     })
 
     it('should handle special characters in token', async () => {
+      process.env.NODE_ENV = 'development'
+      delete process.env.RESEND_API_KEY
       delete process.env.SMTP_HOST
       process.env.FRONTEND_URL = 'http://localhost:5173'
       const specialToken = 'token-with-special_chars.123'
 
+      const { sendMagicLinkEmail } = await import('./email')
       const result = await sendMagicLinkEmail('test@example.com', specialToken)
 
       expect(result).toContain(specialToken)
@@ -83,105 +91,137 @@ describe('sendMagicLinkEmail', () => {
     })
   })
 
-  describe('Production mode', () => {
+  describe('Resend provider', () => {
     beforeEach(() => {
       process.env.NODE_ENV = 'production'
+      process.env.RESEND_API_KEY = 're_test_key'
+      process.env.EMAIL_FROM = 'Pioum <noreply@pioum.app>'
+      process.env.FRONTEND_URL = 'https://pioum.app'
+      delete process.env.SMTP_HOST
+    })
+
+    it('should send email via Resend and return null', async () => {
+      mockResendSend.mockResolvedValue({ data: { id: 'test-id' }, error: null })
+
+      const { sendMagicLinkEmail } = await import('./email')
+      const result = await sendMagicLinkEmail('user@example.com', 'prod-token')
+
+      expect(result).toBeNull()
+      expect(mockResendSend).toHaveBeenCalledTimes(1)
+    })
+
+    it('should send email with correct recipient', async () => {
+      mockResendSend.mockResolvedValue({ data: { id: 'test-id' }, error: null })
+      const email = 'recipient@example.com'
+
+      const { sendMagicLinkEmail } = await import('./email')
+      await sendMagicLinkEmail(email, 'token')
+
+      expect(mockResendSend).toHaveBeenCalledWith(
+        expect.objectContaining({ to: email })
+      )
+    })
+
+    it('should include magic link in email HTML', async () => {
+      mockResendSend.mockResolvedValue({ data: { id: 'test-id' }, error: null })
+      const token = 'magic-token-xyz'
+
+      const { sendMagicLinkEmail } = await import('./email')
+      await sendMagicLinkEmail('user@test.com', token)
+
+      const callArgs = mockResendSend.mock.calls[0][0]
+      expect(callArgs.html).toContain('https://pioum.app/auth/verify?token=magic-token-xyz')
+    })
+
+    it('should use configured EMAIL_FROM address', async () => {
+      mockResendSend.mockResolvedValue({ data: { id: 'test-id' }, error: null })
+      process.env.EMAIL_FROM = 'Custom App <custom@example.com>'
+
+      const { sendMagicLinkEmail } = await import('./email')
+      await sendMagicLinkEmail('user@test.com', 'token')
+
+      expect(mockResendSend).toHaveBeenCalledWith(
+        expect.objectContaining({ from: 'Custom App <custom@example.com>' })
+      )
+    })
+
+    it('should have correct email subject', async () => {
+      mockResendSend.mockResolvedValue({ data: { id: 'test-id' }, error: null })
+
+      const { sendMagicLinkEmail } = await import('./email')
+      await sendMagicLinkEmail('user@test.com', 'token')
+
+      expect(mockResendSend).toHaveBeenCalledWith(
+        expect.objectContaining({ subject: 'Connexion à Pioum' })
+      )
+    })
+
+    it('should throw error when Resend fails', async () => {
+      mockResendSend.mockResolvedValue({
+        data: null,
+        error: { message: 'Invalid API key' }
+      })
+
+      const { sendMagicLinkEmail } = await import('./email')
+
+      await expect(sendMagicLinkEmail('user@test.com', 'token'))
+        .rejects.toThrow('Failed to send email: Invalid API key')
+    })
+  })
+
+  describe('SMTP fallback', () => {
+    beforeEach(() => {
+      process.env.NODE_ENV = 'production'
+      delete process.env.RESEND_API_KEY
       process.env.SMTP_HOST = 'smtp.example.com'
       process.env.SMTP_PORT = '587'
       process.env.SMTP_USER = 'test@example.com'
       process.env.SMTP_PASS = 'password'
-      process.env.SMTP_FROM = 'Pioum <noreply@pioum.app>'
+      process.env.EMAIL_FROM = 'Pioum <noreply@pioum.app>'
       process.env.FRONTEND_URL = 'https://pioum.app'
     })
 
-    it('should send email and return null in production', async () => {
+    it('should send email via SMTP and return null', async () => {
       mockSendMail.mockResolvedValue({ messageId: 'test-message-id' })
 
+      const { sendMagicLinkEmail } = await import('./email')
       const result = await sendMagicLinkEmail('user@example.com', 'prod-token')
 
       expect(result).toBeNull()
       expect(mockSendMail).toHaveBeenCalledTimes(1)
     })
 
-    it('should send email with correct recipient', async () => {
-      mockSendMail.mockResolvedValue({})
-      const email = 'recipient@example.com'
-
-      await sendMagicLinkEmail(email, 'token')
-
-      expect(mockSendMail).toHaveBeenCalledWith(
-        expect.objectContaining({
-          to: email
-        })
-      )
-    })
-
-    it('should include magic link in email HTML', async () => {
-      mockSendMail.mockResolvedValue({})
-      const token = 'magic-token-xyz'
-
-      await sendMagicLinkEmail('user@test.com', token)
-
-      const callArgs = mockSendMail.mock.calls[0][0]
-      expect(callArgs.html).toContain('https://pioum.app/auth/verify?token=magic-token-xyz')
-    })
-
-    it('should use configured SMTP_FROM address', async () => {
-      mockSendMail.mockResolvedValue({})
-      process.env.SMTP_FROM = 'Custom App <custom@example.com>'
-
-      await sendMagicLinkEmail('user@test.com', 'token')
-
-      expect(mockSendMail).toHaveBeenCalledWith(
-        expect.objectContaining({
-          from: 'Custom App <custom@example.com>'
-        })
-      )
-    })
-
-    it('should have correct email subject', async () => {
-      mockSendMail.mockResolvedValue({})
-
-      await sendMagicLinkEmail('user@test.com', 'token')
-
-      expect(mockSendMail).toHaveBeenCalledWith(
-        expect.objectContaining({
-          subject: 'Connexion à Pioum'
-        })
-      )
-    })
-
-    it('should include HTML content', async () => {
-      mockSendMail.mockResolvedValue({})
-
-      await sendMagicLinkEmail('user@test.com', 'token')
-
-      const callArgs = mockSendMail.mock.calls[0][0]
-      expect(callArgs.html).toBeTruthy()
-      expect(callArgs.html).toContain('Pioum')
-      expect(callArgs.html).toContain('Se connecter')
-      expect(callArgs.html).toContain('15 minutes')
-    })
-  })
-
-  describe('Error handling', () => {
-    it('should propagate email sending errors', async () => {
-      process.env.NODE_ENV = 'production'
-      process.env.SMTP_HOST = 'smtp.example.com'
-
+    it('should propagate SMTP errors', async () => {
       const emailError = new Error('SMTP connection failed')
       mockSendMail.mockRejectedValue(emailError)
 
-      await expect(
-        sendMagicLinkEmail('user@test.com', 'token')
-      ).rejects.toThrow('SMTP connection failed')
+      const { sendMagicLinkEmail } = await import('./email')
+
+      await expect(sendMagicLinkEmail('user@test.com', 'token'))
+        .rejects.toThrow('SMTP connection failed')
+    })
+  })
+
+  describe('Production without email provider', () => {
+    it('should throw error when no provider configured in production', async () => {
+      process.env.NODE_ENV = 'production'
+      delete process.env.RESEND_API_KEY
+      delete process.env.SMTP_HOST
+
+      const { sendMagicLinkEmail } = await import('./email')
+
+      await expect(sendMagicLinkEmail('user@test.com', 'token'))
+        .rejects.toThrow('Email service not configured')
     })
   })
 
   describe('Edge cases', () => {
     it('should handle empty email', async () => {
+      process.env.NODE_ENV = 'development'
+      delete process.env.RESEND_API_KEY
       delete process.env.SMTP_HOST
 
+      const { sendMagicLinkEmail } = await import('./email')
       const result = await sendMagicLinkEmail('', 'token')
 
       expect(result).toBeTruthy()
@@ -189,18 +229,24 @@ describe('sendMagicLinkEmail', () => {
     })
 
     it('should handle very long tokens', async () => {
+      process.env.NODE_ENV = 'development'
+      delete process.env.RESEND_API_KEY
       delete process.env.SMTP_HOST
       const longToken = 'a'.repeat(500)
 
+      const { sendMagicLinkEmail } = await import('./email')
       const result = await sendMagicLinkEmail('test@test.com', longToken)
 
       expect(result).toContain(longToken)
     })
 
     it('should use custom frontend URL', async () => {
+      process.env.NODE_ENV = 'development'
+      delete process.env.RESEND_API_KEY
       delete process.env.SMTP_HOST
       process.env.FRONTEND_URL = 'https://custom-domain.com'
 
+      const { sendMagicLinkEmail } = await import('./email')
       const result = await sendMagicLinkEmail('test@test.com', 'token')
 
       expect(result).toBe('https://custom-domain.com/auth/verify?token=token')

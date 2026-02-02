@@ -88,14 +88,16 @@ export function PastSessionsList({ groupId, refreshTrigger = 0 }: PastSessionsLi
   // Initial fetch
   useEffect(() => {
     fetchSessions()
-  }, [fetchSessions])
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [groupId])
 
   // Refetch when refreshTrigger changes
   useEffect(() => {
     if (refreshTrigger > 0) {
       fetchSessions()
     }
-  }, [refreshTrigger, fetchSessions])
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [refreshTrigger])
 
   const toggleSessionExpanded = useCallback((sessionId: string) => {
     setExpandedSessions(prev => {

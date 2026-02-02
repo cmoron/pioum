@@ -71,19 +71,22 @@ export function MonthCalendar({ groupId, refreshTrigger = 0, isAdmin = false }: 
   useEffect(() => {
     fetchSessions()
     fetchBans()
-  }, [fetchSessions, fetchBans])
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [groupId])
 
   useEffect(() => {
     if (refreshTrigger > 0) {
       fetchSessions(false)
     }
-  }, [refreshTrigger, fetchSessions])
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [refreshTrigger])
 
   // Poll for updates every 10 seconds
   useEffect(() => {
     const interval = setInterval(() => fetchSessions(false), 10_000)
     return () => clearInterval(interval)
-  }, [fetchSessions])
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [groupId])
 
   const handleRefresh = useCallback(() => {
     fetchSessions(false)

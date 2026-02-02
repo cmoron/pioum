@@ -46,20 +46,23 @@ export function UpcomingSessionsList({ groupId, refreshTrigger = 0, isAdmin = fa
   useEffect(() => {
     fetchSessions()
     fetchBans()
-  }, [fetchSessions, fetchBans])
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [groupId])
 
   // Refetch when refreshTrigger changes (without showing loading spinner)
   useEffect(() => {
     if (refreshTrigger > 0) {
       fetchSessions(false)
     }
-  }, [refreshTrigger, fetchSessions])
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [refreshTrigger])
 
   // Poll for updates from other users every 10 seconds
   useEffect(() => {
     const interval = setInterval(() => fetchSessions(false), 10_000)
     return () => clearInterval(interval)
-  }, [fetchSessions])
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [groupId])
 
   // Internal refresh handler for SessionCard actions
   const handleRefresh = useCallback(() => {

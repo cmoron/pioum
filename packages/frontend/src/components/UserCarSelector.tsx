@@ -267,7 +267,7 @@ export function UserCarSelector({ onSelect, onClose }: UserCarSelectorProps) {
               </>
             )}
 
-            {!selectedCar && userCars.length > 0 && (
+            {!selectedCar && (
               <button
                 onClick={onClose}
                 className="w-full btn-ghost"

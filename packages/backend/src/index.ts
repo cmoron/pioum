@@ -25,18 +25,16 @@ app.use(cors({
 app.use(express.json())
 app.use(cookieParser())
 
-// Rate limiting (plus souple en dev)
-const isDev = process.env.NODE_ENV === 'development'
+// Rate limiting - 1000 req/min (généreux pour usage normal)
 const limiter = rateLimit({
-  windowMs: 15 * 60 * 1000, // 15 minutes
-  max: isDev ? 1000 : 100, // 1000 en dev, 100 en prod
+  windowMs: 60 * 1000, // 1 minute
+  max: 1000,
   standardHeaders: true,
   legacyHeaders: false,
-  skip: isDev ? () => true : undefined, // Désactivé complètement en dev
   message: {
-    error: 'Trop de requêtes, réessaie dans quelques minutes',
+    error: 'Trop de requêtes, réessaie dans une minute',
     code: 'RATE_LIMIT_EXCEEDED',
-    retryAfter: 15 * 60 // secondes
+    retryAfter: 60
   },
   handler: (req, res, _next, options) => {
     console.warn(`[RATE LIMIT] IP ${req.ip} bloquée sur ${req.originalUrl}`)

@@ -30,6 +30,9 @@ services:
       FRONTEND_URL: http://localhost:5173
       PORT: 3000
       NODE_ENV: development
+      # Email pour Magic Link
+      RESEND_API_KEY: ${RESEND_API_KEY:-}
+      EMAIL_FROM: ${EMAIL_FROM:-}
     volumes:
       - .:/app
       - backend_node_modules:/app/node_modules

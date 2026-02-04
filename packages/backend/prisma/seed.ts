@@ -10,10 +10,12 @@ const avatars = [
   { name: 'gSeb', imageUrl: '/avatars/users/avatar_grolem_seb.jpeg', category: 'users' },
   { name: 'gTheB', imageUrl: '/avatars/users/avatar_grolem_b.jpeg', category: 'users' },
   { name: 'gClovi', imageUrl: '/avatars/users/avatar_grolem_clovi.jpeg', category: 'users' },
+  { name: 'gMax', imageUrl: '/avatars/users/avatar_grolem_max.jpeg', category: 'users' },
   { name: 'aLion', imageUrl: '/avatars/users/avatar_animal_lion.jpeg', category: 'users' },
   { name: 'aGorilla', imageUrl: '/avatars/users/avatar_animal_gorilla.jpeg', category: 'users' },
   { name: 'aWolf', imageUrl: '/avatars/users/avatar_animal_wolf.jpeg', category: 'users' },
   { name: 'aBear', imageUrl: '/avatars/users/avatar_animal_bear.jpeg', category: 'users' },
+  { name: 'aShark', imageUrl: '/avatars/users/avatar_animal_shark.jpeg', category: 'users' },
   { name: 'hSuperman', imageUrl: '/avatars/users/avatar_hero_superman.jpeg', category: 'users' },
   { name: 'hHulk', imageUrl: '/avatars/users/avatar_hero_hulk.jpeg', category: 'users' },
   { name: 'hBatman', imageUrl: '/avatars/users/avatar_hero_batman.jpeg', category: 'users' },
@@ -26,15 +28,11 @@ const avatars = [
   { name: 'SUV', imageUrl: '/avatars/cars/cars_suv.png', category: 'cars' },
 
   // Groups category - avatars pour les groupes
-  { name: 'Fitness', imageUrl: '🏋️‍♂️', category: 'groups' },
-  { name: 'Muscle', imageUrl: '💪', category: 'groups' },
-  { name: 'Shaker', imageUrl: '🥤', category: 'groups' },
-  { name: 'Trophée', imageUrl: '🏆', category: 'groups' },
-  { name: 'Équipe', imageUrl: '👥', category: 'groups' },
-  { name: 'Gym', imageUrl: '🏢', category: 'groups' },
-  { name: 'Médaille', imageUrl: '🥇', category: 'groups' },
-  { name: 'Feu', imageUrl: '🔥', category: 'groups' },
-  { name: 'Étoile', imageUrl: '⭐', category: 'groups' },
+  { name: 'Genius', imageUrl: '/avatars/groups/avatar_groups_genius.jpeg', category: 'groups' },
+  { name: 'Gorillas', imageUrl: '/avatars/groups/avatar_groups_gorillas.jpeg', category: 'groups' },
+  { name: 'Lions', imageUrl: '/avatars/groups/avatar_groups_lions.jpeg', category: 'groups' },
+  { name: 'Sharks', imageUrl: '/avatars/groups/avatar_groups_sharks.jpeg', category: 'groups' },
+  { name: 'Wolves', imageUrl: '/avatars/groups/avatar_groups_wolves.jpeg', category: 'groups' },
 ]
 
 async function main() {

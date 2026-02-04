@@ -32,7 +32,7 @@ export const api = {
       body: JSON.stringify({ email, name }),
       credentials: 'include'
     })
-    return handleResponse<{ message: string }>(res)
+    return handleResponse<{ message: string; devLink?: string }>(res)
   },
 
   async verifyMagicLink(token: string) {

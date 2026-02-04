@@ -14,6 +14,7 @@ export function LoginPage() {
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [magicLinkSent, setMagicLinkSent] = useState(false)
+  const [devLink, setDevLink] = useState<string | null>(null)
   const googleBtnRef = useRef<HTMLDivElement>(null)
 
   useEffect(() => {
@@ -80,7 +81,8 @@ export function LoginPage() {
     setError(null)
 
     try {
-      await requestMagicLink(email, name || undefined)
+      const link = await requestMagicLink(email, name || undefined)
+      if (link) setDevLink(link)
       setMagicLinkSent(true)
     } catch (err) {
       setError((err as Error).message)
@@ -132,11 +134,25 @@ export function LoginPage() {
               </div>
               <h2 className="text-xl font-bold mb-2 text-primary-800">Check tes mails !</h2>
               <p className="text-primary-700 mb-4">
-                Un lien magique a été envoyé à <strong>{email}</strong>
+                Un magic link a été envoyé à <strong>{email}</strong>
               </p>
+
+              {isDev && devLink && (
+                <div className="mb-4 p-3 bg-accent-100 rounded-warm border border-accent-300">
+                  <p className="text-xs text-accent-800 mb-2 font-medium">Mode dev - Lien direct :</p>
+                  <a
+                    href={devLink}
+                    className="text-sm text-accent-700 hover:text-accent-900 underline break-all"
+                  >
+                    {devLink}
+                  </a>
+                </div>
+              )}
+
               <button
                 onClick={() => {
                   setMagicLinkSent(false)
+                  setDevLink(null)
                   setEmail('')
                 }}
                 className="text-primary-700 hover:text-primary-800 hover:underline font-medium"
@@ -324,7 +340,7 @@ export function LoginPage() {
                   disabled={loading || !email}
                   className="w-full btn-primary"
                 >
-                  {loading ? 'Envoi en cours...' : 'Recevoir le lien magique'}
+                  {loading ? 'Envoi en cours...' : 'Recevoir le magic link'}
                 </button>
               </form>
             </>

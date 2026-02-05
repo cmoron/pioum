@@ -490,10 +490,6 @@ it('should manage auth state', () => {
 })
 ```
 
-### Test Coverage Report
-
-Voir [TEST_COVERAGE_REPORT.md](./TEST_COVERAGE_REPORT.md) pour le rapport détaillé.
-
 ---
 
 ## CI/CD
@@ -703,8 +699,10 @@ cat packages/backend/.env | grep NODE_ENV
 - [ARCHITECTURE.md](./ARCHITECTURE.md) - Architecture détaillée
 - [DEV_GUIDE.md](./DEV_GUIDE.md) - Guide développement (modes setup)
 - [CLAUDE.md](./CLAUDE.md) - Dev guidelines du projet
+- [PRD.md](./PRD.md) - Spécifications produit
+- [DEPLOYMENT_STAGING.md](./DEPLOYMENT_STAGING.md) - Guide de déploiement staging
 - [.github/workflows/README.md](./.github/workflows/README.md) - Workflows CI/CD
 
 ---
 
-**Dernière mise à jour** : 2026-01-29
+**Dernière mise à jour** : 2026-02-05

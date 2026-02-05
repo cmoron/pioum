@@ -115,7 +115,7 @@ Une webapp simple et fun pour organiser les covoiturages quotidiens d'un groupe 
 
 - **Budget** : Projet perso, hébergement gratuit ou très low-cost
 - **Timeline** : MVP fonctionnel en 2-3 semaines de dev
-- **Stack** : À définir (voir IMPLEMENTATION_PLAN.md)
+- **Stack** : Monorepo pnpm (voir ARCHITECTURE.md)
 
 ---
 

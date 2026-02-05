@@ -98,9 +98,8 @@ export function CarCard({ car, isBanned, onRefresh, readOnly = false }: CarCardP
               <Avatar user={car.driver} size="md" />
             )}
             <div>
-              <p className="font-medium text-primary-800">{car.driver.name}</p>
-              <p className="text-sm text-primary-600">
-                {car.userCar ? (car.userCar.name || car.userCar.avatar.name) : 'Conducteur'}
+              <p className="font-medium text-primary-800">
+                {car.userCar ? (car.userCar.name || car.userCar.avatar.name) : `Voiture de ${car.driver.name}`}
               </p>
             </div>
           </div>
@@ -116,40 +115,44 @@ export function CarCard({ car, isBanned, onRefresh, readOnly = false }: CarCardP
         </div>
 
         {/* Passengers */}
-        {car.passengers.length > 0 && (
-          <div className="border-t border-primary-200 pt-3 mb-3">
-            <p className="text-sm text-primary-600 mb-2">Passagers</p>
-            <div className="flex flex-wrap gap-2">
-              {car.passengers.map((passenger) => (
-                <div
-                  key={passenger.id}
-                  className="flex items-center gap-2 bg-primary-50 rounded-full pl-1 pr-3 py-1 border border-primary-200"
-                >
-                  <Avatar user={passenger.user} size="sm" />
-                  <span className="text-sm text-primary-800">{passenger.user.name}</span>
-                  {!readOnly && isDriver && passenger.userId !== user?.id && (
-                    <div className="flex gap-1 ml-1">
-                      <button
-                        onClick={() => handleKick(passenger.userId)}
-                        className="text-primary-400 hover:text-red-500 p-1 transition-colors"
-                        title="Éjecter"
-                      >
-                        <XIcon className="w-5 h-5" />
-                      </button>
-                      <button
-                        onClick={() => setBanTarget(passenger.user)}
-                        className="text-primary-400 hover:text-red-500 p-1 transition-colors"
-                        title="Bannir"
-                      >
-                        <BanIcon className="w-5 h-5" />
-                      </button>
-                    </div>
-                  )}
-                </div>
-              ))}
+        <div className="border-t border-primary-200 pt-3 mb-3">
+          <div className="flex flex-wrap gap-2">
+            {/* Driver */}
+            <div className="flex items-center gap-2 bg-primary-100 rounded-full pl-1 pr-3 py-1 border border-primary-300">
+              <Avatar user={car.driver} size="sm" />
+              <span className="text-sm font-medium text-primary-800">{car.driver.name}</span>
+              <span className="text-xs bg-primary-200 text-primary-700 px-1.5 py-0.5 rounded-full">Conducteur</span>
             </div>
+            {/* Other passengers */}
+            {car.passengers.map((passenger) => (
+              <div
+                key={passenger.id}
+                className="flex items-center gap-2 bg-primary-50 rounded-full pl-1 pr-3 py-1 border border-primary-200"
+              >
+                <Avatar user={passenger.user} size="sm" />
+                <span className="text-sm text-primary-800">{passenger.user.name}</span>
+                {!readOnly && isDriver && passenger.userId !== user?.id && (
+                  <div className="flex gap-1 ml-1">
+                    <button
+                      onClick={() => handleKick(passenger.userId)}
+                      className="text-primary-400 hover:text-red-500 p-1 transition-colors"
+                      title="Éjecter"
+                    >
+                      <XIcon className="w-5 h-5" />
+                    </button>
+                    <button
+                      onClick={() => setBanTarget(passenger.user)}
+                      className="text-primary-400 hover:text-red-500 p-1 transition-colors"
+                      title="Bannir"
+                    >
+                      <BanIcon className="w-5 h-5" />
+                    </button>
+                  </div>
+                )}
+              </div>
+            ))}
           </div>
-        )}
+        </div>
 
         {/* Error */}
         {error && (

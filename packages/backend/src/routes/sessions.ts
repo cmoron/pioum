@@ -43,6 +43,81 @@ function isSessionLocked(session: { startTime: Date }): boolean {
   return new Date() >= session.startTime
 }
 
+// Get sessions for a date range (used by calendar view)
+sessionsRouter.get('/range/:groupId', authenticate, async (req, res, next) => {
+  try {
+    const groupId = req.params.groupId as string
+    const from = req.query.from as string | undefined
+    const to = req.query.to as string | undefined
+
+    if (!from || !to) {
+      throw new AppError(400, 'Both "from" and "to" query parameters are required')
+    }
+
+    const fromDate = new Date(from)
+    const toDate = new Date(to)
+
+    if (isNaN(fromDate.getTime()) || isNaN(toDate.getTime())) {
+      throw new AppError(400, 'Invalid date format for "from" or "to"')
+    }
+
+    // Verify membership
+    const membership = await prisma.groupMember.findUnique({
+      where: {
+        userId_groupId: {
+          userId: req.user!.userId,
+          groupId
+        }
+      }
+    })
+
+    if (!membership) {
+      throw new AppError(403, 'Not a member of this group')
+    }
+
+    const sessions = await prisma.session.findMany({
+      where: {
+        groupId,
+        date: {
+          gte: fromDate,
+          lte: toDate
+        }
+      },
+      include: {
+        cars: {
+          include: {
+            driver: {
+              select: USER_SELECT
+            },
+            userCar: {
+              include: { avatar: true }
+            },
+            passengers: {
+              include: {
+                user: {
+                  select: USER_SELECT
+                }
+              }
+            }
+          }
+        },
+        passengers: {
+          include: {
+            user: {
+              select: USER_SELECT
+            }
+          }
+        }
+      },
+      orderBy: { startTime: 'asc' }
+    })
+
+    res.json({ sessions })
+  } catch (error) {
+    next(error)
+  }
+})
+
 // Get past sessions for a group (history)
 sessionsRouter.get('/past/:groupId', authenticate, async (req, res, next) => {
   try {

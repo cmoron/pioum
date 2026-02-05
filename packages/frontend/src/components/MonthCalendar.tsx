@@ -48,8 +48,14 @@ export function MonthCalendar({ groupId, refreshTrigger = 0, isAdmin = false }: 
   const fetchSessions = useCallback(async (showLoading = true) => {
     try {
       if (showLoading) setLoading(true)
-      // Fetch enough sessions for the month view
-      const result = await api.getUpcomingSessions(groupId, 100)
+      // Fetch sessions for the visible calendar range (including padding days)
+      const monthStart = startOfMonth(currentMonth)
+      const monthEnd = endOfMonth(currentMonth)
+      const calendarStart = startOfWeek(monthStart, { weekStartsOn: 1 })
+      const calendarEnd = endOfWeek(monthEnd, { weekStartsOn: 1 })
+      const from = format(calendarStart, 'yyyy-MM-dd')
+      const to = format(calendarEnd, 'yyyy-MM-dd')
+      const result = await api.getSessionsByRange(groupId, from, to)
       setSessions(result.sessions)
       setError(null)
     } catch (err) {
@@ -57,7 +63,7 @@ export function MonthCalendar({ groupId, refreshTrigger = 0, isAdmin = false }: 
     } finally {
       setLoading(false)
     }
-  }, [groupId])
+  }, [groupId, currentMonth])
 
   const fetchBans = useCallback(async () => {
     try {
@@ -72,7 +78,7 @@ export function MonthCalendar({ groupId, refreshTrigger = 0, isAdmin = false }: 
     fetchSessions()
     fetchBans()
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [groupId])
+  }, [groupId, currentMonth])
 
   useEffect(() => {
     if (refreshTrigger > 0) {
@@ -86,7 +92,7 @@ export function MonthCalendar({ groupId, refreshTrigger = 0, isAdmin = false }: 
     const interval = setInterval(() => fetchSessions(false), 10_000)
     return () => clearInterval(interval)
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [groupId])
+  }, [groupId, currentMonth])
 
   const handleRefresh = useCallback(() => {
     fetchSessions(false)
@@ -234,7 +240,7 @@ export function MonthCalendar({ groupId, refreshTrigger = 0, isAdmin = false }: 
                     </span>
                     {/* Session indicators */}
                     <div className="flex gap-0.5 mt-0.5 h-1.5">
-                      {hasSession && isCurrentMonthDay ? (
+                      {hasSession ? (
                         daySessions.slice(0, 3).map((_, i) => (
                           <span
                             key={i}
@@ -276,16 +282,20 @@ export function MonthCalendar({ groupId, refreshTrigger = 0, isAdmin = false }: 
             </div>
           ) : (
             <div className="space-y-2">
-              {selectedDateSessions.map(session => (
-                <SessionCard
-                  key={session.id}
-                  session={session}
-                  onRefresh={handleRefresh}
-                  bansReceived={bansReceived}
-                  compact
-                  isAdmin={isAdmin}
-                />
-              ))}
+              {selectedDateSessions.map(session => {
+                const sessionIsPast = isBefore(parseISO(session.endTime), new Date())
+                return (
+                  <SessionCard
+                    key={session.id}
+                    session={session}
+                    onRefresh={handleRefresh}
+                    bansReceived={bansReceived}
+                    compact
+                    isAdmin={isAdmin}
+                    isPast={sessionIsPast}
+                  />
+                )
+              })}
             </div>
           )}
         </div>

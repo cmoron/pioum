@@ -42,23 +42,22 @@ export const useAuthStore = create<AuthState>((set) => ({
 
   requestMagicLink: async (email: string, name?: string) => {
     try {
-      set({ loading: true, error: null })
+      set({ error: null })
       const { devLink } = await api.requestMagicLink(email, name)
-      set({ loading: false })
       return devLink
     } catch (err) {
-      set({ error: (err as Error).message, loading: false })
+      set({ error: (err as Error).message })
       throw err
     }
   },
 
   verifyMagicLink: async (token: string) => {
     try {
-      set({ loading: true, error: null })
+      set({ error: null })
       const { user } = await api.verifyMagicLink(token)
       set({ user, loading: false })
     } catch (err) {
-      set({ error: (err as Error).message, loading: false })
+      set({ error: (err as Error).message })
       throw err
     }
   },

@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { useNavigate, useSearchParams } from 'react-router-dom'
 import { useAuthStore } from '../stores/auth'
 import { LoadingSpinner } from '../components/LoadingSpinner'
@@ -8,8 +8,12 @@ export function VerifyPage() {
   const [searchParams] = useSearchParams()
   const { verifyMagicLink } = useAuthStore()
   const [error, setError] = useState<string | null>(null)
+  const verifyAttempted = useRef(false)
 
   useEffect(() => {
+    if (verifyAttempted.current) return
+    verifyAttempted.current = true
+
     const token = searchParams.get('token')
     if (!token) {
       setError('Lien invalide')

@@ -40,6 +40,9 @@ authRouter.post('/google', async (req, res, next) => {
       throw new AppError(400, 'Invalid Google token')
     }
 
+    // Normalize email to lowercase to prevent duplicate accounts
+    const normalizedEmail = payload.email.toLowerCase()
+
     let user = await prisma.user.findUnique({
       where: { googleId: payload.sub },
       include: { avatar: true }
@@ -47,7 +50,7 @@ authRouter.post('/google', async (req, res, next) => {
 
     if (!user) {
       const userByEmail = await prisma.user.findUnique({
-        where: { email: payload.email }
+        where: { email: normalizedEmail }
       })
 
       if (userByEmail) {
@@ -71,8 +74,8 @@ authRouter.post('/google', async (req, res, next) => {
         // No user by googleId or email, create a new one.
         user = await prisma.user.create({
           data: {
-            email: payload.email,
-            name: payload.name || payload.email.split('@')[0],
+            email: normalizedEmail,
+            name: payload.name || normalizedEmail.split('@')[0],
             googleId: payload.sub,
             customAvatarUrl: payload.picture
           },
@@ -101,13 +104,16 @@ authRouter.post('/magic-link', async (req, res, next) => {
   try {
     const { email, name } = magicLinkRequestSchema.parse(req.body)
 
-    let user = await prisma.user.findUnique({ where: { email } })
+    // Normalize email to lowercase to prevent duplicate accounts
+    const normalizedEmail = email.toLowerCase()
+
+    let user = await prisma.user.findUnique({ where: { email: normalizedEmail } })
 
     if (!user) {
       user = await prisma.user.create({
         data: {
-          email,
-          name: name || email.split('@')[0]
+          email: normalizedEmail,
+          name: name || normalizedEmail.split('@')[0]
         }
       })
     }
@@ -126,7 +132,7 @@ authRouter.post('/magic-link', async (req, res, next) => {
       data: {
         token,
         userId: user.id,
-        email,
+        email: normalizedEmail,
         expiresAt
       }
     })

@@ -72,6 +72,16 @@ export function BansPage() {
         ))}
       </div>
 
+      {/* Ban button - visible on all tabs */}
+      <button
+        type="button"
+        onClick={() => setDisplayBanModal(true)}
+        className="btn-danger w-full mb-4"
+      >
+        Bannir un utilisateur
+      </button>
+      {displayBanModal && <SelectUserToBanModal me={user!} bansGiven={bansGiven} onClose={() => setDisplayBanModal(false)} onUserBanned={(ban) => setBansGiven([...bansGiven, ban])} />}
+
       {/* Bans Given */}
       {activeTab === 'given' && (
         <div>
@@ -91,20 +101,6 @@ export function BansPage() {
               ))}
             </div>
           )}
-          <div className="w-full px-4">
-            <div className="mt-2">
-              <div className="w-full text-center">
-                <button
-                  type="button"
-                  onClick={() => setDisplayBanModal(true)}
-                  className="bg-red-600 hover:bg-red-700 text-white font-medium px-4 py-2 rounded"
-                >
-                  Bannir un utilisateur
-                </button>
-              </div>
-            </div>
-          </div>
-          {displayBanModal && <SelectUserToBanModal me={user!} bansGiven={bansGiven} onClose={() => setDisplayBanModal(false)} onUserBanned={(ban) => setBansGiven([...bansGiven, ban])}/>}
         </div>
       )}
 

@@ -62,6 +62,13 @@ export const api = {
     return handleResponse<{ user: User | null }>(res)
   },
 
+  async users() {
+    const res = await fetch(`${API_BASE}/users`, {
+      credentials: 'include'
+    })
+    return handleResponse<{ users: User[] | null }>(res)
+  },
+
   async logout() {
     const res = await fetch(`${API_BASE}/auth/logout`, {
       method: 'POST',

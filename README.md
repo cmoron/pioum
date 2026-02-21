@@ -164,6 +164,7 @@ pnpm test:run     # Tests une seule fois
 - `POST /api/auth/magic-link/verify` - Vérifier la magic link
 - `POST /api/auth/dev-login` - Login dev (dev mode seulement)
 - `GET /api/auth/me` - Utilisateur courant
+- `GET /api/auth/users` - Récupérer tous les utilisateurs
 - `POST /api/auth/logout` - Déconnexion
 
 ### Groupes

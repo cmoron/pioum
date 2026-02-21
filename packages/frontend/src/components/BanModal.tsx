@@ -1,11 +1,11 @@
 import { useState } from 'react'
-import { User, api } from '../lib/api'
+import { Ban, User, api } from '../lib/api'
 import { Avatar } from './Avatar'
 
 interface BanModalProps {
   user: User
   onClose: () => void
-  onBanned?: () => void
+  onBanned?: (ban: Ban) => void
 }
 
 const durations = [
@@ -25,8 +25,8 @@ export function BanModal({ user, onClose, onBanned }: BanModalProps) {
     setLoading(true)
     setError(null)
     try {
-      await api.createBan(user.id, duration, reason || undefined)
-      onBanned?.()
+      let result = await api.createBan(user.id, duration, reason || undefined)
+      onBanned?.(result.ban)
       onClose()
     } catch (err) {
       setError((err as Error).message)

@@ -65,3 +65,20 @@ usersRouter.get('/:id', authenticate, async (req, res, next) => {
     next(error)
   }
 })
+
+// Get user by ID (for group members)
+usersRouter.get('/', authenticate, async (req, res, next) => {
+  try {
+    const users = await prisma.user.findMany({
+      select: USER_SELECT
+    })
+
+    if (!users) {
+      throw new AppError(404, 'User not found')
+    }
+
+    res.json({ users })
+  } catch (error) {
+    next(error)
+  }
+})

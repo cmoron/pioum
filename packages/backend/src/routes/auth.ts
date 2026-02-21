@@ -272,3 +272,29 @@ authRouter.get('/me', async (req, res) => {
     res.json({ user: null })
   }
 })
+
+// Get all users
+authRouter.get('/users', async (req, res) => {
+  try {
+    const authHeader = req.headers.authorization
+    const tokenFromCookie = req.cookies?.token
+
+    const token = authHeader?.startsWith('Bearer ')
+      ? authHeader.slice(7)
+      : tokenFromCookie
+
+    if (!token) {
+      res.json({ users: null })
+      return
+    }
+
+    const { verifyToken } = await import('../lib/jwt.js')
+    const payload = verifyToken(token)
+
+    const users = await prisma.user.findMany()
+
+    res.json({ users })
+  } catch {
+    res.json({ users: null })
+  }
+})

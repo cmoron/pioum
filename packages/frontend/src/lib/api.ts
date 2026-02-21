@@ -309,6 +309,13 @@ export const api = {
   },
 
   // Bans
+  async getBannableUsers() {
+    const res = await fetch(`${API_BASE}/bans/bannable-users`, {
+      credentials: 'include'
+    })
+    return handleResponse<{ users: User[] }>(res)
+  },
+
   async getActiveBans() {
     const res = await fetch(`${API_BASE}/bans/active`, {
       credentials: 'include'

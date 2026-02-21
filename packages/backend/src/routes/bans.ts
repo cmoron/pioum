@@ -107,6 +107,34 @@ bansRouter.get('/hall-of-fame', authenticate, async (req, res, next) => {
   }
 })
 
+// Get users bannable by the current user (users sharing at least one group)
+bansRouter.get('/bannable-users', authenticate, async (req, res, next) => {
+  try {
+    const myMemberships = await prisma.groupMember.findMany({
+      where: { userId: req.user!.userId },
+      select: { groupId: true }
+    })
+
+    const myGroupIds = myMemberships.map(m => m.groupId)
+
+    const users = await prisma.user.findMany({
+      where: {
+        id: { not: req.user!.userId },
+        memberships: {
+          some: {
+            groupId: { in: myGroupIds }
+          }
+        }
+      },
+      select: USER_SELECT
+    })
+
+    res.json({ users })
+  } catch (error) {
+    next(error)
+  }
+})
+
 // Create a ban
 bansRouter.post('/', authenticate, async (req, res, next) => {
   try {

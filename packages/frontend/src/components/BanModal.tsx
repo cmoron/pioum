@@ -25,7 +25,7 @@ export function BanModal({ user, onClose, onBanned }: BanModalProps) {
     setLoading(true)
     setError(null)
     try {
-      let result = await api.createBan(user.id, duration, reason || undefined)
+      const result = await api.createBan(user.id, duration, reason || undefined)
       onBanned?.(result.ban)
       onClose()
     } catch (err) {

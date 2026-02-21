@@ -19,7 +19,7 @@ export function SelectUserToBanModal({ me: me, bansGiven: bansGiven, onClose: on
     useEffect(() => {
         const fetchUsers = async () => {
             try {
-                const { users } = await api.users();
+                const { users } = await api.getBannableUsers();
                 setUsers(users);
             } catch (error) {
                 alert(error);

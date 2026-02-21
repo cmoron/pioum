@@ -63,7 +63,7 @@ export const api = {
   },
 
   async users() {
-    const res = await fetch(`${API_BASE}/auth/users`, {
+    const res = await fetch(`${API_BASE}/users`, {
       credentials: 'include'
     })
     return handleResponse<{ users: User[] | null }>(res)

@@ -1,11 +1,11 @@
 import { useEffect, useState } from 'react'
-import { api, Ban, GroupMember, HallOfFame, User } from '../lib/api'
+import { api, Ban, HallOfFame } from '../lib/api'
 import { Avatar } from '../components/Avatar'
 import { LoadingSpinner } from '../components/LoadingSpinner'
 import { formatDistanceToNow } from 'date-fns'
 import { fr } from 'date-fns/locale'
-import { BanModal } from '@/components/BanModal'
 import { useAuthStore } from '@/stores/auth'
+import { SelectUserToBanModal } from '@/components/SelectUserToBanModal'
 
 export function BansPage() {
   const [bansGiven, setBansGiven] = useState<Ban[]>([])
@@ -14,20 +14,16 @@ export function BansPage() {
   const [loading, setLoading] = useState(true)
   const [activeTab, setActiveTab] = useState<'given' | 'received' | 'hall'>('given')
   const [displayBanModal, setDisplayBanModal] = useState<boolean>(false);
-  const [userToBan, setUserToBan] = useState<User | undefined>();
-  const [users, setUsers] = useState<User[] | null>([]);
   const { user } = useAuthStore();
 
   useEffect(() => {
     Promise.all([
       api.getActiveBans(),
-      api.getHallOfFame(),
-      api.users()
-    ]).then(([bans, hof, users]) => {
+      api.getHallOfFame()
+    ]).then(([bans, hof]) => {
       setBansGiven(bans.bansGiven)
       setBansReceived(bans.bansReceived)
       setHallOfFame(hof.hallOfFame)
-      setUsers(users.users);
     }).finally(() => setLoading(false))
   }, [])
 
@@ -95,56 +91,20 @@ export function BansPage() {
               ))}
             </div>
           )}
-          <div className='container-fluid'>
-            <div className='row mt-2'>
-              <div className="col-12 text-center">
-                <button type="button" className="btn btn-danger" onClick={() => setDisplayBanModal(true)}>Bannir un utilisateur</button>
+          <div className="w-full px-4">
+            <div className="mt-2">
+              <div className="w-full text-center">
+                <button
+                  type="button"
+                  onClick={() => setDisplayBanModal(true)}
+                  className="bg-red-600 hover:bg-red-700 text-white font-medium px-4 py-2 rounded"
+                >
+                  Bannir un utilisateur
+                </button>
               </div>
             </div>
           </div>
-          {displayBanModal &&
-            <div className="fixed inset-0 bg-black/50 flex items-center justify-center p-4 z-50">
-              <div className="bg-white rounded-warm p-6 w-full max-w-sm shadow-warm-xl border-2 border-primary-300">
-                <h2 className="text-xl font-bold mb-4 text-primary-800">Qui a fauté?</h2>
-                {users && users.filter(u => u.id != user?.id).map((user) => {
-                  let isUserAlreadyBanned = false;
-                  if (bansGiven.find(b => b.receiverId === user.id)) {
-                    isUserAlreadyBanned = true;
-                  }
-                  if (isUserAlreadyBanned) {
-                    return <div key={user.id} className="flex items-center gap-3 mb-4 p-3 bg-primary-50 rounded-warm border border-primary-200">
-                      <Avatar user={user} size="md" />
-                      <div className="flex-1">
-                        <p className="font-medium text-primary-800">{user.name}</p>
-                        <p className="text-sm text-primary-600">Vous avez déjà banni cette personne</p>
-                      </div>
-                    </div>
-                  } else {
-                    return <div key={user.id} className="flex items-center gap-3 mb-4 p-3 bg-primary-50 rounded-warm border border-primary-200" onClick={() => setUserToBan(user)}>
-                      <Avatar user={user} size="md" />
-                      <div className="flex-1">
-                        <p className="font-medium text-primary-800">{user.name}</p>
-                      </div>
-                    </div>
-                  }
-
-                })}
-                {userToBan && <BanModal user={{ id: userToBan.id, name: userToBan.name }} onBanned={(ban) => {setBansGiven([...bansGiven, ban])}} onClose={() => {
-                  setUserToBan(undefined)
-                  setDisplayBanModal(false)
-                }} />}
-                <div className="flex gap-2">
-                  <button
-                    onClick={() => setDisplayBanModal(false)}
-                    className="btn-secondary flex-1"
-                    disabled={loading}
-                  >
-                    Annuler
-                  </button>
-                </div>
-              </div>
-            </div>}
-
+          {displayBanModal && <SelectUserToBanModal me={user!} bansGiven={bansGiven} onClose={() => setDisplayBanModal(false)} onUserBanned={(ban) => setBansGiven([...bansGiven, ban])}/>}
         </div>
       )}
 

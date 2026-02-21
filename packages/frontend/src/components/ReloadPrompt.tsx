@@ -9,6 +9,8 @@ export function ReloadPrompt() {
   } = useRegisterSW({
     onRegisteredSW(_swUrl, registration) {
       if (registration) {
+        // Immediate check on mount to catch waiting SW (fixes missed events on PC)
+        registration.update()
         // Periodic check for updates (important for iOS WebClip standalone mode)
         setInterval(() => {
           registration.update()

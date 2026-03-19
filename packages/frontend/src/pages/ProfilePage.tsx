@@ -6,6 +6,7 @@ import { isImageUrl } from '../lib/utils'
 import { Avatar } from '../components/Avatar'
 import { LoadingSpinner } from '../components/LoadingSpinner'
 import { UserCarCard } from '../components/UserCarCard'
+import { NotificationBell } from '../components/NotificationBell'
 
 export function ProfilePage() {
   const { user, updateUser, logout } = useAuthStore()
@@ -232,6 +233,15 @@ export function ProfilePage() {
             ))}
           </div>
         )}
+      </div>
+
+      {/* Notifications */}
+      <div className="card p-6 mb-6">
+        <h2 className="text-xl font-bold text-primary-800 mb-4">Notifications</h2>
+        <p className="text-sm text-primary-600 mb-4">
+          Reçois une notification quand un membre s'inscrit à une séance.
+        </p>
+        <NotificationBell />
       </div>
 
       {/* Logout */}

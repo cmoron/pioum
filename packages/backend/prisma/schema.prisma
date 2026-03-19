@@ -27,9 +27,22 @@ model User {
   userCars           UserCar[]
   recurrencePatterns RecurrencePattern[]
   sessionsCreated    Session[]           @relation("sessionsCreated")
+  pushSubscription   PushSubscription?
 
   @@index([email])
   @@index([googleId])
+}
+
+model PushSubscription {
+  id        String   @id @default(cuid())
+  userId    String   @unique
+  endpoint  String
+  p256dh    String
+  auth      String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
 }
 
 model MagicLink {

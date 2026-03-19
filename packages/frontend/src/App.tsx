@@ -12,6 +12,7 @@ import { JoinGroupPage } from './pages/JoinGroupPage'
 import { CreateGroupPage } from './pages/CreateGroupPage'
 import { BansPage } from './pages/BansPage'
 import { LoadingSpinner } from './components/LoadingSpinner'
+import { registerServiceWorker } from './services/pushNotification.service'
 
 function ProtectedRoute({ children }: { children: React.ReactNode }) {
   const { user, loading } = useAuthStore()
@@ -36,6 +37,11 @@ function App() {
 
   useEffect(() => {
     checkAuth()
+    // Enregistre le SW au démarrage — silencieux, sans popup d'abonnement
+    // L'abonnement push réel est déclenché uniquement via <NotificationBell />
+    registerServiceWorker().catch((err: unknown) => {
+      console.warn('[Pioum] Service Worker non enregistré:', err)
+    })
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
 

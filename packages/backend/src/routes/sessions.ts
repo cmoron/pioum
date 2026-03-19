@@ -5,6 +5,7 @@ import { prisma } from '../lib/prisma.js'
 import { USER_SELECT } from '../lib/prismaSelects.js'
 import { authenticate } from '../middleware/auth.js'
 import { AppError } from '../middleware/errorHandler.js'
+import { notifyGroupMembers } from '../notifications/notification.service.js'
 
 export const sessionsRouter = Router()
 
@@ -522,6 +523,21 @@ sessionsRouter.post('/:id/join', authenticate, async (req, res, next) => {
         userId: req.user!.userId
       }
     })
+
+    // Notifier les autres membres du groupe (fire-and-forget)
+    prisma.user.findUnique({ where: { id: req.user!.userId }, select: { name: true } })
+      .then((joiner) => {
+        const userName = joiner?.name ?? 'Quelqu\'un'
+        return notifyGroupMembers(session.groupId, req.user!.userId, {
+          title: '🏋️ Nouvelle inscription Pioum',
+          body: `${userName} s'est inscrit à la séance et est en attente de voiture`,
+          url: `/groups/${session.groupId}`,
+          type: 'NO_CAR',
+        })
+      })
+      .catch((err: unknown) => {
+        console.error('[Pioum] Erreur envoi notifications:', err)
+      })
 
     res.json({ message: 'Joined session' })
   } catch (error) {

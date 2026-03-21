@@ -1,3 +1,5 @@
+const API_BASE = import.meta.env.VITE_API_URL || '/api'
+
 function urlBase64ToUint8Array(base64String: string): ArrayBuffer {
   const padding = '='.repeat((4 - (base64String.length % 4)) % 4)
   const base64 = (base64String + padding).replace(/-/g, '+').replace(/_/g, '/')
@@ -10,7 +12,7 @@ function urlBase64ToUint8Array(base64String: string): ArrayBuffer {
 }
 
 async function getVapidPublicKey(): Promise<string> {
-  const res = await fetch('/api/notifications/vapid-public-key')
+  const res = await fetch(`${API_BASE}/notifications/vapid-public-key`)
   if (!res.ok) throw new Error('Impossible de récupérer la clé VAPID')
   const { vapidPublicKey } = (await res.json()) as { vapidPublicKey: string }
   return vapidPublicKey
@@ -20,7 +22,8 @@ export async function registerServiceWorker(): Promise<ServiceWorkerRegistration
   if (!('serviceWorker' in navigator)) {
     throw new Error('Service Workers non supportés sur ce navigateur')
   }
-  return navigator.serviceWorker.register('/sw.js')
+  const swUrl = import.meta.env.DEV ? '/dev-sw.js' : '/sw.js'
+  return navigator.serviceWorker.register(swUrl)
 }
 
 export async function subscribeToPush(
@@ -37,7 +40,7 @@ export async function subscribeToPush(
 }
 
 export async function sendSubscriptionToServer(subscription: PushSubscription): Promise<void> {
-  const res = await fetch('/api/notifications/subscribe', {
+  const res = await fetch(`${API_BASE}/notifications/subscribe`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     credentials: 'include',
@@ -47,12 +50,12 @@ export async function sendSubscriptionToServer(subscription: PushSubscription): 
 }
 
 export async function unsubscribeFromPush(): Promise<void> {
-  const reg = await navigator.serviceWorker.ready
-  const sub = await reg.pushManager.getSubscription()
-  if (sub) {
-    await sub.unsubscribe()
+  const reg = await navigator.serviceWorker.getRegistration()
+  if (reg) {
+    const sub = await reg.pushManager.getSubscription()
+    if (sub) await sub.unsubscribe()
   }
-  await fetch('/api/notifications/unsubscribe', {
+  await fetch(`${API_BASE}/notifications/unsubscribe`, {
     method: 'POST',
     credentials: 'include',
   })
@@ -60,7 +63,8 @@ export async function unsubscribeFromPush(): Promise<void> {
 
 export async function checkExistingSubscription(): Promise<boolean> {
   if (!('serviceWorker' in navigator) || !('PushManager' in window)) return false
-  const reg = await navigator.serviceWorker.ready
+  const reg = await navigator.serviceWorker.getRegistration()
+  if (!reg) return false
   const sub = await reg.pushManager.getSubscription()
   return sub !== null
 }

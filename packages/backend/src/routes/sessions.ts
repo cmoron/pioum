@@ -7,6 +7,10 @@ import { authenticate } from '../middleware/auth.js'
 import { AppError } from '../middleware/errorHandler.js'
 import { notifyGroupMembers } from '../notifications/notification.service.js'
 
+function formatSessionDate(date: Date): string {
+  return date.toLocaleDateString('fr-FR', { weekday: 'long', day: 'numeric', month: 'long' })
+}
+
 export const sessionsRouter = Router()
 
 const createSessionSchema = z.object({
@@ -530,7 +534,7 @@ sessionsRouter.post('/:id/join', authenticate, async (req, res, next) => {
         const userName = joiner?.name ?? 'Quelqu\'un'
         return notifyGroupMembers(session.groupId, req.user!.userId, {
           title: '🏋️ Nouvelle inscription Pioum',
-          body: `${userName} s'est inscrit à la séance et est en attente de voiture`,
+          body: `${userName} est inscrit et en attente de voiture !`,
           url: `/groups/${session.groupId}`,
           type: 'NO_CAR',
         })
@@ -548,25 +552,23 @@ sessionsRouter.post('/:id/join', authenticate, async (req, res, next) => {
 // Leave session
 sessionsRouter.delete('/:id/leave', authenticate, async (req, res, next) => {
   try {
+    const sessionId = req.params.id as string
+
     const passenger = await prisma.passenger.findUnique({
-      where: {
-        sessionId_userId: {
-          sessionId: req.params.id as string,
-          userId: req.user!.userId
-        }
-      }
+      where: { sessionId_userId: { sessionId, userId: req.user!.userId } }
     })
 
     if (!passenger) {
       throw new AppError(404, 'Not participating in this session')
     }
 
-    // Also remove any car they might have
+    // Vérifier si l'utilisateur avait une voiture avant de la supprimer
+    const driverCar = await prisma.car.findUnique({
+      where: { sessionId_driverId: { sessionId, driverId: req.user!.userId } }
+    })
+
     await prisma.car.deleteMany({
-      where: {
-        sessionId: req.params.id as string,
-        driverId: req.user!.userId
-      }
+      where: { sessionId, driverId: req.user!.userId }
     })
 
     await prisma.passenger.delete({
@@ -574,6 +576,27 @@ sessionsRouter.delete('/:id/leave', authenticate, async (req, res, next) => {
     })
 
     res.json({ message: 'Left session' })
+
+    // Si l'utilisateur était chauffeur, notifier les membres du groupe
+    if (driverCar) {
+      Promise.all([
+        prisma.user.findUnique({ where: { id: req.user!.userId }, select: { name: true } }),
+        prisma.session.findUnique({ where: { id: sessionId }, select: { date: true, groupId: true } }),
+      ])
+        .then(([driver, session]) => {
+          if (!session) return
+          const driverName = driver?.name ?? 'Le chauffeur'
+          return notifyGroupMembers(session.groupId, req.user!.userId, {
+            title: '🚨 Un chauffeur s\'est désisté !',
+            body: `${driverName} s'est désisté de la séance du ${formatSessionDate(session.date)}, pas fiable le golem…`,
+            url: `/groups/${session.groupId}`,
+            type: 'DRIVER_LEFT',
+          })
+        })
+        .catch((err: unknown) => {
+          console.error('[Pioum] Erreur envoi notification désistement:', err)
+        })
+    }
   } catch (error) {
     next(error)
   }

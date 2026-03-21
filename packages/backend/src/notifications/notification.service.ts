@@ -13,7 +13,7 @@ export type PioumNotificationPayload = {
   title: string
   body: string
   url: string
-  type: 'NEW_INSCRIPTION' | 'CAR_AVAILABLE' | 'NO_CAR'
+  type: 'NEW_INSCRIPTION' | 'CAR_AVAILABLE' | 'NO_CAR' | 'DRIVER_LEFT'
 }
 
 export async function saveSubscription(userId: string, sub: WebPushSubscription): Promise<void> {
@@ -55,7 +55,7 @@ export async function notifyUser(
     privateJWK,
     subscription: sub,
     message: {
-      payload: JSON.stringify(payload),
+      payload: payload as unknown as string,
       options: {
         ttl: 3600,
         urgency: 'normal',

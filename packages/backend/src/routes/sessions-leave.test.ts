@@ -29,11 +29,9 @@ const mockSessionFindUnique = vi.mocked(prisma.session.findUnique)
 const mockNotifyGroupMembers = vi.mocked(notifyGroupMembers)
 
 const sessionDate = new Date(2026, 2, 21) // 21 mars 2026 (local time)
-
 const existingPassenger = { id: 'passenger-1' }
 const existingCar = { id: 'car-1' }
 const sessionInfo = { date: sessionDate, groupId: 'group-1' }
-
 
 describe('DELETE /sessions/:id/leave — notification DRIVER_LEFT', () => {
   let mockRes: ReturnType<typeof makeRes>
@@ -46,13 +44,13 @@ describe('DELETE /sessions/:id/leave — notification DRIVER_LEFT', () => {
     mockNotifyGroupMembers.mockResolvedValue(undefined)
     mockPassengerDelete.mockResolvedValue({})
     mockCarDeleteMany.mockResolvedValue({ count: 0 })
+    mockPassengerFindUnique.mockResolvedValue(existingPassenger)
+    mockCarFindUnique.mockResolvedValue(existingCar)
+    mockSessionFindUnique.mockResolvedValue(sessionInfo)
   })
 
   it('envoie DRIVER_LEFT avec le bon message quand le chauffeur quitte la séance', async () => {
-    mockPassengerFindUnique.mockResolvedValue(existingPassenger)
-    mockCarFindUnique.mockResolvedValue(existingCar) // user avait une voiture
     mockUserFindUnique.mockResolvedValue({ name: 'Alice' })
-    mockSessionFindUnique.mockResolvedValue(sessionInfo)
 
     const req = makeReq({ params: { id: 'session-1' }, user: { userId: 'user-1' } })
 
@@ -73,31 +71,14 @@ describe('DELETE /sessions/:id/leave — notification DRIVER_LEFT', () => {
         url: '/groups/group-1',
       })
     )
-  })
-
-  it("mentionne 'pas fiable le golem' dans le message", async () => {
-    mockPassengerFindUnique.mockResolvedValue(existingPassenger)
-    mockCarFindUnique.mockResolvedValue(existingCar)
-    mockUserFindUnique.mockResolvedValue({ name: 'Bob' })
-    mockSessionFindUnique.mockResolvedValue(sessionInfo)
-
-    const req = makeReq({ params: { id: 'session-1' }, user: { userId: 'user-1' } })
-
-    await leaveSessionHandler(req, asRes(mockRes), mockNext)
-
-    await vi.waitFor(() => expect(mockNotifyGroupMembers).toHaveBeenCalled())
-
     expect(mockNotifyGroupMembers).toHaveBeenCalledWith(
       'group-1',
       'user-1',
-      expect.objectContaining({
-        body: expect.stringContaining('pas fiable le golem'),
-      })
+      expect.objectContaining({ body: expect.stringContaining('pas fiable le golem') })
     )
   })
 
   it("n'envoie PAS de notification quand un simple passager (sans voiture) quitte la séance", async () => {
-    mockPassengerFindUnique.mockResolvedValue(existingPassenger)
     mockCarFindUnique.mockResolvedValue(null) // pas de voiture
 
     const req = makeReq({ params: { id: 'session-1' }, user: { userId: 'user-1' } })
@@ -112,10 +93,7 @@ describe('DELETE /sessions/:id/leave — notification DRIVER_LEFT', () => {
   })
 
   it("utilise 'Le chauffeur' si le nom de l'utilisateur est introuvable", async () => {
-    mockPassengerFindUnique.mockResolvedValue(existingPassenger)
-    mockCarFindUnique.mockResolvedValue(existingCar)
     mockUserFindUnique.mockResolvedValue(null) // user inconnu
-    mockSessionFindUnique.mockResolvedValue(sessionInfo)
 
     const req = makeReq({ params: { id: 'session-1' }, user: { userId: 'user-unknown' } })
 
@@ -133,8 +111,6 @@ describe('DELETE /sessions/:id/leave — notification DRIVER_LEFT', () => {
   })
 
   it("n'envoie pas de notification si la session est introuvable après le départ", async () => {
-    mockPassengerFindUnique.mockResolvedValue(existingPassenger)
-    mockCarFindUnique.mockResolvedValue(existingCar)
     mockUserFindUnique.mockResolvedValue({ name: 'Alice' })
     mockSessionFindUnique.mockResolvedValue(null) // session disparue entre temps
 

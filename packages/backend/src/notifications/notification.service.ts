@@ -13,7 +13,7 @@ export type PioumNotificationPayload = {
   title: string
   body: string
   url: string
-  type: 'NEW_INSCRIPTION' | 'CAR_AVAILABLE' | 'NO_CAR' | 'DRIVER_LEFT'
+  type: 'NEW_INSCRIPTION' | 'CAR_AVAILABLE' | 'NO_CAR' | 'DRIVER_LEFT' | 'USER_BANNED'
 }
 
 export async function saveSubscription(userId: string, sub: WebPushSubscription): Promise<void> {

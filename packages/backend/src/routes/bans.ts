@@ -4,6 +4,7 @@ import { prisma } from '../lib/prisma.js'
 import { USER_SELECT } from '../lib/prismaSelects.js'
 import { authenticate } from '../middleware/auth.js'
 import { AppError } from '../middleware/errorHandler.js'
+import { notifyUser } from '../notifications/notification.service.js'
 
 export const bansRouter = Router()
 
@@ -212,6 +213,21 @@ bansRouter.post('/', authenticate, async (req, res, next) => {
     }
 
     res.status(201).json({ ban })
+
+    // Fire-and-forget notification au banni
+    prisma.user
+      .findUnique({ where: { id: req.user!.userId }, select: { name: true } })
+      .then((giver) => {
+        const giverName = giver?.name ?? 'Quelqu\'un'
+        const reasonPart = reason ? ` pour : ${reason}` : ''
+        return notifyUser(receiverId, {
+          title: '🚨 Tu as été banni !',
+          body: `${giverName} t'a banni${reasonPart}. Va falloir sucer des gros orteils…`,
+          url: '/',
+          type: 'USER_BANNED',
+        })
+      })
+      .catch(() => { /* silencieux */ })
   } catch (error) {
     next(error)
   }

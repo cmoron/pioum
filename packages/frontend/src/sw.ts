@@ -10,13 +10,14 @@ type NotificationData = {
   title: string
   body: string
   url?: string
-  type?: 'NEW_INSCRIPTION' | 'CAR_AVAILABLE' | 'NO_CAR'
+  type?: 'NEW_INSCRIPTION' | 'CAR_AVAILABLE' | 'NO_CAR' | 'DRIVER_LEFT'
 }
 
 const iconMap: Record<string, string> = {
   NEW_INSCRIPTION: '/pwa-192x192.png',
   CAR_AVAILABLE: '/pwa-192x192.png',
   NO_CAR: '/pwa-192x192.png',
+  DRIVER_LEFT: '/pwa-192x192.png',
 }
 
 self.addEventListener('push', (event: PushEvent) => {

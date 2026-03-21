@@ -4,6 +4,11 @@ import { prisma } from '../lib/prisma.js'
 import { USER_SELECT } from '../lib/prismaSelects.js'
 import { authenticate } from '../middleware/auth.js'
 import { AppError } from '../middleware/errorHandler.js'
+import { notifyGroupMembers } from '../notifications/notification.service.js'
+
+function formatSessionDate(date: Date): string {
+  return date.toLocaleDateString('fr-FR', { weekday: 'long', day: 'numeric', month: 'long' })
+}
 
 export const carsRouter = Router()
 
@@ -136,6 +141,22 @@ carsRouter.post('/', authenticate, async (req, res, next) => {
     })
 
     res.status(201).json({ car })
+
+    // Notifier les membres du groupe qu'une voiture est disponible (fire-and-forget)
+    prisma.user.findUnique({ where: { id: req.user!.userId }, select: { name: true } })
+      .then((driver) => {
+        const driverName = driver?.name ?? 'Quelqu\'un'
+        const availableSeats = car.seats - car.passengers.length
+        return notifyGroupMembers(session.groupId, req.user!.userId, {
+          title: '🚗 Une voiture est disponible !',
+          body: `${driverName} propose sa voiture pour la séance du ${formatSessionDate(session.date)}. Il reste ${availableSeats} place${availableSeats > 1 ? 's' : ''} disponible${availableSeats > 1 ? 's' : ''}.`,
+          url: `/groups/${session.groupId}`,
+          type: 'CAR_AVAILABLE',
+        })
+      })
+      .catch((err: unknown) => {
+        console.error('[Pioum] Erreur envoi notification voiture:', err)
+      })
   } catch (error) {
     next(error)
   }

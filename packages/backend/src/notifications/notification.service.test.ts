@@ -126,7 +126,7 @@ describe('notifyUser', () => {
       expect.objectContaining({
         subscription: { endpoint: mockSub.endpoint, keys: mockSub.keys },
         message: expect.objectContaining({
-          payload: JSON.stringify(mockPayload),
+          payload: mockPayload,
         }),
       })
     )

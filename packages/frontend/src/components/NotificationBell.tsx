@@ -8,7 +8,7 @@ export function NotificationBell() {
   // car WKWebView n'expose pas Notification ni serviceWorker)
   // isIOS combine UA (mode normal) et 'standalone' in navigator (mode "version ordinateur"
   // où le UA devient desktop mais la propriété WebKit reste présente)
-  const isStandalone = window.matchMedia('(display-mode: standalone)').matches
+  const isStandalone = globalThis.matchMedia('(display-mode: standalone)').matches
   const isIOS = /iphone|ipad|ipod/i.test(navigator.userAgent) || 'standalone' in navigator
   if (isIOS && !isStandalone) {
     return (
@@ -19,7 +19,7 @@ export function NotificationBell() {
   }
 
   // Navigateur non compatible (après le check iOS pour éviter return null prématuré)
-  if (!('Notification' in window) || !('serviceWorker' in navigator)) return null
+  if (!('Notification' in globalThis) || !('serviceWorker' in navigator)) return null
 
   if (permission === 'denied') {
     return (
@@ -40,13 +40,9 @@ export function NotificationBell() {
             : 'btn-primary'
         }`}
       >
-        {isLoading ? (
-          <span className="text-sm">Chargement...</span>
-        ) : isSubscribed ? (
-          <>🔕 Désactiver les notifications</>
-        ) : (
-          <>🔔 Activer les notifications</>
-        )}
+        {isLoading && <span className="text-sm">Chargement...</span>}
+        {!isLoading && isSubscribed && <>🔕 Désactiver les notifications</>}
+        {!isLoading && !isSubscribed && <>🔔 Activer les notifications</>}
       </button>
       {error && <p className="text-sm text-red-500 mt-2">{error}</p>}
     </div>

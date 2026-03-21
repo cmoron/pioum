@@ -55,7 +55,7 @@ export async function notifyUser(
     privateJWK,
     subscription: sub,
     message: {
-      payload: payload as unknown as string,
+      payload: payload,
       options: {
         ttl: 3600,
         urgency: 'normal',

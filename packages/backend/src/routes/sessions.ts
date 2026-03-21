@@ -6,10 +6,7 @@ import { USER_SELECT } from '../lib/prismaSelects.js'
 import { authenticate } from '../middleware/auth.js'
 import { AppError } from '../middleware/errorHandler.js'
 import { notifyGroupMembers } from '../notifications/notification.service.js'
-
-function formatSessionDate(date: Date): string {
-  return date.toLocaleDateString('fr-FR', { weekday: 'long', day: 'numeric', month: 'long' })
-}
+import { formatSessionDate } from '../lib/formatDate.js'
 
 export const sessionsRouter = Router()
 

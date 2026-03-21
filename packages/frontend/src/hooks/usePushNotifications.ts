@@ -24,7 +24,7 @@ export function usePushNotifications(): PushState {
 
   // Vérifie l'état initial au montage
   useEffect(() => {
-    if (!('Notification' in window)) {
+    if (!('Notification' in globalThis)) {
       setIsLoading(false)
       return
     }

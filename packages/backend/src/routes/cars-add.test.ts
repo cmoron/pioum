@@ -19,14 +19,16 @@ vi.mock('../notifications/notification.service.js', () => ({
 
 import { prisma } from '../lib/prisma.js'
 import { notifyGroupMembers } from '../notifications/notification.service.js'
+import { makeRes } from './test-utils.js'
+import { formatSessionDate } from '../lib/formatDate.js'
 
-const mockSessionFindUnique = prisma.session.findUnique as ReturnType<typeof vi.fn>
-const mockGroupMemberFindUnique = prisma.groupMember.findUnique as ReturnType<typeof vi.fn>
-const mockCarFindUnique = prisma.car.findUnique as ReturnType<typeof vi.fn>
-const mockCarCreate = prisma.car.create as ReturnType<typeof vi.fn>
-const mockPassengerUpsert = prisma.passenger.upsert as ReturnType<typeof vi.fn>
-const mockUserFindUnique = prisma.user.findUnique as ReturnType<typeof vi.fn>
-const mockNotifyGroupMembers = notifyGroupMembers as ReturnType<typeof vi.fn>
+const mockSessionFindUnique = vi.mocked(prisma.session.findUnique)
+const mockGroupMemberFindUnique = vi.mocked(prisma.groupMember.findUnique)
+const mockCarFindUnique = vi.mocked(prisma.car.findUnique)
+const mockCarCreate = vi.mocked(prisma.car.create)
+const mockPassengerUpsert = vi.mocked(prisma.passenger.upsert)
+const mockUserFindUnique = vi.mocked(prisma.user.findUnique)
+const mockNotifyGroupMembers = vi.mocked(notifyGroupMembers)
 
 const sessionDate = new Date(2026, 2, 21) // 21 mars 2026 (local time)
 
@@ -38,17 +40,6 @@ const futureSession = {
 }
 
 const memberRole = { role: 'member' }
-
-function makeRes() {
-  const res = { status: vi.fn(), json: vi.fn() }
-  res.status.mockReturnValue(res)
-  res.json.mockReturnValue(res)
-  return res
-}
-
-function formatSessionDate(date: Date): string {
-  return date.toLocaleDateString('fr-FR', { weekday: 'long', day: 'numeric', month: 'long' })
-}
 
 /**
  * Extracted handler — mirrors POST /cars in cars.ts

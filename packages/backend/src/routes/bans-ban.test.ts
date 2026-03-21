@@ -18,20 +18,14 @@ vi.mock('../notifications/notification.service.js', () => ({
 
 import { prisma } from '../lib/prisma.js'
 import { notifyUser } from '../notifications/notification.service.js'
+import { makeRes } from './test-utils.js'
 
-const mockUserFindUnique = prisma.user.findUnique as ReturnType<typeof vi.fn>
-const mockBanFindFirst = prisma.ban.findFirst as ReturnType<typeof vi.fn>
-const mockBanCreate = prisma.ban.create as ReturnType<typeof vi.fn>
-const mockCarFindMany = prisma.car.findMany as ReturnType<typeof vi.fn>
-const mockPassengerUpdateMany = prisma.passenger.updateMany as ReturnType<typeof vi.fn>
-const mockNotifyUser = notifyUser as ReturnType<typeof vi.fn>
-
-function makeRes() {
-  const res = { status: vi.fn(), json: vi.fn() }
-  res.status.mockReturnValue(res)
-  res.json.mockReturnValue(res)
-  return res
-}
+const mockUserFindUnique = vi.mocked(prisma.user.findUnique)
+const mockBanFindFirst = vi.mocked(prisma.ban.findFirst)
+const mockBanCreate = vi.mocked(prisma.ban.create)
+const mockCarFindMany = vi.mocked(prisma.car.findMany)
+const mockPassengerUpdateMany = vi.mocked(prisma.passenger.updateMany)
+const mockNotifyUser = vi.mocked(notifyUser)
 
 const receiver = { id: 'user-2', name: 'Bob' }
 const giver = { name: 'Alice' }

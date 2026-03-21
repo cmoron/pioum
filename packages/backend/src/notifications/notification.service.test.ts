@@ -28,11 +28,11 @@ import {
   type PioumNotificationPayload,
 } from './notification.service.js'
 
-const mockUpsert = prisma.pushSubscription.upsert as ReturnType<typeof vi.fn>
-const mockDeleteMany = prisma.pushSubscription.deleteMany as ReturnType<typeof vi.fn>
-const mockFindUnique = prisma.pushSubscription.findUnique as ReturnType<typeof vi.fn>
-const mockGroupMemberFindMany = prisma.groupMember.findMany as ReturnType<typeof vi.fn>
-const mockBuildPushHTTPRequest = buildPushHTTPRequest as ReturnType<typeof vi.fn>
+const mockUpsert = vi.mocked(prisma.pushSubscription.upsert)
+const mockDeleteMany = vi.mocked(prisma.pushSubscription.deleteMany)
+const mockFindUnique = vi.mocked(prisma.pushSubscription.findUnique)
+const mockGroupMemberFindMany = vi.mocked(prisma.groupMember.findMany)
+const mockBuildPushHTTPRequest = vi.mocked(buildPushHTTPRequest)
 
 const mockSub: WebPushSubscription = {
   endpoint: 'https://fcm.googleapis.com/push/abc123',

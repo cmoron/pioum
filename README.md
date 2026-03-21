@@ -16,6 +16,7 @@ Application de covoiturage pour aller à la muscu avec tes potes. Une webapp sim
 - **Avatars personnalisables** pour utilisateurs, voitures et groupes
 - **Gestion des voitures personnelles** (UserCar) avec avatars
 - **PWA installable** sur mobile
+- **Notifications push** : alertes en temps réel (nouvelle inscription, voiture disponible, chauffeur désisté, ban)
 
 ## Stack Technique
 
@@ -103,6 +104,11 @@ SMTP_HOST="smtp.gmail.com"
 SMTP_PORT="587"
 SMTP_USER="your-email@gmail.com"
 SMTP_PASS="your-app-password"
+
+# Push Notifications (Web Push VAPID)
+VAPID_PUBLIC_KEY="votre-clé-publique-vapid"
+VAPID_PRIVATE_KEY_JWK='{"kty":"EC","crv":"P-256",...}'
+VAPID_EMAIL="mailto:contact@example.com"
 
 # Configuration
 FRONTEND_URL="http://localhost:5173"
@@ -208,6 +214,11 @@ pnpm test:run     # Tests une seule fois
 - `PATCH /api/user-cars/:id` - Modifier
 - `DELETE /api/user-cars/:id` - Supprimer
 
+### Notifications Push
+- `GET /api/notifications/vapid-public-key` - Clé publique VAPID
+- `POST /api/notifications/subscribe` - Enregistrer une souscription push
+- `POST /api/notifications/unsubscribe` - Supprimer la souscription
+
 ### Avatars & Utilisateurs
 - `GET /api/avatars` - Liste des avatars
 - `GET /api/users/me` - Mon profil
@@ -253,7 +264,7 @@ GOOGLE_CLIENT_SECRET=xxx
 ## Tests
 
 ### Couverture
-- **195 tests** au total (61 backend + 134 frontend)
+- **314 tests** au total (141 backend + 173 frontend)
 - **100% coverage** sur les modules testés
 - Tous les tests passent en **< 2 secondes**
 
@@ -311,7 +322,7 @@ pioum/
 
 GitHub Actions automatise :
 - **Linting** de tout le code
-- **Tests** (195 tests)
+- **Tests** (314 tests)
 - **Build** production
 - **Coverage reporting**
 

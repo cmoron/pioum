@@ -44,6 +44,8 @@ services:
       SMTP_PORT: ${SMTP_PORT:-587}
       SMTP_USER: ${SMTP_USER:-}
       SMTP_PASS: ${SMTP_PASS:-}
+    env_file:
+      - .env.staging
     # Exposition sur localhost uniquement pour le reverse proxy nginx
     ports:
       - "127.0.0.1:3002:3000"

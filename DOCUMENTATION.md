@@ -64,6 +64,9 @@ pioum/
 │   │   │   │   ├── avatars.ts    # Avatars
 │   │   │   │   ├── users.ts      # Profils
 │   │   │   │   └── userCars.ts   # Voitures perso
+│   │   │   ├── notifications/
+│   │   │   │   ├── notification.service.ts    # VAPID, saveSubscription, notifyUser, notifyGroupMembers
+│   │   │   │   └── notification.controller.ts # Routes /api/notifications/*
 │   │   │   ├── services/
 │   │   │   │   └── recurrence.ts # Génération d'occurrences
 │   │   │   ├── middleware/
@@ -73,6 +76,7 @@ pioum/
 │   │   │       ├── prisma.ts     # DB client
 │   │   │       ├── jwt.ts        # Token management
 │   │   │       ├── email.ts      # Email sending
+│   │   │       ├── formatDate.ts # Formatage de date (fr-FR)
 │   │   │       └── prismaSelects.ts
 │   │   ├── prisma/
 │   │   │   ├── schema.prisma     # Modèle de données
@@ -153,6 +157,7 @@ Voir [ARCHITECTURE.md](./ARCHITECTURE.md) pour le diagramme ER complet. Entités
 - **UserCar** - Voiture personnelle d'un utilisateur
 - **Ban** - Ban temporaire avec raison et durée
 - **Avatar** - Avatar réutilisable (users, cars, groups)
+- **PushSubscription** - Souscription Web Push d'un utilisateur (endpoint @unique, clés VAPID)
 
 ### Flux Authentification
 
@@ -182,6 +187,8 @@ Voir [ARCHITECTURE.md](./ARCHITECTURE.md) pour le diagramme ER complet. Entités
 - **Typage** : TypeScript end-to-end
 - **Rate Limiting** : express-rate-limit (sauf dev)
 - **CORS** : Configuré pour localhost:5173 en dev
+- **VAPID JWK** : Structure validée au démarrage du serveur (`kty`, `crv`, `d`) — crash explicite si mal configuré
+- **Souscriptions push** : endpoint validé (`https://`, longueurs max) avant enregistrement en DB
 
 ---
 
@@ -376,9 +383,7 @@ pnpm lint --fix     # Corrige automatiquement
 
 ### Couverture Actuelle
 
-- **195 tests** au total
-- **61 tests backend** (100% coverage sur lib + middleware)
-- **134 tests frontend** (100% coverage sur stores + utils)
+- **315 tests** au total (142 backend + 173 frontend)
 - **Exécution** : < 2 secondes
 - **Status** : Tous passent ✅
 
@@ -387,26 +392,32 @@ pnpm lint --fix     # Corrige automatiquement
 ```
 packages/backend/src/
 ├── lib/
-│   ├── jwt.test.ts           (12 tests) ✅ 100%
-│   ├── params.test.ts        (8 tests)  ✅ 100%
-│   └── email.test.ts         (14 tests) ✅ 100%
+│   ├── jwt.test.ts                         ✅
+│   ├── params.test.ts                      ✅
+│   └── email.test.ts                       ✅
 ├── middleware/
-│   ├── auth.test.ts          (13 tests) ✅ 100%
-│   └── errorHandler.test.ts  (14 tests) ✅ 100%
+│   ├── auth.test.ts                        ✅
+│   └── errorHandler.test.ts                ✅
+├── notifications/
+│   └── notification.service.test.ts        ✅ (saveSubscription, notifyUser, notifyGroupMembers)
 └── routes/
-    └── auth.test.ts          (3 tests, skipped - integration)
+    ├── auth.test.ts                        (skipped - integration)
+    ├── sessions-join.test.ts               ✅ (NO_CAR notification)
+    ├── sessions-leave.test.ts              ✅ (DRIVER_LEFT notification)
+    ├── cars-add.test.ts                    ✅ (CAR_AVAILABLE notification)
+    └── bans-ban.test.ts                    ✅ (USER_BANNED notification)
 
 packages/frontend/src/
 ├── lib/
-│   ├── utils.test.ts         (25 tests) ✅ 100%
-│   └── api.test.ts           (13 tests) ✅ partial
+│   ├── utils.test.ts                       ✅
+│   └── api.test.ts                         ✅
 ├── stores/
-│   ├── auth.test.ts          (27 tests) ✅ 100%
-│   ├── groups.test.ts        (25 tests) ✅ 100%
-│   └── userCars.test.ts      (22 tests) ✅ 100%
+│   ├── auth.test.ts                        ✅
+│   ├── groups.test.ts                      ✅
+│   └── userCars.test.ts                    ✅
 └── components/
-    ├── Avatar.test.tsx       (3 tests)  ✅ 100%
-    └── LoadingSpinner.test.tsx (19 tests) ✅ 100%
+    ├── Avatar.test.tsx                     ✅
+    └── LoadingSpinner.test.tsx             ✅
 ```
 
 ### Exécuter les Tests
@@ -507,7 +518,7 @@ Déclenché sur: Push et PR vers `main`
 4. Lint all packages
 5. Generate Prisma Client
 6. Push schema to test DB
-7. Run tests (195 tests)
+7. Run tests (315 tests)
 8. Build all packages
 
 **Services** :
@@ -705,4 +716,4 @@ cat packages/backend/.env | grep NODE_ENV
 
 ---
 
-**Dernière mise à jour** : 2026-02-05
+**Dernière mise à jour** : 2026-03-22

@@ -264,7 +264,7 @@ GOOGLE_CLIENT_SECRET=xxx
 ## Tests
 
 ### Couverture
-- **314 tests** au total (141 backend + 173 frontend)
+- **315 tests** au total (142 backend + 173 frontend)
 - **100% coverage** sur les modules testés
 - Tous les tests passent en **< 2 secondes**
 
@@ -322,7 +322,7 @@ pioum/
 
 GitHub Actions automatise :
 - **Linting** de tout le code
-- **Tests** (314 tests)
+- **Tests** (315 tests)
 - **Build** production
 - **Coverage reporting**
 

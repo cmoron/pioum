@@ -45,7 +45,13 @@ export function usePushNotifications(): PushState {
       setIsSubscribed(true)
       setPermission('granted')
     } catch (err) {
-      setError("Impossible d'activer les notifications")
+      if ('Notification' in globalThis && Notification.permission === 'denied') {
+        setError('Notifications bloquées — autorise-les dans les réglages de ton navigateur')
+      } else if (!('serviceWorker' in navigator) || !('PushManager' in globalThis)) {
+        setError('Les notifications push ne sont pas supportées sur ce navigateur')
+      } else {
+        setError("Impossible d'activer les notifications — réessaie dans quelques instants")
+      }
       console.error('[Pioum] Erreur abonnement push:', err)
     } finally {
       setIsLoading(false)

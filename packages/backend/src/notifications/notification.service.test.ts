@@ -6,6 +6,7 @@ vi.mock('../lib/prisma.js', () => ({
       upsert: vi.fn(),
       deleteMany: vi.fn(),
       findUnique: vi.fn(),
+      findMany: vi.fn(),
     },
     groupMember: {
       findMany: vi.fn(),
@@ -31,6 +32,7 @@ import {
 const mockUpsert = vi.mocked(prisma.pushSubscription.upsert)
 const mockDeleteMany = vi.mocked(prisma.pushSubscription.deleteMany)
 const mockFindUnique = vi.mocked(prisma.pushSubscription.findUnique)
+const mockFindMany = vi.mocked(prisma.pushSubscription.findMany)
 const mockGroupMemberFindMany = vi.mocked(prisma.groupMember.findMany)
 const mockBuildPushHTTPRequest = vi.mocked(buildPushHTTPRequest)
 
@@ -79,6 +81,16 @@ describe('saveSubscription', () => {
 
     await expect(saveSubscription('user-1', mockSub)).rejects.toThrow('DB error')
   })
+
+  it('throws 400 if endpoint does not start with https', async () => {
+    const badSub = { ...mockSub, endpoint: 'http://insecure.example.com' }
+    await expect(saveSubscription('user-1', badSub)).rejects.toMatchObject({ statusCode: 400 })
+  })
+
+  it('throws 400 if keys are missing', async () => {
+    const badSub = { endpoint: mockSub.endpoint, keys: { p256dh: '', auth: '' } }
+    await expect(saveSubscription('user-1', badSub)).rejects.toMatchObject({ statusCode: 400 })
+  })
 })
 
 describe('removeSubscription', () => {
@@ -108,6 +120,7 @@ describe('notifyUser', () => {
 
   it('builds and sends the push request when subscription exists', async () => {
     mockFindUnique.mockResolvedValue({
+      userId: 'user-1',
       endpoint: mockSub.endpoint,
       p256dh: mockSub.keys.p256dh,
       auth: mockSub.keys.auth,
@@ -138,6 +151,7 @@ describe('notifyUser', () => {
 
   it('removes the subscription when push endpoint returns 410', async () => {
     mockFindUnique.mockResolvedValue({
+      userId: 'user-1',
       endpoint: mockSub.endpoint,
       p256dh: mockSub.keys.p256dh,
       auth: mockSub.keys.auth,
@@ -157,6 +171,7 @@ describe('notifyUser', () => {
 
   it('throws when push endpoint returns a non-ok, non-410 status', async () => {
     mockFindUnique.mockResolvedValue({
+      userId: 'user-1',
       endpoint: mockSub.endpoint,
       p256dh: mockSub.keys.p256dh,
       auth: mockSub.keys.auth,
@@ -182,7 +197,8 @@ describe('notifyGroupMembers', () => {
       { userId: 'user-2' },
       { userId: 'user-3' },
     ])
-    mockFindUnique.mockResolvedValue(null)
+    // Aucune souscription trouvée → aucun push envoyé
+    mockFindMany.mockResolvedValue([])
 
     await notifyGroupMembers('group-1', 'user-1', mockPayload)
 
@@ -190,7 +206,9 @@ describe('notifyGroupMembers', () => {
       where: { groupId: 'group-1', userId: { not: 'user-1' } },
       select: { userId: true },
     })
-    expect(mockFindUnique).toHaveBeenCalledTimes(2)
+    expect(mockFindMany).toHaveBeenCalledWith({
+      where: { userId: { in: ['user-2', 'user-3'] } },
+    })
   })
 
   it('resolves even if one member notification fails', async () => {
@@ -198,13 +216,9 @@ describe('notifyGroupMembers', () => {
       { userId: 'user-2' },
       { userId: 'user-3' },
     ])
-    mockFindUnique
-      .mockResolvedValueOnce({
-        endpoint: mockSub.endpoint,
-        p256dh: mockSub.keys.p256dh,
-        auth: mockSub.keys.auth,
-      })
-      .mockResolvedValueOnce(null)
+    mockFindMany.mockResolvedValue([
+      { userId: 'user-2', endpoint: mockSub.endpoint, p256dh: mockSub.keys.p256dh, auth: mockSub.keys.auth },
+    ])
     mockBuildPushHTTPRequest.mockRejectedValue(new Error('VAPID sign failed'))
 
     await expect(notifyGroupMembers('group-1', 'user-1', mockPayload)).resolves.toBeUndefined()
@@ -215,6 +229,6 @@ describe('notifyGroupMembers', () => {
 
     await notifyGroupMembers('group-1', 'user-1', mockPayload)
 
-    expect(mockFindUnique).not.toHaveBeenCalled()
+    expect(mockFindMany).not.toHaveBeenCalled()
   })
 })

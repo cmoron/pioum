@@ -69,6 +69,9 @@ pioum/
 │   │   │   │   ├── avatars.ts    # Banque d'avatars
 │   │   │   │   ├── users.ts      # Profils utilisateurs
 │   │   │   │   └── userCars.ts   # Voitures personnelles
+│   │   │   ├── notifications/
+│   │   │   │   ├── notification.service.ts    # VAPID, saveSubscription, notifyUser, notifyGroupMembers
+│   │   │   │   └── notification.controller.ts # Routes /api/notifications/*
 │   │   │   ├── services/
 │   │   │   │   └── recurrence.ts # Génération d'occurrences
 │   │   │   ├── middleware/
@@ -78,6 +81,7 @@ pioum/
 │   │   │   │   ├── prisma.ts        # Client DB
 │   │   │   │   ├── jwt.ts           # Token management
 │   │   │   │   ├── prismaSelects.ts # Constantes SELECT réutilisables
+│   │   │   │   ├── formatDate.ts    # Formatage de date (fr-FR, utilisé dans notifs)
 │   │   │   │   └── email.ts         # Envoi emails (magic link)
 │   │   │   └── index.ts             # Entry point
 │   │   ├── prisma/
@@ -217,6 +221,15 @@ pioum/
        │ endsAt       │
        │ liftedAt     │  (nullable, pour lever le ban)
        └──────────────┘
+
+       ┌──────────────────┐
+       │ PushSubscription │
+       ├──────────────────┤
+       │ userId  @unique  │◄──── User
+       │ endpoint @unique │  (URL push service)
+       │ p256dh           │
+       │ auth             │
+       └──────────────────┘
 ```
 
 ---
@@ -373,14 +386,18 @@ pioum/
 |----------|-------------|--------|
 | `DATABASE_URL` | URL PostgreSQL | Oui |
 | `JWT_SECRET` | Clé secrète JWT (32+ chars) | Oui |
+| `FRONTEND_URL` | URL publique frontend | Oui |
 | `GOOGLE_CLIENT_ID` | OAuth Google | Non* |
 | `GOOGLE_CLIENT_SECRET` | OAuth Google | Non* |
 | `SMTP_HOST` | Serveur SMTP | Non* |
 | `SMTP_USER` | User SMTP | Non* |
 | `SMTP_PASS` | Password SMTP | Non* |
-| `FRONTEND_URL` | URL publique frontend | Oui |
+| `VAPID_PUBLIC_KEY` | Clé publique VAPID (Web Push) | Non** |
+| `VAPID_PRIVATE_KEY_JWK` | Clé privée VAPID au format JWK JSON | Non** |
+| `VAPID_EMAIL` | Contact admin pour VAPID (`mailto:…`) | Non** |
 
 *Au moins une méthode d'auth requise
+**Requis ensemble pour activer les notifications push. Si `VAPID_PRIVATE_KEY_JWK` est présent, le format JWK est validé au démarrage.
 
 ---
 

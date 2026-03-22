@@ -227,7 +227,10 @@ bansRouter.post('/', authenticate, async (req, res, next) => {
           type: 'USER_BANNED',
         })
       })
-      .catch(() => { /* silencieux */ })
+      .catch((err: unknown) => {
+        const msg = err instanceof Error ? err.message : String(err)
+        console.error(`[Pioum][Notification] USER_BANNED: ${msg}`)
+      })
   } catch (error) {
     next(error)
   }

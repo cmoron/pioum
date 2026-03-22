@@ -57,6 +57,9 @@ Serveur: Debian avec nginx reverse proxy
   - [ ] `GOOGLE_CLIENT_ID`
   - [ ] `GOOGLE_CLIENT_SECRET`
   - [ ] (Optionnel) Variables SMTP
+  - [ ] (Optionnel) `VAPID_PUBLIC_KEY` — clé publique générée avec `npx web-push generate-vapid-keys`
+  - [ ] (Optionnel) `VAPID_PRIVATE_KEY_JWK` — clé privée au format JWK JSON (`{ "kty": "EC", "crv": "P-256", "d": "…", … }`)
+  - [ ] (Optionnel) `VAPID_EMAIL` — contact admin (`mailto:contact@example.com`)
 - [ ] Vérifier que toutes les variables obligatoires sont définies
 - [ ] Sécuriser le fichier: `chmod 600 .env.staging`
 
@@ -254,6 +257,8 @@ Serveur: Debian avec nginx reverse proxy
 - [ ] Inscription à une session fonctionnelle
 - [ ] Ajout de voiture fonctionnel
 - [ ] API backend répond correctement
+- [ ] (Si VAPID configuré) `GET /api/notifications/vapid-public-key` retourne 200
+- [ ] (Si VAPID configuré) Activation des notifications push fonctionnelle depuis le profil
 
 ### Technique
 

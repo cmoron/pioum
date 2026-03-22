@@ -66,5 +66,9 @@ export async function checkExistingSubscription(): Promise<boolean> {
   const reg = await navigator.serviceWorker.getRegistration()
   if (!reg) return false
   const sub = await reg.pushManager.getSubscription()
-  return sub !== null
+  if (!sub) return false
+  const res = await fetch(`${API_BASE}/notifications/subscription`, { credentials: 'include' })
+  if (!res.ok) return false
+  const { subscribed } = (await res.json()) as { subscribed: boolean }
+  return subscribed
 }

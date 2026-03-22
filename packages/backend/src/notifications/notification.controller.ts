@@ -1,5 +1,6 @@
 import { Router, Request, Response, NextFunction } from 'express'
 import { authenticate } from '../middleware/auth.js'
+import { prisma } from '../lib/prisma.js'
 import {
   saveSubscription,
   removeSubscription,
@@ -46,6 +47,20 @@ notificationsRouter.post(
     try {
       await removeSubscription(req.user!.userId)
       res.status(200).json({ message: 'Désabonnement effectué' })
+    } catch (err) {
+      next(err)
+    }
+  }
+)
+
+// Vérifie si l'utilisateur connecté a une subscription en DB
+notificationsRouter.get(
+  '/subscription',
+  authenticate,
+  async (req: Request, res: Response, next: NextFunction): Promise<void> => {
+    try {
+      const sub = await prisma.pushSubscription.findUnique({ where: { userId: req.user!.userId } })
+      res.json({ subscribed: sub !== null })
     } catch (err) {
       next(err)
     }

@@ -146,7 +146,10 @@ export async function notifyGroupMembers(
     where: { userId: { in: userIds } },
   })
 
-  await Promise.allSettled(
+  const results = await Promise.allSettled(
     subscriptions.map((record) => sendPushToRecord(record, payload))
   )
+  results.forEach((r) => {
+    if (r.status === 'rejected') console.error('[push] sendPushToRecord failed:', r.reason)
+  })
 }

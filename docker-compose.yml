@@ -21,7 +21,7 @@ services:
     image: node:22-alpine
     container_name: pioum-backend
     working_dir: /app
-    command: command: sh -c "corepack enable && corepack prepare pnpm@latest --activate && pnpm install && pnpm --filter @pioum/backend db:push && pnpm --filter @pioum/backend db:generate && pnpm --filter @pioum/backend dev"
+    command: sh -c "corepack enable && corepack prepare pnpm@latest --activate && pnpm install && pnpm --filter @pioum/backend db:push && pnpm --filter @pioum/backend db:generate && pnpm --filter @pioum/backend dev"
     environment:
       DATABASE_URL: postgresql://pioum:pioum@db:5432/pioum?schema=public
       JWT_SECRET: ${JWT_SECRET:-dev-secret-change-in-production}

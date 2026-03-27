@@ -14,7 +14,7 @@ export type PioumNotificationPayload = {
   title: string
   body: string
   url: string
-  type: 'NEW_INSCRIPTION' | 'CAR_AVAILABLE' | 'NO_CAR' | 'DRIVER_LEFT' | 'USER_BANNED'
+  type: 'NEW_INSCRIPTION' | 'NEW_WITHDRAWAL' | 'CAR_AVAILABLE' | 'NO_CAR' | 'DRIVER_LEFT' | 'USER_BANNED' | 'PASSENGER_JOINED' | 'PASSENGER_LEFT' | 'PASSENGER_KICKED'
 }
 
 // ── VAPID key ──────────────────────────────────────────────────────────────

@@ -4,7 +4,7 @@ import { prisma } from '../lib/prisma.js'
 import { USER_SELECT } from '../lib/prismaSelects.js'
 import { authenticate } from '../middleware/auth.js'
 import { AppError } from '../middleware/errorHandler.js'
-import { notifyGroupMembers } from '../notifications/notification.service.js'
+import { notifyGroupMembers, notifyUser } from '../notifications/notification.service.js'
 import { formatSessionDate } from '../lib/formatDate.js'
 
 export const carsRouter = Router()
@@ -216,7 +216,8 @@ carsRouter.patch('/:id', authenticate, async (req, res, next) => {
 carsRouter.delete('/:id', authenticate, async (req, res, next) => {
   try {
     const car = await prisma.car.findUnique({
-      where: { id: req.params.id as string }
+      where: { id: req.params.id as string },
+      include: { session: true, passengers: { select: { userId: true } } }
     })
 
     if (!car) {
@@ -238,6 +239,25 @@ carsRouter.delete('/:id', authenticate, async (req, res, next) => {
     })
 
     res.json({ message: 'Car removed' })
+
+    // Notifier uniquement les passagers de la voiture (fire-and-forget)
+    const passengerIds = car.passengers.map((p) => p.userId).filter((id) => id !== car.driverId)
+    if (passengerIds.length > 0) {
+      prisma.user.findUnique({ where: { id: car.driverId }, select: { name: true } })
+        .then((driver) => {
+          const driverName = driver?.name ?? 'Le chauffeur'
+          const payload = {
+            title: '🚨 Un chauffeur s\'est désisté !',
+            body: `La voiture de ${driverName} n'est plus disponible pour la séance du ${formatSessionDate(car.session.date)}.`,
+            url: `/groups/${car.session.groupId}`,
+            type: 'DRIVER_LEFT' as const,
+          }
+          return Promise.allSettled(passengerIds.map((id) => notifyUser(id, payload)))
+        })
+        .catch((err: unknown) => {
+          console.error('[Pioum] Erreur envoi notification désistement voiture:', err)
+        })
+    }
   } catch (error) {
     next(error)
   }
@@ -328,10 +348,25 @@ carsRouter.post('/:id/join', authenticate, async (req, res, next) => {
         }
       })
 
-      return passenger
+      return { passenger, driverId: car.driverId, groupId: car.session.groupId, sessionDate: car.session.date }
     })
 
-    res.json({ message: 'Joined car', passenger: result })
+    res.json({ message: 'Joined car', passenger: result.passenger })
+
+    // Notifier le conducteur qu'un passager a rejoint sa voiture (fire-and-forget)
+    prisma.user.findUnique({ where: { id: userId }, select: { name: true } })
+      .then((joiner) => {
+        const joinerName = joiner?.name ?? 'Quelqu\'un'
+        return notifyUser(result.driverId, {
+          title: '🙋 Nouveau passager !',
+          body: `${joinerName} a rejoint ta voiture pour la séance du ${formatSessionDate(result.sessionDate)}.`,
+          url: `/groups/${result.groupId}`,
+          type: 'PASSENGER_JOINED',
+        })
+      })
+      .catch((err: unknown) => {
+        console.error('[Pioum] Erreur envoi notification nouveau passager', err)
+      })
   } catch (error) {
     next(error)
   }
@@ -341,7 +376,8 @@ carsRouter.post('/:id/join', authenticate, async (req, res, next) => {
 carsRouter.delete('/:id/leave', authenticate, async (req, res, next) => {
   try {
     const car = await prisma.car.findUnique({
-      where: { id: req.params.id as string }
+      where: { id: req.params.id as string },
+      include: { session: true }
     })
 
     if (!car) {
@@ -365,6 +401,21 @@ carsRouter.delete('/:id/leave', authenticate, async (req, res, next) => {
     })
 
     res.json({ message: 'Left car' })
+
+    // Notifier le conducteur qu'un passager a quitté sa voiture (fire-and-forget)
+    prisma.user.findUnique({ where: { id: req.user!.userId }, select: { name: true } })
+      .then((leaver) => {
+        const leaverName = leaver?.name ?? 'Quelqu\'un'
+        return notifyUser(car.driverId, {
+          title: '🚪 Un passager est parti !',
+          body: `${leaverName} a quitté ta voiture pour la séance du ${formatSessionDate(car.session.date)}.`,
+          url: `/groups/${car.session.groupId}`,
+          type: 'PASSENGER_LEFT',
+        })
+      })
+      .catch((err: unknown) => {
+        console.error('[Pioum] Erreur envoi notification départ passager:', err)
+      })
   } catch (error) {
     next(error)
   }
@@ -374,7 +425,8 @@ carsRouter.delete('/:id/leave', authenticate, async (req, res, next) => {
 carsRouter.delete('/:id/kick/:userId', authenticate, async (req, res, next) => {
   try {
     const car = await prisma.car.findUnique({
-      where: { id: req.params.id as string }
+      where: { id: req.params.id as string },
+      include: { session: true }
     })
 
     if (!car) {
@@ -402,6 +454,16 @@ carsRouter.delete('/:id/kick/:userId', authenticate, async (req, res, next) => {
     })
 
     res.json({ message: 'Passenger kicked' })
+
+    // Notifier le passager éjecté (fire-and-forget)
+    notifyUser(req.params.userId as string, {
+      title: '👢 Tu as été éjecté !',
+      body: `Tu as été retiré de la voiture pour la séance du ${formatSessionDate(car.session.date)}.`,
+      url: `/groups/${car.session.groupId}`,
+      type: 'PASSENGER_KICKED',
+    }).catch((err: unknown) => {
+      console.error('[Pioum] Erreur envoi notification éjection passager:', err)
+    })
   } catch (error) {
     next(error)
   }

@@ -24,6 +24,7 @@ if (process.env.VAPID_PRIVATE_KEY_JWK) {
 }
 
 const app = express();
+app.disable("x-powered-by");
 const PORT = process.env.PORT || 3000;
 
 // Middleware

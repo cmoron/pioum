@@ -2,66 +2,69 @@ import { Router, Request, Response, NextFunction } from 'express'
 import { z } from 'zod'
 import { Prisma } from '@prisma/client'
 import { prisma } from '../lib/prisma.js'
-import { USER_SELECT } from '../lib/prismaSelects.js'
+import { USER_SELECT, SESSION_INCLUDE } from '../lib/prismaSelects.js'
 import { authenticate } from '../middleware/auth.js'
 import { AppError } from '../middleware/errorHandler.js'
 import { actionRateLimit } from '../middleware/actionRateLimit.js'
 import { notifyGroupMembers } from '../notifications/notification.service.js'
 import { formatSessionDate } from '../lib/formatDate.js'
 
-export const sessionsRouter = Router()
+export const sessionsRouter = Router();
 
 const createSessionSchema = z.object({
   groupId: z.string(),
   date: z.string().optional(), // ISO date string, defaults to today
   startTime: z.string().optional(), // ISO datetime string
-  endTime: z.string().optional() // ISO datetime string
-})
+  endTime: z.string().optional(), // ISO datetime string
+});
 
 const updateSessionSchema = z.object({
   startTime: z.string(), // ISO datetime string
   endTime: z.string(), // ISO datetime string
-  scope: z.enum(['single', 'future']).optional() // For recurring sessions
-})
+  scope: z.enum(["single", "future"]).optional(), // For recurring sessions
+});
 
 // Helper to get today's date at midnight UTC
 function getTodayDate(): Date {
-  const now = new Date()
-  return new Date(Date.UTC(now.getFullYear(), now.getMonth(), now.getDate()))
+  const now = new Date();
+  return new Date(Date.UTC(now.getFullYear(), now.getMonth(), now.getDate()));
 }
 
 // Helper to get default start/end times for a date (12:00 - 14:00 local time)
 function getDefaultTimes(date: Date): { startTime: Date; endTime: Date } {
-  const startTime = new Date(date)
-  startTime.setHours(12, 0, 0, 0)
+  const startTime = new Date(date);
+  startTime.setHours(12, 0, 0, 0);
 
-  const endTime = new Date(date)
-  endTime.setHours(14, 0, 0, 0)
+  const endTime = new Date(date);
+  endTime.setHours(14, 0, 0, 0);
 
-  return { startTime, endTime }
+  return { startTime, endTime };
 }
 
 // Helper to check if a session is locked (startTime has passed)
 function isSessionLocked(session: { startTime: Date }): boolean {
-  return new Date() >= session.startTime
+  return new Date() >= session.startTime;
 }
 
 // Get sessions for a date range (used by calendar view)
-sessionsRouter.get('/range/:groupId', authenticate, async (req, res, next) => {
+sessionsRouter.get("/range/:groupId", authenticate, async (req, res, next) => {
   try {
-    const groupId = req.params.groupId as string
-    const from = req.query.from as string | undefined
-    const to = req.query.to as string | undefined
+    const groupId = req.params.groupId as string;
+    const from = req.query.from as string | undefined;
+    const to = req.query.to as string | undefined;
 
     if (!from || !to) {
-      throw new AppError(400, 'Both "from" and "to" query parameters are required')
+      throw new AppError(
+        400,
+        'Both "from" and "to" query parameters are required',
+      );
     }
 
-    const fromDate = new Date(from)
-    const toDate = new Date(to)
+    const fromDate = new Date(from);
+    const toDate = new Date(to);
 
     if (isNaN(fromDate.getTime()) || isNaN(toDate.getTime())) {
-      throw new AppError(400, 'Invalid date format for "from" or "to"')
+      throw new AppError(400, 'Invalid date format for "from" or "to"');
     }
 
     // Verify membership
@@ -69,13 +72,13 @@ sessionsRouter.get('/range/:groupId', authenticate, async (req, res, next) => {
       where: {
         userId_groupId: {
           userId: req.user!.userId,
-          groupId
-        }
-      }
-    })
+          groupId,
+        },
+      },
+    });
 
     if (!membership) {
-      throw new AppError(403, 'Not a member of this group')
+      throw new AppError(403, "Not a member of this group");
     }
 
     const sessions = await prisma.session.findMany({
@@ -83,79 +86,56 @@ sessionsRouter.get('/range/:groupId', authenticate, async (req, res, next) => {
         groupId,
         date: {
           gte: fromDate,
-          lte: toDate
-        }
-      },
-      include: {
-        cars: {
-          include: {
-            driver: {
-              select: USER_SELECT
-            },
-            userCar: {
-              include: { avatar: true }
-            },
-            passengers: {
-              include: {
-                user: {
-                  select: USER_SELECT
-                }
-              }
-            }
-          }
+          lte: toDate,
         },
-        passengers: {
-          include: {
-            user: {
-              select: USER_SELECT
-            }
-          }
-        }
       },
-      orderBy: { startTime: 'asc' }
-    })
+      include: SESSION_INCLUDE,
+      orderBy: { startTime: "asc" },
+    });
 
-    res.json({ sessions })
+    res.json({ sessions });
   } catch (error) {
-    next(error)
+    next(error);
   }
-})
+});
 
 // Get past sessions for a group (history)
-sessionsRouter.get('/past/:groupId', authenticate, async (req, res, next) => {
+sessionsRouter.get("/past/:groupId", authenticate, async (req, res, next) => {
   try {
-    const groupId = req.params.groupId as string
-    const limit = Math.min(parseInt(req.query.limit as string) || 15, 50)
-    const cursor = req.query.cursor as string | undefined
+    const groupId = req.params.groupId as string;
+    const limit = Math.min(parseInt(req.query.limit as string) || 15, 50);
+    const cursor = req.query.cursor as string | undefined;
 
     // Verify membership
     const membership = await prisma.groupMember.findUnique({
       where: {
         userId_groupId: {
           userId: req.user!.userId,
-          groupId
-        }
-      }
-    })
+          groupId,
+        },
+      },
+    });
 
     if (!membership) {
-      throw new AppError(403, 'Not a member of this group')
+      throw new AppError(403, "Not a member of this group");
     }
 
-    const now = new Date()
+    const now = new Date();
 
     // Build cursor condition if provided
-    let cursorCondition = {}
+    let cursorCondition = {};
     if (cursor) {
-      const cursorSession = await prisma.session.findUnique({ where: { id: cursor } })
+      const cursorSession = await prisma.session.findUnique({
+        where: { id: cursor },
+      });
       if (cursorSession) {
         // Get sessions older than the cursor (pagination going back in time)
         cursorCondition = {
           OR: [
             { startTime: { lt: cursorSession.startTime } },
-            { startTime: cursorSession.startTime, id: { lt: cursor } }
-          ]
-        }
+            { startTime: cursorSession.startTime, id: { lt: cursor } },
+          ],
+        };
       }
     }
 
@@ -164,225 +144,211 @@ sessionsRouter.get('/past/:groupId', authenticate, async (req, res, next) => {
         groupId,
         // Sessions that have ended (endTime <= now)
         endTime: { lte: now },
-        ...cursorCondition
+        ...cursorCondition,
       },
-      include: {
-        cars: {
-          include: {
-            driver: {
-              select: USER_SELECT
-            },
-            userCar: {
-              include: { avatar: true }
-            },
-            passengers: {
-              include: {
-                user: {
-                  select: USER_SELECT
-                }
-              }
-            }
-          }
-        },
-        passengers: {
-          include: {
-            user: {
-              select: USER_SELECT
-            }
-          }
-        }
-      },
-      orderBy: [{ startTime: 'desc' }, { id: 'desc' }],
-      take: limit + 1 // Take one extra to know if there are more
-    })
+      include: SESSION_INCLUDE,
+      orderBy: [{ startTime: "desc" }, { id: "desc" }],
+      take: limit + 1, // Take one extra to know if there are more
+    });
 
-    const hasMore = sessions.length > limit
-    const resultSessions = hasMore ? sessions.slice(0, limit) : sessions
-    const nextCursor = hasMore ? resultSessions[resultSessions.length - 1]?.id : undefined
+    const hasMore = sessions.length > limit;
+    const resultSessions = hasMore ? sessions.slice(0, limit) : sessions;
+    const nextCursor = hasMore
+      ? resultSessions[resultSessions.length - 1]?.id
+      : undefined;
 
     res.json({
       sessions: resultSessions,
       hasMore,
-      nextCursor
-    })
+      nextCursor,
+    });
   } catch (error) {
-    next(error)
+    next(error);
   }
-})
+});
 
 // Get upcoming sessions for a group
-sessionsRouter.get('/upcoming/:groupId', authenticate, async (req, res, next) => {
-  try {
-    const groupId = req.params.groupId as string
-    const limit = Math.min(parseInt(req.query.limit as string) || 10, 50)
-    const cursor = req.query.cursor as string | undefined
+sessionsRouter.get(
+  "/upcoming/:groupId",
+  authenticate,
+  async (req, res, next) => {
+    try {
+      const groupId = req.params.groupId as string;
+      const limit = Math.min(parseInt(req.query.limit as string) || 10, 50);
+      const cursor = req.query.cursor as string | undefined;
 
-    // Verify membership
-    const membership = await prisma.groupMember.findUnique({
-      where: {
-        userId_groupId: {
-          userId: req.user!.userId,
-          groupId
-        }
-      }
-    })
-
-    if (!membership) {
-      throw new AppError(403, 'Not a member of this group')
-    }
-
-    const now = new Date()
-
-    const sessions = await prisma.session.findMany({
-      where: {
-        groupId,
-        // Sessions that haven't ended yet (endTime > now)
-        endTime: { gt: now },
-        // If cursor provided, get sessions after that one
-        ...(cursor && {
-          id: { not: cursor },
-          startTime: { gte: (await prisma.session.findUnique({ where: { id: cursor } }))?.startTime }
-        })
-      },
-      include: {
-        cars: {
-          include: {
-            driver: {
-              select: USER_SELECT
-            },
-            userCar: {
-              include: { avatar: true }
-            },
-            passengers: {
-              include: {
-                user: {
-                  select: USER_SELECT
-                }
-              }
-            }
-          }
+      // Verify membership
+      const membership = await prisma.groupMember.findUnique({
+        where: {
+          userId_groupId: {
+            userId: req.user!.userId,
+            groupId,
+          },
         },
-        passengers: {
-          include: {
-            user: {
-              select: USER_SELECT
-            }
-          }
-        }
-      },
-      orderBy: { startTime: 'asc' },
-      take: limit + 1 // Take one extra to know if there are more
-    })
+      });
 
-    const hasMore = sessions.length > limit
-    const resultSessions = hasMore ? sessions.slice(0, limit) : sessions
-    const nextCursor = hasMore ? resultSessions[resultSessions.length - 1]?.id : undefined
-
-    res.json({
-      sessions: resultSessions,
-      hasMore,
-      nextCursor
-    })
-  } catch (error) {
-    next(error)
-  }
-})
-
-// Get or create today's session for a group
-sessionsRouter.get('/today/:groupId', authenticate, async (req, res, next) => {
-  try {
-    const groupId = req.params.groupId as string
-
-    // Verify membership
-    const membership = await prisma.groupMember.findUnique({
-      where: {
-        userId_groupId: {
-          userId: req.user!.userId,
-          groupId
-        }
+      if (!membership) {
+        throw new AppError(403, "Not a member of this group");
       }
-    })
 
-    if (!membership) {
-      throw new AppError(403, 'Not a member of this group')
-    }
+      const now = new Date();
 
-    const today = getTodayDate()
-
-    let session = await prisma.session.findFirst({
-      where: {
-        groupId,
-        date: today
-      },
-      orderBy: { startTime: 'asc' },
-      include: {
-        cars: {
-          include: {
-            driver: {
-              select: USER_SELECT
-            },
-            passengers: {
-              include: {
-                user: {
-                  select: USER_SELECT
-                }
-              }
-            }
-          }
-        },
-        passengers: {
-          include: {
-            user: {
-              select: USER_SELECT
-            }
-          }
-        }
-      }
-    })
-
-    if (!session) {
-      const { startTime, endTime } = getDefaultTimes(today)
-      session = await prisma.session.create({
-        data: {
+      const sessions = await prisma.session.findMany({
+        where: {
           groupId,
-          date: today,
-          startTime,
-          endTime
+          // Sessions that haven't ended yet (endTime > now)
+          endTime: { gt: now },
+          // If cursor provided, get sessions after that one
+          ...(cursor && {
+            id: { not: cursor },
+            startTime: {
+              gte: (await prisma.session.findUnique({ where: { id: cursor } }))
+                ?.startTime,
+            },
+          }),
         },
         include: {
           cars: {
             include: {
               driver: {
-                select: USER_SELECT
+                select: USER_SELECT,
+              },
+              userCar: {
+                include: { avatar: true },
               },
               passengers: {
                 include: {
                   user: {
-                    select: USER_SELECT
-                  }
-                }
-              }
-            }
+                    select: USER_SELECT,
+                  },
+                },
+              },
+            },
           },
           passengers: {
             include: {
               user: {
-                select: USER_SELECT
-              }
-            }
-          }
-        }
-      })
+                select: USER_SELECT,
+              },
+            },
+          },
+        },
+        orderBy: { startTime: "asc" },
+        take: limit + 1, // Take one extra to know if there are more
+      });
+
+      const hasMore = sessions.length > limit;
+      const resultSessions = hasMore ? sessions.slice(0, limit) : sessions;
+      const nextCursor = hasMore
+        ? resultSessions[resultSessions.length - 1]?.id
+        : undefined;
+
+      res.json({
+        sessions: resultSessions,
+        hasMore,
+        nextCursor,
+      });
+    } catch (error) {
+      next(error);
+    }
+  },
+);
+
+// Get or create today's session for a group
+sessionsRouter.get("/today/:groupId", authenticate, async (req, res, next) => {
+  try {
+    const groupId = req.params.groupId as string;
+
+    // Verify membership
+    const membership = await prisma.groupMember.findUnique({
+      where: {
+        userId_groupId: {
+          userId: req.user!.userId,
+          groupId,
+        },
+      },
+    });
+
+    if (!membership) {
+      throw new AppError(403, "Not a member of this group");
     }
 
-    res.json({ session })
+    const today = getTodayDate();
+
+    let session = await prisma.session.findFirst({
+      where: {
+        groupId,
+        date: today,
+      },
+      orderBy: { startTime: "asc" },
+      include: {
+        cars: {
+          include: {
+            driver: {
+              select: USER_SELECT,
+            },
+            passengers: {
+              include: {
+                user: {
+                  select: USER_SELECT,
+                },
+              },
+            },
+          },
+        },
+        passengers: {
+          include: {
+            user: {
+              select: USER_SELECT,
+            },
+          },
+        },
+      },
+    });
+
+    if (!session) {
+      const { startTime, endTime } = getDefaultTimes(today);
+      session = await prisma.session.create({
+        data: {
+          groupId,
+          date: today,
+          startTime,
+          endTime,
+        },
+        include: {
+          cars: {
+            include: {
+              driver: {
+                select: USER_SELECT,
+              },
+              passengers: {
+                include: {
+                  user: {
+                    select: USER_SELECT,
+                  },
+                },
+              },
+            },
+          },
+          passengers: {
+            include: {
+              user: {
+                select: USER_SELECT,
+              },
+            },
+          },
+        },
+      });
+    }
+
+    res.json({ session });
   } catch (error) {
-    next(error)
+    next(error);
   }
-})
+});
 
 // Get session by ID
-sessionsRouter.get('/:id', authenticate, async (req, res, next) => {
+sessionsRouter.get("/:id", authenticate, async (req, res, next) => {
   try {
     const session = await prisma.session.findUnique({
       where: { id: req.params.id as string },
@@ -391,29 +357,29 @@ sessionsRouter.get('/:id', authenticate, async (req, res, next) => {
         cars: {
           include: {
             driver: {
-              select: USER_SELECT
+              select: USER_SELECT,
             },
             passengers: {
               include: {
                 user: {
-                  select: USER_SELECT
-                }
-              }
-            }
-          }
+                  select: USER_SELECT,
+                },
+              },
+            },
+          },
         },
         passengers: {
           include: {
             user: {
-              select: USER_SELECT
-            }
-          }
-        }
-      }
-    })
+              select: USER_SELECT,
+            },
+          },
+        },
+      },
+    });
 
     if (!session) {
-      throw new AppError(404, 'Session not found')
+      throw new AppError(404, "Session not found");
     }
 
     // Verify membership
@@ -421,31 +387,31 @@ sessionsRouter.get('/:id', authenticate, async (req, res, next) => {
       where: {
         userId_groupId: {
           userId: req.user!.userId,
-          groupId: session.groupId
-        }
-      }
-    })
+          groupId: session.groupId,
+        },
+      },
+    });
 
     if (!membership) {
-      throw new AppError(403, 'Not a member of this group')
+      throw new AppError(403, "Not a member of this group");
     }
 
-    res.json({ session })
+    res.json({ session });
   } catch (error) {
-    next(error)
+    next(error);
   }
-})
+});
 
 // Get session lock status
-sessionsRouter.get('/:id/lock-status', authenticate, async (req, res, next) => {
+sessionsRouter.get("/:id/lock-status", authenticate, async (req, res, next) => {
   try {
     const session = await prisma.session.findUnique({
       where: { id: req.params.id as string },
-      select: { id: true, groupId: true, startTime: true }
-    })
+      select: { id: true, groupId: true, startTime: true },
+    });
 
     if (!session) {
-      throw new AppError(404, 'Session not found')
+      throw new AppError(404, "Session not found");
     }
 
     // Verify membership
@@ -453,37 +419,37 @@ sessionsRouter.get('/:id/lock-status', authenticate, async (req, res, next) => {
       where: {
         userId_groupId: {
           userId: req.user!.userId,
-          groupId: session.groupId
-        }
-      }
-    })
+          groupId: session.groupId,
+        },
+      },
+    });
 
     if (!membership) {
-      throw new AppError(403, 'Not a member of this group')
+      throw new AppError(403, "Not a member of this group");
     }
 
-    const isLocked = isSessionLocked(session)
-    const isAdmin = membership.role === 'admin'
+    const isLocked = isSessionLocked(session);
+    const isAdmin = membership.role === "admin";
 
     res.json({
       isLocked,
       canModify: !isLocked || isAdmin,
-      locksAt: session.startTime
-    })
+      locksAt: session.startTime,
+    });
   } catch (error) {
-    next(error)
+    next(error);
   }
-})
+});
 
 // Join session (participate)
 sessionsRouter.post('/:id/join', authenticate, actionRateLimit, async (req, res, next) => {
   try {
     const session = await prisma.session.findUnique({
-      where: { id: req.params.id as string }
-    })
+      where: { id: req.params.id as string },
+    });
 
     if (!session) {
-      throw new AppError(404, 'Session not found')
+      throw new AppError(404, "Session not found");
     }
 
     // Verify membership
@@ -491,18 +457,21 @@ sessionsRouter.post('/:id/join', authenticate, actionRateLimit, async (req, res,
       where: {
         userId_groupId: {
           userId: req.user!.userId,
-          groupId: session.groupId
-        }
-      }
-    })
+          groupId: session.groupId,
+        },
+      },
+    });
 
     if (!membership) {
-      throw new AppError(403, 'Not a member of this group')
+      throw new AppError(403, "Not a member of this group");
     }
 
     // Check if session is locked (admin can bypass)
-    if (isSessionLocked(session) && membership.role !== 'admin') {
-      throw new AppError(403, 'Les inscriptions sont fermées pour cette séance')
+    if (isSessionLocked(session) && membership.role !== "admin") {
+      throw new AppError(
+        403,
+        "Les inscriptions sont fermées pour cette séance",
+      );
     }
 
     // Check if already participating
@@ -510,70 +479,75 @@ sessionsRouter.post('/:id/join', authenticate, actionRateLimit, async (req, res,
       where: {
         sessionId_userId: {
           sessionId: session.id,
-          userId: req.user!.userId
-        }
-      }
-    })
+          userId: req.user!.userId,
+        },
+      },
+    });
 
     if (existing) {
-      throw new AppError(400, 'Already participating')
+      throw new AppError(400, "Already participating");
     }
 
     await prisma.passenger.create({
       data: {
         sessionId: session.id,
-        userId: req.user!.userId
-      }
-    })
+        userId: req.user!.userId,
+      },
+    });
 
     // Notifier les autres membres du groupe (fire-and-forget)
-    prisma.user.findUnique({ where: { id: req.user!.userId }, select: { name: true } })
+    prisma.user
+      .findUnique({ where: { id: req.user!.userId }, select: { name: true } })
       .then((joiner) => {
-        const userName = joiner?.name ?? 'Quelqu\'un'
+        const userName = joiner?.name ?? "Quelqu'un";
         return notifyGroupMembers(session.groupId, req.user!.userId, {
-          title: '🏋️ Nouvelle inscription Pioum',
+          title: "🏋️ Nouvelle inscription Pioum",
           body: `${userName} est inscrit et en attente de voiture !`,
           url: `/groups/${session.groupId}`,
           type: 'NEW_INSCRIPTION',
         })
       })
       .catch((err: unknown) => {
-        console.error('[Pioum] Erreur envoi notifications:', err)
-      })
+        console.error("[Pioum] Erreur envoi notifications:", err);
+      });
 
-    res.json({ message: 'Joined session' })
+    res.json({ message: "Joined session" });
   } catch (error) {
-    next(error)
+    next(error);
   }
-})
+});
 
 // Leave session
-export async function leaveSessionHandler(req: Request, res: Response, next: NextFunction): Promise<void> {
+export async function leaveSessionHandler(
+  req: Request,
+  res: Response,
+  next: NextFunction,
+): Promise<void> {
   try {
-    const sessionId = req.params.id as string
+    const sessionId = req.params.id as string;
 
     const passenger = await prisma.passenger.findUnique({
-      where: { sessionId_userId: { sessionId, userId: req.user!.userId } }
-    })
+      where: { sessionId_userId: { sessionId, userId: req.user!.userId } },
+    });
 
     if (!passenger) {
-      throw new AppError(404, 'Not participating in this session')
+      throw new AppError(404, "Not participating in this session");
     }
 
     // Vérifier si l'utilisateur avait une voiture avant de la supprimer
     const driverCar = await prisma.car.findUnique({
-      where: { sessionId_driverId: { sessionId, driverId: req.user!.userId } }
-    })
+      where: { sessionId_driverId: { sessionId, driverId: req.user!.userId } },
+    });
 
     await prisma.car.deleteMany({
-      where: { sessionId, driverId: req.user!.userId }
-    })
+      where: { sessionId, driverId: req.user!.userId },
+    });
 
     await prisma.passenger.delete({
-      where: { id: passenger.id }
-    })
+      where: { id: passenger.id },
+    });
 
-    res.json({ message: 'Left session' })
+    res.json({ message: "Left session" });
 
     // Notifier les membres du groupe selon le rôle de l'utilisateur
     Promise.all([
@@ -585,7 +559,7 @@ export async function leaveSessionHandler(req: Request, res: Response, next: Nex
         if (driverCar) {
           const driverName = leaver?.name ?? 'Le chauffeur'
           return notifyGroupMembers(session.groupId, req.user!.userId, {
-            title: '🚨 Un chauffeur s\'est désisté !',
+            title: "🚨 Un chauffeur s'est désisté !",
             body: `${driverName} s'est désisté de la séance du ${formatSessionDate(session.date)}, pas fiable le golem…`,
             url: `/groups/${session.groupId}`,
             type: 'DRIVER_LEFT',
@@ -604,35 +578,39 @@ export async function leaveSessionHandler(req: Request, res: Response, next: Nex
         console.error('[Pioum] Erreur envoi notification désistement:', err)
       })
   } catch (error) {
-    next(error)
+    next(error);
   }
 }
 
 sessionsRouter.delete('/:id/leave', authenticate, actionRateLimit, leaveSessionHandler)
 
 // Create a session for a specific date
-sessionsRouter.post('/', authenticate, async (req, res, next) => {
+sessionsRouter.post("/", authenticate, async (req, res, next) => {
   try {
-    const { groupId, date, startTime, endTime } = createSessionSchema.parse(req.body)
+    const { groupId, date, startTime, endTime } = createSessionSchema.parse(
+      req.body,
+    );
 
     // Verify membership
     const membership = await prisma.groupMember.findUnique({
       where: {
         userId_groupId: {
           userId: req.user!.userId,
-          groupId
-        }
-      }
-    })
+          groupId,
+        },
+      },
+    });
 
     if (!membership) {
-      throw new AppError(403, 'Not a member of this group')
+      throw new AppError(403, "Not a member of this group");
     }
 
-    const sessionDate = date ? new Date(date) : getTodayDate()
-    const defaultTimes = getDefaultTimes(sessionDate)
-    const sessionStartTime = startTime ? new Date(startTime) : defaultTimes.startTime
-    const sessionEndTime = endTime ? new Date(endTime) : defaultTimes.endTime
+    const sessionDate = date ? new Date(date) : getTodayDate();
+    const defaultTimes = getDefaultTimes(sessionDate);
+    const sessionStartTime = startTime
+      ? new Date(startTime)
+      : defaultTimes.startTime;
+    const sessionEndTime = endTime ? new Date(endTime) : defaultTimes.endTime;
 
     const session = await prisma.session.create({
       data: {
@@ -640,47 +618,50 @@ sessionsRouter.post('/', authenticate, async (req, res, next) => {
         date: sessionDate,
         startTime: sessionStartTime,
         endTime: sessionEndTime,
-        createdById: req.user!.userId
+        createdById: req.user!.userId,
       },
       include: {
         cars: {
           include: {
             driver: true,
             passengers: {
-              include: { user: true }
-            }
-          }
+              include: { user: true },
+            },
+          },
         },
         passengers: {
-          include: { user: true }
-        }
-      }
-    })
+          include: { user: true },
+        },
+      },
+    });
 
-    res.json({ session })
+    res.json({ session });
   } catch (error) {
-    if (error instanceof Prisma.PrismaClientKnownRequestError && error.code === 'P2002') {
-      return next(new AppError(409, 'Une séance existe déjà sur ce créneau'))
+    if (
+      error instanceof Prisma.PrismaClientKnownRequestError &&
+      error.code === "P2002"
+    ) {
+      return next(new AppError(409, "Une séance existe déjà sur ce créneau"));
     }
-    next(error)
+    next(error);
   }
-})
+});
 
 // Update a session (edit times, with scope for recurring sessions)
-sessionsRouter.patch('/:id', authenticate, async (req, res, next) => {
+sessionsRouter.patch("/:id", authenticate, async (req, res, next) => {
   try {
-    const { startTime, endTime, scope } = updateSessionSchema.parse(req.body)
-    const sessionId = req.params.id as string
+    const { startTime, endTime, scope } = updateSessionSchema.parse(req.body);
+    const sessionId = req.params.id as string;
 
     const session = await prisma.session.findUnique({
       where: { id: sessionId },
       include: {
-        recurrencePattern: true
-      }
-    })
+        recurrencePattern: true,
+      },
+    });
 
     if (!session) {
-      throw new AppError(404, 'Session not found')
+      throw new AppError(404, "Session not found");
     }
 
     // Verify membership and get role
@@ -688,93 +669,108 @@ sessionsRouter.patch('/:id', authenticate, async (req, res, next) => {
       where: {
         userId_groupId: {
           userId: req.user!.userId,
-          groupId: session.groupId
-        }
-      }
-    })
+          groupId: session.groupId,
+        },
+      },
+    });
 
     if (!membership) {
-      throw new AppError(403, 'Not a member of this group')
+      throw new AppError(403, "Not a member of this group");
     }
 
     // Check if session is locked (admin can bypass)
-    if (isSessionLocked(session) && membership.role !== 'admin') {
-      throw new AppError(403, 'Cette séance a déjà commencé')
+    if (isSessionLocked(session) && membership.role !== "admin") {
+      throw new AppError(403, "Cette séance a déjà commencé");
     }
 
     // Permission check: admin or creator can edit
-    const isAdmin = membership.role === 'admin'
-    const isCreator = session.createdById === req.user!.userId
+    const isAdmin = membership.role === "admin";
+    const isCreator = session.createdById === req.user!.userId;
     if (!isAdmin && !isCreator) {
-      throw new AppError(403, 'Seul le créateur ou un admin peut modifier cette séance')
+      throw new AppError(
+        403,
+        "Seul le créateur ou un admin peut modifier cette séance",
+      );
     }
 
-    const newStartTime = new Date(startTime)
-    const newEndTime = new Date(endTime)
+    const newStartTime = new Date(startTime);
+    const newEndTime = new Date(endTime);
 
     // Validate times
     if (newEndTime <= newStartTime) {
-      throw new AppError(400, "L'heure de fin doit être après l'heure de début")
+      throw new AppError(
+        400,
+        "L'heure de fin doit être après l'heure de début",
+      );
     }
 
     // If session is part of a recurrence and scope is 'future', update the pattern
-    if (session.recurrencePatternId && scope === 'future') {
+    if (session.recurrencePatternId && scope === "future") {
       // Extract time from the new dates
-      const newStartHour = newStartTime.getHours().toString().padStart(2, '0')
-      const newStartMin = newStartTime.getMinutes().toString().padStart(2, '0')
-      const newEndHour = newEndTime.getHours().toString().padStart(2, '0')
-      const newEndMin = newEndTime.getMinutes().toString().padStart(2, '0')
+      const newStartHour = newStartTime.getHours().toString().padStart(2, "0");
+      const newStartMin = newStartTime.getMinutes().toString().padStart(2, "0");
+      const newEndHour = newEndTime.getHours().toString().padStart(2, "0");
+      const newEndMin = newEndTime.getMinutes().toString().padStart(2, "0");
 
       // Update the pattern
       await prisma.recurrencePattern.update({
         where: { id: session.recurrencePatternId },
         data: {
           startTime: `${newStartHour}:${newStartMin}`,
-          endTime: `${newEndHour}:${newEndMin}`
-        }
-      })
+          endTime: `${newEndHour}:${newEndMin}`,
+        },
+      });
 
       // Update all future sessions from this pattern (that haven't started yet)
-      const now = new Date()
+      const now = new Date();
       const futureSessions = await prisma.session.findMany({
         where: {
           recurrencePatternId: session.recurrencePatternId,
-          startTime: { gt: now }
-        }
-      })
+          startTime: { gt: now },
+        },
+      });
 
       for (const futureSession of futureSessions) {
         // Create new times using the session's date but new times
-        const sessionDate = new Date(futureSession.date)
-        const updatedStart = new Date(sessionDate)
-        updatedStart.setHours(parseInt(newStartHour), parseInt(newStartMin), 0, 0)
-        const updatedEnd = new Date(sessionDate)
-        updatedEnd.setHours(parseInt(newEndHour), parseInt(newEndMin), 0, 0)
+        const sessionDate = new Date(futureSession.date);
+        const updatedStart = new Date(sessionDate);
+        updatedStart.setHours(
+          parseInt(newStartHour),
+          parseInt(newStartMin),
+          0,
+          0,
+        );
+        const updatedEnd = new Date(sessionDate);
+        updatedEnd.setHours(parseInt(newEndHour), parseInt(newEndMin), 0, 0);
 
         await prisma.session.update({
           where: { id: futureSession.id },
           data: {
             startTime: updatedStart,
-            endTime: updatedEnd
-          }
-        })
+            endTime: updatedEnd,
+          },
+        });
       }
 
       res.json({
-        message: 'Pattern et séances futures mis à jour',
-        updatedCount: futureSessions.length
-      })
+        message: "Pattern et séances futures mis à jour",
+        updatedCount: futureSessions.length,
+      });
     } else {
       // Single session update - detach from pattern if it was part of one
-      const updateData: { startTime: Date; endTime: Date; recurrencePatternId?: null } = {
+      const updateData: {
+        startTime: Date;
+        endTime: Date;
+        recurrencePatternId?: null;
+      } = {
         startTime: newStartTime,
-        endTime: newEndTime
-      }
+        endTime: newEndTime,
+      };
 
       // If this session was part of a recurrence and scope is 'single' (or not specified),
       // detach it from the pattern
       if (session.recurrencePatternId) {
-        updateData.recurrencePatternId = null
+        updateData.recurrencePatternId = null;
       }
 
       const updatedSession = await prisma.session.update({
@@ -784,42 +780,45 @@ sessionsRouter.patch('/:id', authenticate, async (req, res, next) => {
           cars: {
             include: {
               driver: { select: USER_SELECT },
-              passengers: { include: { user: { select: USER_SELECT } } }
-            }
+              passengers: { include: { user: { select: USER_SELECT } } },
+            },
           },
-          passengers: { include: { user: { select: USER_SELECT } } }
-        }
-      })
+          passengers: { include: { user: { select: USER_SELECT } } },
+        },
+      });
 
       res.json({
         session: updatedSession,
-        detachedFromPattern: !!session.recurrencePatternId
-      })
+        detachedFromPattern: !!session.recurrencePatternId,
+      });
     }
   } catch (error) {
-    if (error instanceof Prisma.PrismaClientKnownRequestError && error.code === 'P2002') {
-      return next(new AppError(409, 'Une séance existe déjà sur ce créneau'))
+    if (
+      error instanceof Prisma.PrismaClientKnownRequestError &&
+      error.code === "P2002"
+    ) {
+      return next(new AppError(409, "Une séance existe déjà sur ce créneau"));
     }
-    next(error)
+    next(error);
   }
-})
+});
 
 // Delete a session (with optional scope for recurring sessions)
 // scope: 'single' (default), 'future', 'all'
-sessionsRouter.delete('/:id', authenticate, async (req, res, next) => {
+sessionsRouter.delete("/:id", authenticate, async (req, res, next) => {
   try {
-    const scope = (req.query.scope as string) || 'single'
+    const scope = (req.query.scope as string) || "single";
 
     const session = await prisma.session.findUnique({
       where: { id: req.params.id as string },
       include: {
         _count: { select: { passengers: true } },
-        recurrencePattern: true
-      }
-    })
+        recurrencePattern: true,
+      },
+    });
 
     if (!session) {
-      throw new AppError(404, 'Session not found')
+      throw new AppError(404, "Session not found");
     }
 
     // Verify membership and get role
@@ -827,90 +826,99 @@ sessionsRouter.delete('/:id', authenticate, async (req, res, next) => {
       where: {
         userId_groupId: {
           userId: req.user!.userId,
-          groupId: session.groupId
-        }
-      }
-    })
+          groupId: session.groupId,
+        },
+      },
+    });
 
     if (!membership) {
-      throw new AppError(403, 'Not a member of this group')
+      throw new AppError(403, "Not a member of this group");
     }
 
-    const isAdmin = membership.role === 'admin'
-    const isCreator = session.createdById === req.user!.userId
-    const hasParticipants = session._count.passengers > 0
+    const isAdmin = membership.role === "admin";
+    const isCreator = session.createdById === req.user!.userId;
+    const hasParticipants = session._count.passengers > 0;
 
     if (!isAdmin && !isCreator) {
-      throw new AppError(403, 'Seul le créateur ou un admin peut supprimer cette séance')
+      throw new AppError(
+        403,
+        "Seul le créateur ou un admin peut supprimer cette séance",
+      );
     }
 
     // For single session deletion, check participants
-    if (scope === 'single' && isCreator && !isAdmin && hasParticipants) {
-      throw new AppError(403, 'Impossible de supprimer une séance avec des participants')
+    if (scope === "single" && isCreator && !isAdmin && hasParticipants) {
+      throw new AppError(
+        403,
+        "Impossible de supprimer une séance avec des participants",
+      );
     }
 
     // Handle different scopes for recurring sessions
-    if (session.recurrencePatternId && (scope === 'future' || scope === 'all')) {
-      if (scope === 'future') {
+    if (
+      session.recurrencePatternId &&
+      (scope === "future" || scope === "all")
+    ) {
+      if (scope === "future") {
         // Delete this session and all future sessions from the pattern
         const deleted = await prisma.session.deleteMany({
           where: {
             recurrencePatternId: session.recurrencePatternId,
-            startTime: { gte: session.startTime }
-          }
-        })
+            startTime: { gte: session.startTime },
+          },
+        });
 
         res.json({
           message: `${deleted.count} séance(s) supprimée(s)`,
           deletedCount: deleted.count,
-          scope: 'future'
-        })
-      } else if (scope === 'all') {
-        const now = new Date()
+          scope: "future",
+        });
+      } else if (scope === "all") {
+        const now = new Date();
 
         // Delete only future sessions from the pattern
         const deleted = await prisma.session.deleteMany({
           where: {
             recurrencePatternId: session.recurrencePatternId,
-            startTime: { gt: now }
-          }
-        })
+            startTime: { gt: now },
+          },
+        });
 
         // Detach past sessions from the pattern (preserve historical data)
         await prisma.session.updateMany({
           where: {
             recurrencePatternId: session.recurrencePatternId,
-            startTime: { lte: now }
+            startTime: { lte: now },
           },
-          data: { recurrencePatternId: null }
-        })
+          data: { recurrencePatternId: null },
+        });
 
         // Delete the pattern
         await prisma.recurrencePattern.delete({
-          where: { id: session.recurrencePatternId }
-        })
+          where: { id: session.recurrencePatternId },
+        });
 
         res.json({
           message: `${deleted.count} séance(s) future(s) supprimée(s), récurrence supprimée (historique conservé)`,
           deletedCount: deleted.count,
           patternDeleted: true,
-          scope: 'all'
-        })
+          scope: "all",
+        });
       }
     } else {
       // Single session deletion
       await prisma.session.delete({
-        where: { id: session.id }
-      })
+        where: { id: session.id },
+      });
 
       res.json({
-        message: 'Séance supprimée',
+        message: "Séance supprimée",
         hadParticipants: hasParticipants,
         deletedCount: 1,
-        scope: 'single'
-      })
+        scope: "single",
+      });
     }
   } catch (error) {
-    next(error)
+    next(error);
   }
-})
+});

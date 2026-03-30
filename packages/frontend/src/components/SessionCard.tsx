@@ -36,6 +36,235 @@ function formatSessionTime(startTime: string, endTime: string): string {
   return `${format(start, "HH:mm")} - ${format(end, "HH:mm")}`;
 }
 
+// --- Shared sub-components to avoid duplication across render modes ---
+
+interface PassengerListProps {
+  participants: Session["passengers"];
+  currentUserId: string | undefined;
+  sessionGroupId: string;
+  onRefresh: () => void;
+  variant: "compact" | "full";
+  isPast?: boolean;
+}
+
+function PassengerList({
+  participants,
+  currentUserId,
+  sessionGroupId,
+  onRefresh,
+  variant,
+  isPast = false,
+}: PassengerListProps) {
+  if (participants.length === 0) return null;
+
+  const isCompact = variant === "compact";
+  const avatarSize = isCompact ? "xs" : "sm";
+  const tagMargin = isCompact ? "ml-7" : "ml-11";
+  const containerCn = isCompact
+    ? "flex flex-wrap gap-1.5"
+    : "flex flex-wrap gap-2";
+  const chipCn = isCompact
+    ? `rounded-warm pl-0.5 pr-2 py-0.5 border ${isPast ? "bg-primary-100 border-primary-100" : "bg-primary-50 border-primary-200"}`
+    : "bg-primary-50 rounded-warm pl-1 pr-3 py-1 border border-primary-200";
+  const nameCn = isCompact
+    ? `text-xs ${isPast ? "text-primary-600" : "text-primary-700"}`
+    : "text-sm text-primary-800";
+  const gapCn = isCompact ? "gap-1" : "gap-1.5";
+
+  const inner = (
+    <div className={containerCn}>
+      {participants.map((p) => (
+        <div key={p.id} className={chipCn}>
+          <div className={`flex items-center ${gapCn}`}>
+            <Avatar user={p.user} size={avatarSize} />
+            <span className={nameCn}>{p.user.name}</span>
+          </div>
+          {(!isCompact || !isPast) && p.userId === currentUserId ? (
+            <div className={`${tagMargin} mt-0.5`}>
+              <TagEditor
+                tags={p.tags ?? []}
+                groupId={sessionGroupId}
+                onAdd={async (data) => {
+                  await api.addPassengerTag(p.id, data);
+                  onRefresh();
+                }}
+                onRemove={async (tagId) => {
+                  await api.removePassengerTag(p.id, tagId);
+                  onRefresh();
+                }}
+              />
+            </div>
+          ) : (p.tags ?? []).length > 0 ? (
+            <div className={`flex flex-wrap gap-1 ${tagMargin} mt-0.5`}>
+              {p.tags.map((tag) => (
+                <TagBadge key={tag.id} tag={tag} />
+              ))}
+            </div>
+          ) : null}
+        </div>
+      ))}
+    </div>
+  );
+
+  if (isCompact) return inner;
+
+  return (
+    <>
+      <p className="text-sm font-medium text-primary-700 mb-2">
+        En attente de voiture
+      </p>
+      {inner}
+    </>
+  );
+}
+
+interface CarListProps {
+  cars: Session["cars"];
+  groupId: string;
+  bansReceived: string[];
+  onRefresh: () => void;
+  readOnly?: boolean;
+  showLabel?: boolean;
+  spacing?: string;
+}
+
+function CarList({
+  cars,
+  groupId,
+  bansReceived,
+  onRefresh,
+  readOnly = false,
+  showLabel = true,
+  spacing = "space-y-2",
+}: CarListProps) {
+  if (cars.length === 0) return null;
+  return (
+    <div className={spacing}>
+      {showLabel && (
+        <p className="text-sm font-medium text-primary-700">Voitures</p>
+      )}
+      {cars.map((car) => (
+        <CarCard
+          key={car.id}
+          car={car}
+          groupId={groupId}
+          isBanned={bansReceived.includes(car.driverId)}
+          onRefresh={onRefresh}
+          readOnly={readOnly}
+        />
+      ))}
+    </div>
+  );
+}
+
+interface EditCancelButtonsProps {
+  canEdit: boolean;
+  canCancel: boolean;
+  loading: boolean;
+  onEdit: () => void;
+  onCancel: () => void;
+  cancelLabel?: string;
+  pyClass?: string;
+}
+
+function EditCancelButtons({
+  canEdit,
+  canCancel,
+  loading,
+  onEdit,
+  onCancel,
+  cancelLabel = "Annuler la séance",
+  pyClass = "py-2",
+}: EditCancelButtonsProps) {
+  if (!canEdit && !canCancel) return null;
+  return (
+    <div className="flex gap-2">
+      {canEdit && (
+        <button
+          onClick={onEdit}
+          disabled={loading}
+          className={`flex-1 text-sm text-primary-600 hover:text-primary-700 hover:bg-primary-50 rounded-warm ${pyClass} transition-colors disabled:opacity-50 flex items-center justify-center gap-1`}
+        >
+          <svg
+            className="w-4 h-4"
+            fill="none"
+            viewBox="0 0 24 24"
+            stroke="currentColor"
+          >
+            <path
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              strokeWidth={2}
+              d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"
+            />
+          </svg>
+          Modifier
+        </button>
+      )}
+      {canCancel && (
+        <button
+          onClick={onCancel}
+          disabled={loading}
+          className={`flex-1 text-sm text-red-600 hover:text-red-700 hover:bg-red-50 rounded-warm ${pyClass} transition-colors disabled:opacity-50`}
+        >
+          {cancelLabel}
+        </button>
+      )}
+    </div>
+  );
+}
+
+interface SessionModalsProps {
+  session: Session;
+  showCarSelector: boolean;
+  showEditModal: boolean;
+  showDeleteModal: boolean;
+  onCarSelected: (userCarId: string | null, seats: number) => void;
+  onCloseCarSelector: () => void;
+  onCloseEditModal: () => void;
+  onCloseDeleteModal: () => void;
+  onRefresh: () => void;
+}
+
+function SessionModals({
+  session,
+  showCarSelector,
+  showEditModal,
+  showDeleteModal,
+  onCarSelected,
+  onCloseCarSelector,
+  onCloseEditModal,
+  onCloseDeleteModal,
+  onRefresh,
+}: SessionModalsProps) {
+  return (
+    <>
+      {showCarSelector && (
+        <UserCarSelector
+          onSelect={onCarSelected}
+          onClose={onCloseCarSelector}
+        />
+      )}
+      {showEditModal && (
+        <EditSessionModal
+          session={session}
+          onClose={onCloseEditModal}
+          onUpdated={onRefresh}
+        />
+      )}
+      {showDeleteModal && (
+        <DeleteSessionModal
+          session={session}
+          onClose={onCloseDeleteModal}
+          onDeleted={onRefresh}
+        />
+      )}
+    </>
+  );
+}
+
+// --- Main component ---
+
 export function SessionCard({
   session,
   onRefresh,
@@ -257,124 +486,51 @@ export function SessionCard({
               </div>
             )}
 
-            {participantsWithoutCar.length > 0 && (
-              <div className="flex flex-wrap gap-1.5">
-                {participantsWithoutCar.map((p) => (
-                  <div
-                    key={p.id}
-                    className={`rounded-warm pl-0.5 pr-2 py-0.5 border ${isPast ? "bg-primary-100 border-primary-100" : "bg-primary-50 border-primary-200"}`}
-                  >
-                    <div className="flex items-center gap-1">
-                      <Avatar user={p.user} size="xs" />
-                      <span
-                        className={`text-xs ${isPast ? "text-primary-600" : "text-primary-700"}`}
-                      >
-                        {p.user.name}
-                      </span>
-                    </div>
-                    {!isPast && p.userId === user?.id ? (
-                      <div className="ml-7 mt-0.5">
-                        <TagEditor
-                          tags={p.tags ?? []}
-                          groupId={session.groupId}
-                          onAdd={async (data) => {
-                            await api.addPassengerTag(p.id, data);
-                            onRefresh();
-                          }}
-                          onRemove={async (tagId) => {
-                            await api.removePassengerTag(p.id, tagId);
-                            onRefresh();
-                          }}
-                        />
-                      </div>
-                    ) : (p.tags ?? []).length > 0 ? (
-                      <div className="flex flex-wrap gap-1 ml-7 mt-0.5">
-                        {p.tags.map((tag) => (
-                          <TagBadge key={tag.id} tag={tag} />
-                        ))}
-                      </div>
-                    ) : null}
-                  </div>
-                ))}
-              </div>
-            )}
+            <PassengerList
+              participants={participantsWithoutCar}
+              currentUserId={user?.id}
+              sessionGroupId={session.groupId}
+              onRefresh={onRefresh}
+              variant="compact"
+              isPast={isPast}
+            />
 
-            {session.cars.length > 0 && (
-              <div className="space-y-1.5">
-                {session.cars.map((car) => (
-                  <CarCard
-                    key={car.id}
-                    car={car}
-                    groupId={session.groupId}
-                    isBanned={bansReceived.includes(car.driverId)}
-                    onRefresh={onRefresh}
-                    readOnly={isPast}
-                  />
-                ))}
-              </div>
-            )}
+            <CarList
+              cars={session.cars}
+              groupId={session.groupId}
+              bansReceived={bansReceived}
+              onRefresh={onRefresh}
+              readOnly={isPast}
+              showLabel={false}
+              spacing="space-y-1.5"
+            />
 
             {/* Edit and Cancel buttons - only for upcoming sessions */}
-            {!isPast && (canEdit || canCancel) && (
-              <div className="flex gap-2">
-                {canEdit && (
-                  <button
-                    onClick={() => setShowEditModal(true)}
-                    disabled={loading}
-                    className="flex-1 text-sm text-primary-600 hover:text-primary-700 hover:bg-primary-50 rounded-warm py-1.5 transition-colors disabled:opacity-50 flex items-center justify-center gap-1"
-                  >
-                    <svg
-                      className="w-4 h-4"
-                      fill="none"
-                      viewBox="0 0 24 24"
-                      stroke="currentColor"
-                    >
-                      <path
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                        strokeWidth={2}
-                        d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"
-                      />
-                    </svg>
-                    Modifier
-                  </button>
-                )}
-                {canCancel && (
-                  <button
-                    onClick={handleCancelClick}
-                    disabled={loading}
-                    className="flex-1 text-sm text-red-600 hover:text-red-700 hover:bg-red-50 rounded-warm py-1.5 transition-colors disabled:opacity-50"
-                  >
-                    Annuler
-                  </button>
-                )}
-              </div>
+            {!isPast && (
+              <EditCancelButtons
+                canEdit={canEdit}
+                canCancel={canCancel}
+                loading={loading}
+                onEdit={() => setShowEditModal(true)}
+                onCancel={handleCancelClick}
+                cancelLabel="Annuler"
+                pyClass="py-1.5"
+              />
             )}
           </div>
         )}
 
-        {showCarSelector && (
-          <UserCarSelector
-            onSelect={handleCarSelected}
-            onClose={() => setShowCarSelector(false)}
-          />
-        )}
-
-        {showEditModal && (
-          <EditSessionModal
-            session={session}
-            onClose={() => setShowEditModal(false)}
-            onUpdated={onRefresh}
-          />
-        )}
-
-        {showDeleteModal && (
-          <DeleteSessionModal
-            session={session}
-            onClose={() => setShowDeleteModal(false)}
-            onDeleted={onRefresh}
-          />
-        )}
+        <SessionModals
+          session={session}
+          showCarSelector={showCarSelector}
+          showEditModal={showEditModal}
+          showDeleteModal={showDeleteModal}
+          onCarSelected={handleCarSelected}
+          onCloseCarSelector={() => setShowCarSelector(false)}
+          onCloseEditModal={() => setShowEditModal(false)}
+          onCloseDeleteModal={() => setShowDeleteModal(false)}
+          onRefresh={onRefresh}
+        />
       </div>
     );
   }
@@ -476,46 +632,13 @@ export function SessionCard({
 
           {participantsWithoutCar.length > 0 && (
             <div className="mb-4">
-              <p className="text-sm font-medium text-primary-700 mb-2">
-                En attente de voiture
-              </p>
-              <div className="flex flex-wrap gap-2">
-                {participantsWithoutCar.map((p) => (
-                  <div
-                    key={p.id}
-                    className="bg-primary-50 rounded-warm pl-1 pr-3 py-1 border border-primary-200"
-                  >
-                    <div className="flex items-center gap-1.5">
-                      <Avatar user={p.user} size="sm" />
-                      <span className="text-sm text-primary-800">
-                        {p.user.name}
-                      </span>
-                    </div>
-                    {p.userId === user?.id ? (
-                      <div className="ml-11 mt-0.5">
-                        <TagEditor
-                          tags={p.tags ?? []}
-                          groupId={session.groupId}
-                          onAdd={async (data) => {
-                            await api.addPassengerTag(p.id, data);
-                            onRefresh();
-                          }}
-                          onRemove={async (tagId) => {
-                            await api.removePassengerTag(p.id, tagId);
-                            onRefresh();
-                          }}
-                        />
-                      </div>
-                    ) : (p.tags ?? []).length > 0 ? (
-                      <div className="flex flex-wrap gap-1 ml-11 mt-0.5">
-                        {p.tags.map((tag) => (
-                          <TagBadge key={tag.id} tag={tag} />
-                        ))}
-                      </div>
-                    ) : null}
-                  </div>
-                ))}
-              </div>
+              <PassengerList
+                participants={participantsWithoutCar}
+                currentUserId={user?.id}
+                sessionGroupId={session.groupId}
+                onRefresh={onRefresh}
+                variant="full"
+              />
             </div>
           )}
 
@@ -543,81 +666,36 @@ export function SessionCard({
             </button>
           )}
 
-          {session.cars.length > 0 && (
-            <div className="space-y-2">
-              <p className="text-sm font-medium text-primary-700">Voitures</p>
-              {session.cars.map((car) => (
-                <CarCard
-                  key={car.id}
-                  car={car}
-                  groupId={session.groupId}
-                  isBanned={bansReceived.includes(car.driverId)}
-                  onRefresh={onRefresh}
-                />
-              ))}
-            </div>
-          )}
+          <CarList
+            cars={session.cars}
+            groupId={session.groupId}
+            bansReceived={bansReceived}
+            onRefresh={onRefresh}
+          />
 
           {/* Edit and Cancel buttons */}
-          {(canEdit || canCancel) && (
-            <div className="flex gap-2 mt-4">
-              {canEdit && (
-                <button
-                  onClick={() => setShowEditModal(true)}
-                  disabled={loading}
-                  className="flex-1 text-sm text-primary-600 hover:text-primary-700 hover:bg-primary-50 rounded-warm py-2 transition-colors disabled:opacity-50 flex items-center justify-center gap-1"
-                >
-                  <svg
-                    className="w-4 h-4"
-                    fill="none"
-                    viewBox="0 0 24 24"
-                    stroke="currentColor"
-                  >
-                    <path
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      strokeWidth={2}
-                      d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"
-                    />
-                  </svg>
-                  Modifier
-                </button>
-              )}
-              {canCancel && (
-                <button
-                  onClick={handleCancelClick}
-                  disabled={loading}
-                  className="flex-1 text-sm text-red-600 hover:text-red-700 hover:bg-red-50 rounded-warm py-2 transition-colors disabled:opacity-50"
-                >
-                  Annuler la séance
-                </button>
-              )}
-            </div>
-          )}
+          <div className="mt-4">
+            <EditCancelButtons
+              canEdit={canEdit}
+              canCancel={canCancel}
+              loading={loading}
+              onEdit={() => setShowEditModal(true)}
+              onCancel={handleCancelClick}
+            />
+          </div>
         </div>
 
-        {showCarSelector && (
-          <UserCarSelector
-            onSelect={handleCarSelected}
-            onClose={() => setShowCarSelector(false)}
-          />
-        )}
-
-        {showEditModal && (
-          <EditSessionModal
-            session={session}
-            onClose={() => setShowEditModal(false)}
-            onUpdated={onRefresh}
-          />
-        )}
-
-        {showDeleteModal && (
-          <DeleteSessionModal
-            session={session}
-            onClose={() => setShowDeleteModal(false)}
-            onDeleted={onRefresh}
-          />
-        )}
+        <SessionModals
+          session={session}
+          showCarSelector={showCarSelector}
+          showEditModal={showEditModal}
+          showDeleteModal={showDeleteModal}
+          onCarSelected={handleCarSelected}
+          onCloseCarSelector={() => setShowCarSelector(false)}
+          onCloseEditModal={() => setShowEditModal(false)}
+          onCloseDeleteModal={() => setShowDeleteModal(false)}
+          onRefresh={onRefresh}
+        />
       </div>
     );
   }
@@ -748,125 +826,45 @@ export function SessionCard({
 
           {participantsWithoutCar.length > 0 && (
             <div>
-              <p className="text-sm font-medium text-primary-700 mb-2">
-                En attente de voiture
-              </p>
-              <div className="flex flex-wrap gap-2">
-                {participantsWithoutCar.map((p) => (
-                  <div
-                    key={p.id}
-                    className="bg-primary-50 rounded-warm pl-1 pr-3 py-1 border border-primary-200"
-                  >
-                    <div className="flex items-center gap-1.5">
-                      <Avatar user={p.user} size="sm" />
-                      <span className="text-sm text-primary-800">
-                        {p.user.name}
-                      </span>
-                    </div>
-                    {p.userId === user?.id ? (
-                      <div className="ml-11 mt-0.5">
-                        <TagEditor
-                          tags={p.tags ?? []}
-                          groupId={session.groupId}
-                          onAdd={async (data) => {
-                            await api.addPassengerTag(p.id, data);
-                            onRefresh();
-                          }}
-                          onRemove={async (tagId) => {
-                            await api.removePassengerTag(p.id, tagId);
-                            onRefresh();
-                          }}
-                        />
-                      </div>
-                    ) : (p.tags ?? []).length > 0 ? (
-                      <div className="flex flex-wrap gap-1 ml-11 mt-0.5">
-                        {p.tags.map((tag) => (
-                          <TagBadge key={tag.id} tag={tag} />
-                        ))}
-                      </div>
-                    ) : null}
-                  </div>
-                ))}
-              </div>
+              <PassengerList
+                participants={participantsWithoutCar}
+                currentUserId={user?.id}
+                sessionGroupId={session.groupId}
+                onRefresh={onRefresh}
+                variant="full"
+              />
             </div>
           )}
 
-          {session.cars.length > 0 && (
-            <div className="space-y-2">
-              <p className="text-sm font-medium text-primary-700">Voitures</p>
-              {session.cars.map((car) => (
-                <CarCard
-                  key={car.id}
-                  car={car}
-                  groupId={session.groupId}
-                  isBanned={bansReceived.includes(car.driverId)}
-                  onRefresh={onRefresh}
-                />
-              ))}
-            </div>
-          )}
+          <CarList
+            cars={session.cars}
+            groupId={session.groupId}
+            bansReceived={bansReceived}
+            onRefresh={onRefresh}
+          />
 
           {/* Edit and Cancel buttons */}
-          {(canEdit || canCancel) && (
-            <div className="flex gap-2">
-              {canEdit && (
-                <button
-                  onClick={() => setShowEditModal(true)}
-                  disabled={loading}
-                  className="flex-1 text-sm text-primary-600 hover:text-primary-700 hover:bg-primary-50 rounded-warm py-2 transition-colors disabled:opacity-50 flex items-center justify-center gap-1"
-                >
-                  <svg
-                    className="w-4 h-4"
-                    fill="none"
-                    viewBox="0 0 24 24"
-                    stroke="currentColor"
-                  >
-                    <path
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      strokeWidth={2}
-                      d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"
-                    />
-                  </svg>
-                  Modifier
-                </button>
-              )}
-              {canCancel && (
-                <button
-                  onClick={handleCancelClick}
-                  disabled={loading}
-                  className="flex-1 text-sm text-red-600 hover:text-red-700 hover:bg-red-50 rounded-warm py-2 transition-colors disabled:opacity-50"
-                >
-                  Annuler la séance
-                </button>
-              )}
-            </div>
-          )}
+          <EditCancelButtons
+            canEdit={canEdit}
+            canCancel={canCancel}
+            loading={loading}
+            onEdit={() => setShowEditModal(true)}
+            onCancel={handleCancelClick}
+          />
         </div>
       )}
 
-      {showCarSelector && (
-        <UserCarSelector
-          onSelect={handleCarSelected}
-          onClose={() => setShowCarSelector(false)}
-        />
-      )}
-
-      {showEditModal && (
-        <EditSessionModal
-          session={session}
-          onClose={() => setShowEditModal(false)}
-          onUpdated={onRefresh}
-        />
-      )}
-
-      {showDeleteModal && (
-        <DeleteSessionModal
-          session={session}
-          onClose={() => setShowDeleteModal(false)}
-          onDeleted={onRefresh}
-        />
-      )}
+      <SessionModals
+        session={session}
+        showCarSelector={showCarSelector}
+        showEditModal={showEditModal}
+        showDeleteModal={showDeleteModal}
+        onCarSelected={handleCarSelected}
+        onCloseCarSelector={() => setShowCarSelector(false)}
+        onCloseEditModal={() => setShowEditModal(false)}
+        onCloseDeleteModal={() => setShowDeleteModal(false)}
+        onRefresh={onRefresh}
+      />
     </div>
   );
 }

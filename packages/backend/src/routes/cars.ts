@@ -4,6 +4,7 @@ import { prisma } from '../lib/prisma.js'
 import { USER_SELECT } from '../lib/prismaSelects.js'
 import { authenticate } from '../middleware/auth.js'
 import { AppError } from '../middleware/errorHandler.js'
+import { actionRateLimit } from '../middleware/actionRateLimit.js'
 import { notifyGroupMembers, notifyUser, notifyUsers } from '../notifications/notification.service.js'
 import { formatSessionDate } from '../lib/formatDate.js'
 
@@ -172,7 +173,7 @@ export async function addCarHandler(req: Request, res: Response, next: NextFunct
   }
 }
 
-carsRouter.post('/', authenticate, addCarHandler)
+carsRouter.post('/', authenticate, actionRateLimit, addCarHandler)
 
 // Update car seats
 carsRouter.patch('/:id', authenticate, async (req, res, next) => {
@@ -226,7 +227,7 @@ carsRouter.patch('/:id', authenticate, async (req, res, next) => {
 })
 
 // Delete a car
-carsRouter.delete('/:id', authenticate, async (req, res, next) => {
+carsRouter.delete('/:id', authenticate, actionRateLimit, async (req, res, next) => {
   try {
     const car = await prisma.car.findUnique({
       where: { id: req.params.id as string },
@@ -273,7 +274,7 @@ carsRouter.delete('/:id', authenticate, async (req, res, next) => {
 })
 
 // Join a car
-carsRouter.post('/:id/join', authenticate, async (req, res, next) => {
+carsRouter.post('/:id/join', authenticate, actionRateLimit, async (req, res, next) => {
   try {
     const carId = req.params.id as string
     const userId = req.user!.userId
@@ -379,7 +380,7 @@ carsRouter.post('/:id/join', authenticate, async (req, res, next) => {
 })
 
 // Leave a car
-carsRouter.delete('/:id/leave', authenticate, async (req, res, next) => {
+carsRouter.delete('/:id/leave', authenticate, actionRateLimit, async (req, res, next) => {
   try {
     const car = await getCarWithSession(req.params.id as string)
 
@@ -418,7 +419,7 @@ carsRouter.delete('/:id/leave', authenticate, async (req, res, next) => {
 })
 
 // Kick a passenger (driver only)
-carsRouter.delete('/:id/kick/:userId', authenticate, async (req, res, next) => {
+carsRouter.delete('/:id/kick/:userId', authenticate, actionRateLimit, async (req, res, next) => {
   try {
     const car = await getCarWithSession(req.params.id as string)
 

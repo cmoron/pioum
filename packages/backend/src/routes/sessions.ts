@@ -5,6 +5,7 @@ import { prisma } from '../lib/prisma.js'
 import { USER_SELECT } from '../lib/prismaSelects.js'
 import { authenticate } from '../middleware/auth.js'
 import { AppError } from '../middleware/errorHandler.js'
+import { actionRateLimit } from '../middleware/actionRateLimit.js'
 import { notifyGroupMembers } from '../notifications/notification.service.js'
 import { formatSessionDate } from '../lib/formatDate.js'
 
@@ -475,7 +476,7 @@ sessionsRouter.get('/:id/lock-status', authenticate, async (req, res, next) => {
 })
 
 // Join session (participate)
-sessionsRouter.post('/:id/join', authenticate, async (req, res, next) => {
+sessionsRouter.post('/:id/join', authenticate, actionRateLimit, async (req, res, next) => {
   try {
     const session = await prisma.session.findUnique({
       where: { id: req.params.id as string }
@@ -607,7 +608,7 @@ export async function leaveSessionHandler(req: Request, res: Response, next: Nex
   }
 }
 
-sessionsRouter.delete('/:id/leave', authenticate, leaveSessionHandler)
+sessionsRouter.delete('/:id/leave', authenticate, actionRateLimit, leaveSessionHandler)
 
 // Create a session for a specific date
 sessionsRouter.post('/', authenticate, async (req, res, next) => {

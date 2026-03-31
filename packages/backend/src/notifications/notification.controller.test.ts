@@ -1,16 +1,35 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest'
 import { Request, Response, NextFunction } from 'express'
+import { z } from 'zod'
 
 vi.mock('./notification.service.js', () => ({
   saveSubscription: vi.fn(),
   removeSubscription: vi.fn(),
+  NOTIFICATION_TYPES: [
+    'NEW_INSCRIPTION', 'NEW_WITHDRAWAL', 'CAR_AVAILABLE', 'NO_CAR',
+    'DRIVER_LEFT', 'USER_BANNED', 'PASSENGER_JOINED', 'PASSENGER_LEFT', 'PASSENGER_KICKED',
+  ] as const,
 }))
 
 vi.mock('../middleware/auth.js', () => ({
   authenticate: (_req: Request, _res: Response, next: NextFunction) => next(),
 }))
 
+vi.mock('../lib/prisma.js', () => ({
+  prisma: {
+    pushSubscription: {
+      findUnique: vi.fn(),
+      update: vi.fn(),
+    },
+  },
+}))
+
 import { saveSubscription, removeSubscription } from './notification.service.js'
+import { prisma } from '../lib/prisma.js'
+import { AppError } from '../middleware/errorHandler.js'
+
+const mockPushSubFindUnique = vi.mocked(prisma.pushSubscription.findUnique)
+const mockPushSubUpdate = vi.mocked(prisma.pushSubscription.update)
 
 const mockSaveSubscription = saveSubscription as ReturnType<typeof vi.fn>
 const mockRemoveSubscription = removeSubscription as ReturnType<typeof vi.fn>
@@ -181,5 +200,98 @@ describe('GET /notifications/vapid-public-key', () => {
 
     expect(mockRes.status).toHaveBeenCalledWith(503)
     expect(mockRes.json).toHaveBeenCalledWith({ error: 'Push notifications non configurées' })
+  })
+})
+
+// ── PATCH /preferences ─────────────────────────────────────────────────────
+
+const preferencesSchema = z.object({
+  enabledTypes: z.array(z.enum([
+    'NEW_INSCRIPTION', 'NEW_WITHDRAWAL', 'CAR_AVAILABLE', 'NO_CAR',
+    'DRIVER_LEFT', 'USER_BANNED', 'PASSENGER_JOINED', 'PASSENGER_LEFT', 'PASSENGER_KICKED',
+  ])),
+})
+
+async function preferencesHandler(req: Request, res: Response, next: NextFunction): Promise<void> {
+  try {
+    const { enabledTypes } = preferencesSchema.parse(req.body)
+    const sub = await prisma.pushSubscription.findUnique({ where: { userId: req.user!.userId } })
+    if (!sub) {
+      next(new AppError(404, 'Aucun abonnement push trouvé'))
+      return
+    }
+    await prisma.pushSubscription.update({
+      where: { userId: req.user!.userId },
+      data: { enabledTypes },
+    })
+    res.json({ enabledTypes })
+  } catch (err) {
+    next(err)
+  }
+}
+
+describe('PATCH /notifications/preferences', () => {
+  let mockReq: Record<string, unknown>
+  let mockRes: ReturnType<typeof makeRes>
+  let mockNext: NextFunction
+
+  beforeEach(() => {
+    mockReq = { user: { userId: 'user-123' }, body: { enabledTypes: ['CAR_AVAILABLE'] } }
+    mockRes = makeRes()
+    mockNext = vi.fn()
+    vi.clearAllMocks()
+  })
+
+  it('met à jour les préférences et retourne les types activés', async () => {
+    mockPushSubFindUnique.mockResolvedValue({ userId: 'user-123' } as never)
+    mockPushSubUpdate.mockResolvedValue({} as never)
+
+    await preferencesHandler(mockReq as unknown as Request, mockRes as unknown as Response, mockNext)
+
+    expect(mockPushSubUpdate).toHaveBeenCalledWith({
+      where: { userId: 'user-123' },
+      data: { enabledTypes: ['CAR_AVAILABLE'] },
+    })
+    expect(mockRes.json).toHaveBeenCalledWith({ enabledTypes: ['CAR_AVAILABLE'] })
+    expect(mockNext).not.toHaveBeenCalled()
+  })
+
+  it('accepte enabledTypes vide (tout activé par convention)', async () => {
+    mockReq.body = { enabledTypes: [] }
+    mockPushSubFindUnique.mockResolvedValue({ userId: 'user-123' } as never)
+    mockPushSubUpdate.mockResolvedValue({} as never)
+
+    await preferencesHandler(mockReq as unknown as Request, mockRes as unknown as Response, mockNext)
+
+    expect(mockPushSubUpdate).toHaveBeenCalledWith(
+      expect.objectContaining({ data: { enabledTypes: [] } })
+    )
+    expect(mockRes.json).toHaveBeenCalledWith({ enabledTypes: [] })
+  })
+
+  it('retourne 404 si l\'utilisateur n\'a pas de subscription push', async () => {
+    mockPushSubFindUnique.mockResolvedValue(null)
+
+    await preferencesHandler(mockReq as unknown as Request, mockRes as unknown as Response, mockNext)
+
+    expect(mockNext).toHaveBeenCalledWith(expect.objectContaining({ statusCode: 404 }))
+    expect(mockPushSubUpdate).not.toHaveBeenCalled()
+  })
+
+  it('passe une ZodError à next si enabledTypes contient un type inconnu', async () => {
+    mockReq.body = { enabledTypes: ['TYPE_INEXISTANT'] }
+
+    await preferencesHandler(mockReq as unknown as Request, mockRes as unknown as Response, mockNext)
+
+    expect(mockNext).toHaveBeenCalledWith(expect.any(Error))
+    expect(mockPushSubFindUnique).not.toHaveBeenCalled()
+  })
+
+  it('passe une ZodError à next si le body est invalide (champ manquant)', async () => {
+    mockReq.body = {}
+
+    await preferencesHandler(mockReq as unknown as Request, mockRes as unknown as Response, mockNext)
+
+    expect(mockNext).toHaveBeenCalledWith(expect.any(Error))
   })
 })

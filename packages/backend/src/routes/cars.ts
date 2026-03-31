@@ -4,7 +4,7 @@ import { prisma } from '../lib/prisma.js'
 import { USER_SELECT } from '../lib/prismaSelects.js'
 import { authenticate } from '../middleware/auth.js'
 import { AppError } from '../middleware/errorHandler.js'
-import { notifyGroupMembers, notifyUser } from '../notifications/notification.service.js'
+import { notifyGroupMembers, notifyUser, notifyUsers } from '../notifications/notification.service.js'
 import { formatSessionDate } from '../lib/formatDate.js'
 
 export const carsRouter = Router()
@@ -257,15 +257,12 @@ carsRouter.delete('/:id', authenticate, async (req, res, next) => {
     const passengerIds = car.passengers.map((p) => p.userId).filter((id) => id !== car.driverId)
     if (passengerIds.length > 0) {
       getUserName(car.driverId, 'Le chauffeur')
-        .then((driverName) => {
-          const payload = {
-            title: '🚨 Un chauffeur s\'est désisté !',
-            body: `La voiture de ${driverName} n'est plus disponible pour la séance du ${formatSessionDate(car.session.date)}.`,
-            url: `/groups/${car.session.groupId}`,
-            type: 'DRIVER_LEFT' as const,
-          }
-          return Promise.allSettled(passengerIds.map((id) => notifyUser(id, payload)))
-        })
+        .then((driverName) => notifyUsers(passengerIds, {
+          title: '🚨 Un chauffeur s\'est désisté !',
+          body: `La voiture de ${driverName} n'est plus disponible pour la séance du ${formatSessionDate(car.session.date)}.`,
+          url: `/groups/${car.session.groupId}`,
+          type: 'DRIVER_LEFT',
+        }))
         .catch((err: unknown) => {
           console.error('[Pioum] Erreur envoi notification désistement voiture:', err)
         })

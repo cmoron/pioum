@@ -2,6 +2,7 @@ import { Router, Request, Response, NextFunction } from 'express'
 import { z } from 'zod'
 import { authenticate } from '../middleware/auth.js'
 import { prisma } from '../lib/prisma.js'
+import { AppError } from '../middleware/errorHandler.js'
 import {
   saveSubscription,
   removeSubscription,
@@ -80,6 +81,11 @@ notificationsRouter.patch(
   async (req: Request, res: Response, next: NextFunction): Promise<void> => {
     try {
       const { enabledTypes } = preferencesSchema.parse(req.body)
+      const sub = await prisma.pushSubscription.findUnique({ where: { userId: req.user!.userId } })
+      if (!sub) {
+        next(new AppError(404, 'Aucun abonnement push trouvé'))
+        return
+      }
       await prisma.pushSubscription.update({
         where: { userId: req.user!.userId },
         data: { enabledTypes },

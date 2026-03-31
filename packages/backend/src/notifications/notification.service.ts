@@ -132,6 +132,22 @@ async function sendPushToRecord(record: PushRecord, payload: PioumNotificationPa
   }
 }
 
+export async function notifyUsers(
+  userIds: string[],
+  payload: PioumNotificationPayload
+): Promise<void> {
+  if (userIds.length === 0) return
+  const subscriptions = await prisma.pushSubscription.findMany({
+    where: { userId: { in: userIds } },
+  })
+  const results = await Promise.allSettled(
+    subscriptions.map((record) => sendPushToRecord(record, payload))
+  )
+  results.forEach((r) => {
+    if (r.status === 'rejected') console.error('[push] sendPushToRecord failed:', r.reason)
+  })
+}
+
 export async function notifyUser(
   userId: string,
   payload: PioumNotificationPayload

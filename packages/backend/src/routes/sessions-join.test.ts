@@ -87,7 +87,7 @@ async function joinHandler(req: Request, res: Response, next: NextFunction): Pro
           title: '🏋️ Nouvelle inscription Pioum',
           body: `${userName} est inscrit et en attente de voiture !`,
           url: `/groups/${session.groupId}`,
-          type: 'NO_CAR',
+          type: 'NEW_INSCRIPTION',
         })
       })
       .catch(() => {/* silencieux en production */})
@@ -133,7 +133,7 @@ describe('POST /sessions/:id/join — notification scénario', () => {
       'user-1',    // exclude User1 (celui qui s'inscrit)
       expect.objectContaining({
         body: 'Alice est inscrit et en attente de voiture !',
-        type: 'NO_CAR',
+        type: 'NEW_INSCRIPTION',
         url: '/groups/group-1',
       })
     )
@@ -156,7 +156,7 @@ describe('POST /sessions/:id/join — notification scénario', () => {
       'user-unknown',
       expect.objectContaining({
         body: "Quelqu'un est inscrit et en attente de voiture !",
-        type: 'NO_CAR',
+        type: 'NEW_INSCRIPTION',
       })
     )
   })

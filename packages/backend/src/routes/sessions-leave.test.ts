@@ -78,18 +78,49 @@ describe('DELETE /sessions/:id/leave — notification DRIVER_LEFT', () => {
     )
   })
 
-  it("n'envoie PAS de notification quand un simple passager (sans voiture) quitte la séance", async () => {
+  it('envoie NEW_WITHDRAWAL avec le bon message quand un simple passager quitte la séance', async () => {
     mockCarFindUnique.mockResolvedValue(null) // pas de voiture
+    mockUserFindUnique.mockResolvedValue({ name: 'Bob' })
 
-    const req = makeReq({ params: { id: 'session-1' }, user: { userId: 'user-1' } })
+    const req = makeReq({ params: { id: 'session-1' }, user: { userId: 'user-2' } })
 
     await leaveSessionHandler(req, asRes(mockRes), mockNext)
 
     expect(mockRes.json).toHaveBeenCalledWith({ message: 'Left session' })
+    expect(mockNext).not.toHaveBeenCalled()
 
-    // Laisser un tick pour s'assurer que la notif n'est pas envoyée en différé
-    await new Promise((r) => setTimeout(r, 10))
-    expect(mockNotifyGroupMembers).not.toHaveBeenCalled()
+    await vi.waitFor(() => expect(mockNotifyGroupMembers).toHaveBeenCalled())
+
+    expect(mockNotifyGroupMembers).toHaveBeenCalledWith(
+      'group-1',
+      'user-2',
+      expect.objectContaining({
+        title: "👋 Désistement d'un inscrit",
+        body: expect.stringContaining("Bob s'est désisté"),
+        type: 'NEW_WITHDRAWAL',
+        url: '/groups/group-1',
+      })
+    )
+  })
+
+  it("utilise 'Quelqu'un' si le nom du passager est introuvable", async () => {
+    mockCarFindUnique.mockResolvedValue(null) // pas de voiture
+    mockUserFindUnique.mockResolvedValue(null)
+
+    const req = makeReq({ params: { id: 'session-1' }, user: { userId: 'user-unknown' } })
+
+    await leaveSessionHandler(req, asRes(mockRes), mockNext)
+
+    await vi.waitFor(() => expect(mockNotifyGroupMembers).toHaveBeenCalled())
+
+    expect(mockNotifyGroupMembers).toHaveBeenCalledWith(
+      'group-1',
+      'user-unknown',
+      expect.objectContaining({
+        body: expect.stringContaining("Quelqu'un s'est désisté"),
+        type: 'NEW_WITHDRAWAL',
+      })
+    )
   })
 
   it("utilise 'Le chauffeur' si le nom de l'utilisateur est introuvable", async () => {

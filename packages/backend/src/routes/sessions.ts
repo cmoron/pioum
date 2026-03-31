@@ -533,7 +533,7 @@ sessionsRouter.post('/:id/join', authenticate, async (req, res, next) => {
           title: '🏋️ Nouvelle inscription Pioum',
           body: `${userName} est inscrit et en attente de voiture !`,
           url: `/groups/${session.groupId}`,
-          type: 'NO_CAR',
+          type: 'NEW_INSCRIPTION',
         })
       })
       .catch((err: unknown) => {
@@ -574,26 +574,34 @@ export async function leaveSessionHandler(req: Request, res: Response, next: Nex
 
     res.json({ message: 'Left session' })
 
-    // Si l'utilisateur était chauffeur, notifier les membres du groupe
-    if (driverCar) {
-      Promise.all([
-        prisma.user.findUnique({ where: { id: req.user!.userId }, select: { name: true } }),
-        prisma.session.findUnique({ where: { id: sessionId }, select: { date: true, groupId: true } }),
-      ])
-        .then(([driver, session]) => {
-          if (!session) return
-          const driverName = driver?.name ?? 'Le chauffeur'
+    // Notifier les membres du groupe selon le rôle de l'utilisateur
+    Promise.all([
+      prisma.user.findUnique({ where: { id: req.user!.userId }, select: { name: true } }),
+      prisma.session.findUnique({ where: { id: sessionId }, select: { date: true, groupId: true } }),
+    ])
+      .then(([leaver, session]) => {
+        if (!session) return
+        if (driverCar) {
+          const driverName = leaver?.name ?? 'Le chauffeur'
           return notifyGroupMembers(session.groupId, req.user!.userId, {
             title: '🚨 Un chauffeur s\'est désisté !',
             body: `${driverName} s'est désisté de la séance du ${formatSessionDate(session.date)}, pas fiable le golem…`,
             url: `/groups/${session.groupId}`,
             type: 'DRIVER_LEFT',
           })
-        })
-        .catch((err: unknown) => {
-          console.error('[Pioum] Erreur envoi notification désistement:', err)
-        })
-    }
+        } else {
+          const leaverName = leaver?.name ?? 'Quelqu\'un'
+          return notifyGroupMembers(session.groupId, req.user!.userId, {
+            title: '👋 Désistement d\'un inscrit',
+            body: `${leaverName} s'est désisté de la séance du ${formatSessionDate(session.date)}.`,
+            url: `/groups/${session.groupId}`,
+            type: 'NEW_WITHDRAWAL',
+          })
+        }
+      })
+      .catch((err: unknown) => {
+        console.error('[Pioum] Erreur envoi notification désistement:', err)
+      })
   } catch (error) {
     next(error)
   }

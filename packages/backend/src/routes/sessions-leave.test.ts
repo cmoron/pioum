@@ -49,40 +49,30 @@ describe('DELETE /sessions/:id/leave — notification DRIVER_LEFT', () => {
     mockSessionFindUnique.mockResolvedValue(sessionInfo)
   })
 
-  it('envoie DRIVER_LEFT avec le bon message quand le chauffeur quitte la séance', async () => {
-    mockUserFindUnique.mockResolvedValue({ name: 'Alice' })
+  it.each([
+    {
+      label: 'chauffeur',
+      hasCar: true,
+      userId: 'user-1',
+      name: 'Alice',
+      title: "🚨 Un chauffeur s'est désisté !",
+      bodyContains: ["Alice s'est désisté", 'pas fiable le golem'],
+      type: 'DRIVER_LEFT',
+    },
+    {
+      label: 'passager',
+      hasCar: false,
+      userId: 'user-2',
+      name: 'Bob',
+      title: "👋 Désistement d'un inscrit",
+      bodyContains: ["Bob s'est désisté"],
+      type: 'NEW_WITHDRAWAL',
+    },
+  ])('envoie $type avec le bon message quand $label quitte la séance', async ({ hasCar, userId, name, title, bodyContains, type }) => {
+    if (!hasCar) mockCarFindUnique.mockResolvedValue(null)
+    mockUserFindUnique.mockResolvedValue({ name })
 
-    const req = makeReq({ params: { id: 'session-1' }, user: { userId: 'user-1' } })
-
-    await leaveSessionHandler(req, asRes(mockRes), mockNext)
-
-    expect(mockRes.json).toHaveBeenCalledWith({ message: 'Left session' })
-    expect(mockNext).not.toHaveBeenCalled()
-
-    await vi.waitFor(() => expect(mockNotifyGroupMembers).toHaveBeenCalled())
-
-    expect(mockNotifyGroupMembers).toHaveBeenCalledWith(
-      'group-1',
-      'user-1',
-      expect.objectContaining({
-        title: "🚨 Un chauffeur s'est désisté !",
-        body: expect.stringContaining("Alice s'est désisté"),
-        type: 'DRIVER_LEFT',
-        url: '/groups/group-1',
-      })
-    )
-    expect(mockNotifyGroupMembers).toHaveBeenCalledWith(
-      'group-1',
-      'user-1',
-      expect.objectContaining({ body: expect.stringContaining('pas fiable le golem') })
-    )
-  })
-
-  it('envoie NEW_WITHDRAWAL avec le bon message quand un simple passager quitte la séance', async () => {
-    mockCarFindUnique.mockResolvedValue(null) // pas de voiture
-    mockUserFindUnique.mockResolvedValue({ name: 'Bob' })
-
-    const req = makeReq({ params: { id: 'session-1' }, user: { userId: 'user-2' } })
+    const req = makeReq({ params: { id: 'session-1' }, user: { userId } })
 
     await leaveSessionHandler(req, asRes(mockRes), mockNext)
 
@@ -91,15 +81,17 @@ describe('DELETE /sessions/:id/leave — notification DRIVER_LEFT', () => {
 
     await vi.waitFor(() => expect(mockNotifyGroupMembers).toHaveBeenCalled())
 
+    for (const fragment of bodyContains) {
+      expect(mockNotifyGroupMembers).toHaveBeenCalledWith(
+        'group-1',
+        userId,
+        expect.objectContaining({ body: expect.stringContaining(fragment) })
+      )
+    }
     expect(mockNotifyGroupMembers).toHaveBeenCalledWith(
       'group-1',
-      'user-2',
-      expect.objectContaining({
-        title: "👋 Désistement d'un inscrit",
-        body: expect.stringContaining("Bob s'est désisté"),
-        type: 'NEW_WITHDRAWAL',
-        url: '/groups/group-1',
-      })
+      userId,
+      expect.objectContaining({ title, type, url: '/groups/group-1' })
     )
   })
 

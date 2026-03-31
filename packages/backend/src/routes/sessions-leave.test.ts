@@ -103,8 +103,11 @@ describe('DELETE /sessions/:id/leave — notification DRIVER_LEFT', () => {
     )
   })
 
-  it("utilise 'Quelqu'un' si le nom du passager est introuvable", async () => {
-    mockCarFindUnique.mockResolvedValue(null) // pas de voiture
+  it.each([
+    { label: 'chauffeur', hasCar: true, expectedBody: "Le chauffeur s'est désisté", expectedType: 'DRIVER_LEFT' },
+    { label: 'passager', hasCar: false, expectedBody: "Quelqu'un s'est désisté", expectedType: 'NEW_WITHDRAWAL' },
+  ])("utilise le bon fallback si le nom est introuvable ($label)", async ({ hasCar, expectedBody, expectedType }) => {
+    mockCarFindUnique.mockResolvedValue(hasCar ? existingCar : null)
     mockUserFindUnique.mockResolvedValue(null)
 
     const req = makeReq({ params: { id: 'session-1' }, user: { userId: 'user-unknown' } })
@@ -117,26 +120,8 @@ describe('DELETE /sessions/:id/leave — notification DRIVER_LEFT', () => {
       'group-1',
       'user-unknown',
       expect.objectContaining({
-        body: expect.stringContaining("Quelqu'un s'est désisté"),
-        type: 'NEW_WITHDRAWAL',
-      })
-    )
-  })
-
-  it("utilise 'Le chauffeur' si le nom de l'utilisateur est introuvable", async () => {
-    mockUserFindUnique.mockResolvedValue(null) // user inconnu
-
-    const req = makeReq({ params: { id: 'session-1' }, user: { userId: 'user-unknown' } })
-
-    await leaveSessionHandler(req, asRes(mockRes), mockNext)
-
-    await vi.waitFor(() => expect(mockNotifyGroupMembers).toHaveBeenCalled())
-
-    expect(mockNotifyGroupMembers).toHaveBeenCalledWith(
-      'group-1',
-      'user-unknown',
-      expect.objectContaining({
-        body: expect.stringContaining("Le chauffeur s'est désisté"),
+        body: expect.stringContaining(expectedBody),
+        type: expectedType,
       })
     )
   })

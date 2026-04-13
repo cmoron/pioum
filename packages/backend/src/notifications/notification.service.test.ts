@@ -124,6 +124,7 @@ describe('notifyUser', () => {
       endpoint: mockSub.endpoint,
       p256dh: mockSub.keys.p256dh,
       auth: mockSub.keys.auth,
+      enabledTypes: [],
     })
     mockBuildPushHTTPRequest.mockResolvedValue({
       endpoint: mockSub.endpoint,
@@ -155,6 +156,7 @@ describe('notifyUser', () => {
       endpoint: mockSub.endpoint,
       p256dh: mockSub.keys.p256dh,
       auth: mockSub.keys.auth,
+      enabledTypes: [],
     })
     mockBuildPushHTTPRequest.mockResolvedValue({
       endpoint: mockSub.endpoint,
@@ -175,6 +177,7 @@ describe('notifyUser', () => {
       endpoint: mockSub.endpoint,
       p256dh: mockSub.keys.p256dh,
       auth: mockSub.keys.auth,
+      enabledTypes: [],
     })
     mockBuildPushHTTPRequest.mockResolvedValue({
       endpoint: mockSub.endpoint,
@@ -188,6 +191,56 @@ describe('notifyUser', () => {
     }))
 
     await expect(notifyUser('user-1', mockPayload)).rejects.toThrow('Push failed: 500')
+  })
+})
+
+describe('notifyUser — enabledTypes filtering', () => {
+  const baseRecord = {
+    userId: 'user-1',
+    endpoint: mockSub.endpoint,
+    p256dh: mockSub.keys.p256dh,
+    auth: mockSub.keys.auth,
+  }
+
+  beforeEach(() => {
+    mockBuildPushHTTPRequest.mockResolvedValue({
+      endpoint: mockSub.endpoint,
+      headers: { 'Content-Type': 'application/octet-stream' },
+      body: new Uint8Array(),
+    })
+    vi.stubGlobal('fetch', vi.fn().mockResolvedValue({ status: 201, ok: true }))
+  })
+
+  it('envoie la notification quand enabledTypes est vide (tout activé)', async () => {
+    mockFindUnique.mockResolvedValue({ ...baseRecord, enabledTypes: [] })
+
+    await notifyUser('user-1', mockPayload)
+
+    expect(mockBuildPushHTTPRequest).toHaveBeenCalled()
+  })
+
+  it('envoie la notification quand le type est dans enabledTypes', async () => {
+    mockFindUnique.mockResolvedValue({ ...baseRecord, enabledTypes: ['NEW_INSCRIPTION', 'CAR_AVAILABLE'] })
+
+    await notifyUser('user-1', { ...mockPayload, type: 'NEW_INSCRIPTION' })
+
+    expect(mockBuildPushHTTPRequest).toHaveBeenCalled()
+  })
+
+  it('ne envoie pas la notification quand le type est absent de enabledTypes', async () => {
+    mockFindUnique.mockResolvedValue({ ...baseRecord, enabledTypes: ['CAR_AVAILABLE'] })
+
+    await notifyUser('user-1', { ...mockPayload, type: 'NEW_INSCRIPTION' })
+
+    expect(mockBuildPushHTTPRequest).not.toHaveBeenCalled()
+  })
+
+  it('ne envoie pas quand enabledTypes ne contient que d\'autres types', async () => {
+    mockFindUnique.mockResolvedValue({ ...baseRecord, enabledTypes: ['DRIVER_LEFT', 'USER_BANNED'] })
+
+    await notifyUser('user-1', { ...mockPayload, type: 'PASSENGER_JOINED' })
+
+    expect(mockBuildPushHTTPRequest).not.toHaveBeenCalled()
   })
 })
 

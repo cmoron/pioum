@@ -5,6 +5,7 @@ import { prisma } from '../lib/prisma.js'
 import { USER_SELECT } from '../lib/prismaSelects.js'
 import { authenticate } from '../middleware/auth.js'
 import { AppError } from '../middleware/errorHandler.js'
+import { actionRateLimit } from '../middleware/actionRateLimit.js'
 import { notifyGroupMembers } from '../notifications/notification.service.js'
 import { formatSessionDate } from '../lib/formatDate.js'
 
@@ -475,7 +476,7 @@ sessionsRouter.get('/:id/lock-status', authenticate, async (req, res, next) => {
 })
 
 // Join session (participate)
-sessionsRouter.post('/:id/join', authenticate, async (req, res, next) => {
+sessionsRouter.post('/:id/join', authenticate, actionRateLimit, async (req, res, next) => {
   try {
     const session = await prisma.session.findUnique({
       where: { id: req.params.id as string }
@@ -533,7 +534,7 @@ sessionsRouter.post('/:id/join', authenticate, async (req, res, next) => {
           title: '🏋️ Nouvelle inscription Pioum',
           body: `${userName} est inscrit et en attente de voiture !`,
           url: `/groups/${session.groupId}`,
-          type: 'NO_CAR',
+          type: 'NEW_INSCRIPTION',
         })
       })
       .catch((err: unknown) => {
@@ -574,32 +575,40 @@ export async function leaveSessionHandler(req: Request, res: Response, next: Nex
 
     res.json({ message: 'Left session' })
 
-    // Si l'utilisateur était chauffeur, notifier les membres du groupe
-    if (driverCar) {
-      Promise.all([
-        prisma.user.findUnique({ where: { id: req.user!.userId }, select: { name: true } }),
-        prisma.session.findUnique({ where: { id: sessionId }, select: { date: true, groupId: true } }),
-      ])
-        .then(([driver, session]) => {
-          if (!session) return
-          const driverName = driver?.name ?? 'Le chauffeur'
+    // Notifier les membres du groupe selon le rôle de l'utilisateur
+    Promise.all([
+      prisma.user.findUnique({ where: { id: req.user!.userId }, select: { name: true } }),
+      prisma.session.findUnique({ where: { id: sessionId }, select: { date: true, groupId: true } }),
+    ])
+      .then(([leaver, session]) => {
+        if (!session) return
+        if (driverCar) {
+          const driverName = leaver?.name ?? 'Le chauffeur'
           return notifyGroupMembers(session.groupId, req.user!.userId, {
             title: '🚨 Un chauffeur s\'est désisté !',
             body: `${driverName} s'est désisté de la séance du ${formatSessionDate(session.date)}, pas fiable le golem…`,
             url: `/groups/${session.groupId}`,
             type: 'DRIVER_LEFT',
           })
-        })
-        .catch((err: unknown) => {
-          console.error('[Pioum] Erreur envoi notification désistement:', err)
-        })
-    }
+        } else {
+          const leaverName = leaver?.name ?? 'Quelqu\'un'
+          return notifyGroupMembers(session.groupId, req.user!.userId, {
+            title: '👋 Désistement d\'un inscrit',
+            body: `${leaverName} s'est désisté de la séance du ${formatSessionDate(session.date)}.`,
+            url: `/groups/${session.groupId}`,
+            type: 'NEW_WITHDRAWAL',
+          })
+        }
+      })
+      .catch((err: unknown) => {
+        console.error('[Pioum] Erreur envoi notification désistement:', err)
+      })
   } catch (error) {
     next(error)
   }
 }
 
-sessionsRouter.delete('/:id/leave', authenticate, leaveSessionHandler)
+sessionsRouter.delete('/:id/leave', authenticate, actionRateLimit, leaveSessionHandler)
 
 // Create a session for a specific date
 sessionsRouter.post('/', authenticate, async (req, res, next) => {

@@ -15,14 +15,19 @@ ENV VITE_API_URL=$VITE_API_URL
 # Copy workspace config
 COPY package.json pnpm-workspace.yaml pnpm-lock.yaml* .npmrc ./
 COPY packages/frontend/package.json ./packages/frontend/
+COPY packages/shared/package.json ./packages/shared/
 
 # Install dependencies
 RUN pnpm install --frozen-lockfile
 
-# Copy source
+# Copy source (shared first — frontend depends on it)
+COPY packages/shared ./packages/shared
 COPY packages/frontend ./packages/frontend
 
-# Build
+# Build shared package first (frontend imports from @pioum/shared)
+RUN pnpm --filter @pioum/shared build
+
+# Build frontend
 RUN pnpm --filter @pioum/frontend build
 
 # Production stage - Nginx

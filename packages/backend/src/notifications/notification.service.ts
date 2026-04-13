@@ -3,7 +3,7 @@ import { prisma } from '../lib/prisma.js'
 import { AppError } from '../middleware/errorHandler.js'
 import type { PioumNotificationPayload } from '@pioum/shared/notifications'
 
-export type { PioumNotificationPayload }
+export type { PioumNotificationPayload } from '@pioum/shared/notifications'
 
 export type WebPushSubscription = {
   endpoint: string

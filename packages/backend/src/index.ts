@@ -1,36 +1,41 @@
-import express from 'express'
-import cors from 'cors'
-import cookieParser from 'cookie-parser'
-import { rateLimit } from 'express-rate-limit'
+import express from "express";
+import cors from "cors";
+import cookieParser from "cookie-parser";
+import { rateLimit } from "express-rate-limit";
 
-import { errorHandler } from './middleware/errorHandler.js'
-import { authRouter } from './routes/auth.js'
-import { usersRouter } from './routes/users.js'
-import { groupsRouter } from './routes/groups.js'
-import { sessionsRouter } from './routes/sessions.js'
-import { carsRouter } from './routes/cars.js'
-import { bansRouter } from './routes/bans.js'
-import { avatarsRouter } from './routes/avatars.js'
-import { userCarsRouter } from './routes/userCars.js'
-import { recurrencePatternsRouter } from './routes/recurrencePatterns.js'
-import { notificationsRouter } from './notifications/notification.controller.js'
-import { validateNotificationConfig } from './notifications/notification.service.js'
+import { errorHandler } from "./middleware/errorHandler.js";
+import { authRouter } from "./routes/auth.js";
+import { usersRouter } from "./routes/users.js";
+import { groupsRouter } from "./routes/groups.js";
+import { sessionsRouter } from "./routes/sessions.js";
+import { carsRouter } from "./routes/cars.js";
+import { bansRouter } from "./routes/bans.js";
+import { avatarsRouter } from "./routes/avatars.js";
+import { userCarsRouter } from "./routes/userCars.js";
+import { recurrencePatternsRouter } from "./routes/recurrencePatterns.js";
+import { groupTagsRouter } from "./routes/groupTags.js";
+import { tagsRouter } from "./routes/tags.js";
+import { notificationsRouter } from "./notifications/notification.controller.js";
+import { validateNotificationConfig } from "./notifications/notification.service.js";
 
 // Valider la config push notifications au démarrage si configurée
 if (process.env.VAPID_PRIVATE_KEY_JWK) {
-  validateNotificationConfig()
+  validateNotificationConfig();
 }
 
-const app = express()
-const PORT = process.env.PORT || 3000
+const app = express();
+app.disable("x-powered-by");
+const PORT = process.env.PORT || 3000;
 
 // Middleware
-app.use(cors({
-  origin: process.env.FRONTEND_URL || 'http://localhost:5173',
-  credentials: true
-}))
-app.use(express.json())
-app.use(cookieParser())
+app.use(
+  cors({
+    origin: process.env.FRONTEND_URL || "http://localhost:5173",
+    credentials: true,
+  }),
+);
+app.use(express.json());
+app.use(cookieParser());
 
 // Rate limiting - 1000 req/min (généreux pour usage normal)
 const limiter = rateLimit({
@@ -39,41 +44,43 @@ const limiter = rateLimit({
   standardHeaders: true,
   legacyHeaders: false,
   message: {
-    error: 'Trop de requêtes, réessaie dans une minute',
-    code: 'RATE_LIMIT_EXCEEDED',
-    retryAfter: 60
+    error: "Trop de requêtes, réessaie dans une minute",
+    code: "RATE_LIMIT_EXCEEDED",
+    retryAfter: 60,
   },
   handler: (req, res, _next, options) => {
-    console.warn(`[RATE LIMIT] IP ${req.ip} bloquée sur ${req.originalUrl}`)
-    res.status(429).json(options.message)
-  }
-})
-app.use('/api', limiter)
+    console.warn(`[RATE LIMIT] IP ${req.ip} bloquée sur ${req.originalUrl}`);
+    res.status(429).json(options.message);
+  },
+});
+app.use("/api", limiter);
 
 // Health check
-app.get('/api/health', (_req, res) => {
-  res.json({ status: 'ok', timestamp: new Date().toISOString() })
-})
+app.get("/api/health", (_req, res) => {
+  res.json({ status: "ok", timestamp: new Date().toISOString() });
+});
 
 // Routes
-app.use('/api/auth', authRouter)
-app.use('/api/users', usersRouter)
-app.use('/api/groups', groupsRouter)
-app.use('/api/sessions', sessionsRouter)
-app.use('/api/cars', carsRouter)
-app.use('/api/bans', bansRouter)
-app.use('/api/avatars', avatarsRouter)
-app.use('/api/user-cars', userCarsRouter)
-app.use('/api', recurrencePatternsRouter)
-app.use('/api/notifications', notificationsRouter)
+app.use("/api/auth", authRouter);
+app.use("/api/users", usersRouter);
+app.use("/api/groups", groupsRouter);
+app.use("/api/sessions", sessionsRouter);
+app.use("/api/cars", carsRouter);
+app.use("/api/bans", bansRouter);
+app.use("/api/avatars", avatarsRouter);
+app.use("/api/user-cars", userCarsRouter);
+app.use("/api", recurrencePatternsRouter);
+app.use("/api/groups", groupTagsRouter);
+app.use("/api/tags", tagsRouter);
+app.use("/api/notifications", notificationsRouter);
 
 // Error handler
-app.use(errorHandler)
+app.use(errorHandler);
 
-if (process.env.NODE_ENV !== 'test') {
+if (process.env.NODE_ENV !== "test") {
   app.listen(PORT, () => {
-    console.log(`Server running on port ${PORT}`)
-  })
+    console.log(`Server running on port ${PORT}`);
+  });
 }
 
-export { app }
+export { app };

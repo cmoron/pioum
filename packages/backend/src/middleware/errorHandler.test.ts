@@ -167,7 +167,7 @@ describe('errorHandler', () => {
       const error = new AppError(404, 'Not found')
       errorHandler(error, mockReq as Request, mockRes as Response, mockNext)
 
-      expect(consoleErrorSpy).toHaveBeenCalledWith('Error:', error)
+      expect(consoleErrorSpy).toHaveBeenCalledWith('AppError 404: Not found')
     })
 
     it('should log ZodError to console', () => {

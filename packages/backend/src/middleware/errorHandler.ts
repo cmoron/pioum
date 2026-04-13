@@ -18,9 +18,8 @@ export function errorHandler(
   res: Response,
   _next: NextFunction
 ) {
-  console.error('Error:', err)
-
   if (err instanceof AppError) {
+    console.error(`AppError ${err.statusCode}: ${err.message}`)
     return res.status(err.statusCode).json({
       error: err.message,
       code: err.code
@@ -28,12 +27,14 @@ export function errorHandler(
   }
 
   if (err instanceof ZodError) {
+    console.error(`ZodError: ${err.message}`)
     return res.status(400).json({
       error: 'Validation error',
-      details: err.errors
+      details: err.issues
     })
   }
 
+  console.error('Error:', err)
   return res.status(500).json({
     error: 'Internal server error'
   })

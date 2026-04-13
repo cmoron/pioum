@@ -84,8 +84,23 @@ model Group {
   members            GroupMember[]
   sessions           Session[]
   recurrencePatterns RecurrencePattern[]
+  tags               GroupTag[]
 
   @@index([inviteCode])
+}
+
+model GroupTag {
+  id        String   @id @default(cuid())
+  groupId   String
+  label     String
+  createdAt DateTime @default(now())
+
+  group         Group          @relation(fields: [groupId], references: [id], onDelete: Cascade)
+  passengerTags PassengerTag[]
+  carTags       CarTag[]
+
+  @@unique([groupId, label])
+  @@index([groupId])
 }
 
 model GroupMember {
@@ -153,10 +168,23 @@ model Car {
   driver     User        @relation(fields: [driverId], references: [id], onDelete: Cascade)
   userCar    UserCar?    @relation(fields: [userCarId], references: [id], onDelete: SetNull)
   passengers Passenger[]
+  tags       CarTag[]
 
   @@unique([sessionId, driverId])
   @@index([sessionId])
   @@index([userCarId])
+}
+
+model CarTag {
+  id         String  @id @default(cuid())
+  carId      String
+  groupTagId String?
+  freeText   String?
+
+  car      Car       @relation(fields: [carId], references: [id], onDelete: Cascade)
+  groupTag GroupTag? @relation(fields: [groupTagId], references: [id], onDelete: Cascade)
+
+  @@index([carId])
 }
 
 model Passenger {
@@ -166,13 +194,26 @@ model Passenger {
   carId     String?
   joinedAt  DateTime @default(now())
 
-  session Session @relation(fields: [sessionId], references: [id], onDelete: Cascade)
-  user    User    @relation(fields: [userId], references: [id], onDelete: Cascade)
-  car     Car?    @relation(fields: [carId], references: [id], onDelete: SetNull)
+  session Session        @relation(fields: [sessionId], references: [id], onDelete: Cascade)
+  user    User           @relation(fields: [userId], references: [id], onDelete: Cascade)
+  car     Car?           @relation(fields: [carId], references: [id], onDelete: SetNull)
+  tags    PassengerTag[]
 
   @@unique([sessionId, userId])
   @@index([sessionId])
   @@index([carId])
+}
+
+model PassengerTag {
+  id          String  @id @default(cuid())
+  passengerId String
+  groupTagId  String?
+  freeText    String?
+
+  passenger Passenger @relation(fields: [passengerId], references: [id], onDelete: Cascade)
+  groupTag  GroupTag? @relation(fields: [groupTagId], references: [id], onDelete: Cascade)
+
+  @@index([passengerId])
 }
 
 model Ban {

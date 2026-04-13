@@ -62,14 +62,23 @@ export async function unsubscribeFromPush(): Promise<void> {
   })
 }
 
-export async function checkExistingSubscription(): Promise<boolean> {
-  if (!('serviceWorker' in navigator) || !('PushManager' in globalThis)) return false
+export async function checkExistingSubscription(): Promise<{ subscribed: boolean; enabledTypes: string[] }> {
+  if (!('serviceWorker' in navigator) || !('PushManager' in globalThis)) return { subscribed: false, enabledTypes: [] }
   const reg = await navigator.serviceWorker.getRegistration()
-  if (!reg) return false
+  if (!reg) return { subscribed: false, enabledTypes: [] }
   const sub = await reg.pushManager.getSubscription()
-  if (!sub) return false
+  if (!sub) return { subscribed: false, enabledTypes: [] }
   const res = await fetch(`${API_BASE}/notifications/subscription`, { credentials: 'include' })
-  if (!res.ok) return false
-  const { subscribed } = (await res.json()) as { subscribed: boolean }
-  return subscribed
+  if (!res.ok) return { subscribed: false, enabledTypes: [] }
+  return res.json() as Promise<{ subscribed: boolean; enabledTypes: string[] }>
+}
+
+export async function updatePreferences(enabledTypes: string[]): Promise<void> {
+  const res = await fetch(`${API_BASE}/notifications/preferences`, {
+    method: 'PATCH',
+    headers: { 'Content-Type': 'application/json' },
+    credentials: 'include',
+    body: JSON.stringify({ enabledTypes }),
+  })
+  if (!res.ok) throw new Error('Erreur lors de la mise à jour des préférences')
 }

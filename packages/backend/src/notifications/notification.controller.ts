@@ -1,10 +1,13 @@
 import { Router, Request, Response, NextFunction } from 'express'
+import { z } from 'zod'
 import { authenticate } from '../middleware/auth.js'
 import { prisma } from '../lib/prisma.js'
+import { AppError } from '../middleware/errorHandler.js'
 import {
   saveSubscription,
   removeSubscription,
   WebPushSubscription,
+  NOTIFICATION_TYPES,
 } from './notification.service.js'
 
 export const notificationsRouter = Router()
@@ -60,7 +63,34 @@ notificationsRouter.get(
   async (req: Request, res: Response, next: NextFunction): Promise<void> => {
     try {
       const sub = await prisma.pushSubscription.findUnique({ where: { userId: req.user!.userId } })
-      res.json({ subscribed: sub !== null })
+      res.json({ subscribed: sub !== null, enabledTypes: sub?.enabledTypes ?? [] })
+    } catch (err) {
+      next(err)
+    }
+  }
+)
+
+// Met à jour les types de notifications activés pour l'utilisateur connecté
+const preferencesSchema = z.object({
+  enabledTypes: z.array(z.enum(NOTIFICATION_TYPES)),
+})
+
+notificationsRouter.patch(
+  '/preferences',
+  authenticate,
+  async (req: Request, res: Response, next: NextFunction): Promise<void> => {
+    try {
+      const { enabledTypes } = preferencesSchema.parse(req.body)
+      const sub = await prisma.pushSubscription.findUnique({ where: { userId: req.user!.userId } })
+      if (!sub) {
+        next(new AppError(404, 'Aucun abonnement push trouvé'))
+        return
+      }
+      await prisma.pushSubscription.update({
+        where: { userId: req.user!.userId },
+        data: { enabledTypes },
+      })
+      res.json({ enabledTypes })
     } catch (err) {
       next(err)
     }

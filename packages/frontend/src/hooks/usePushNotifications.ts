@@ -5,6 +5,7 @@ import {
   sendSubscriptionToServer,
   unsubscribeFromPush,
   checkExistingSubscription,
+  updatePreferences,
 } from '../services/pushNotification.service'
 
 type PushState = {
@@ -12,8 +13,10 @@ type PushState = {
   isLoading: boolean
   error: string | null
   permission: NotificationPermission
+  enabledTypes: string[]
   subscribe: () => Promise<void>
   unsubscribe: () => Promise<void>
+  updatePreferences: (enabledTypes: string[]) => Promise<void>
 }
 
 export function usePushNotifications(): PushState {
@@ -21,6 +24,7 @@ export function usePushNotifications(): PushState {
   const [isLoading, setIsLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
   const [permission, setPermission] = useState<NotificationPermission>('default')
+  const [enabledTypes, setEnabledTypes] = useState<string[]>([])
 
   // Vérifie l'état initial au montage
   useEffect(() => {
@@ -30,7 +34,10 @@ export function usePushNotifications(): PushState {
     }
     setPermission(Notification.permission)
     checkExistingSubscription()
-      .then(setIsSubscribed)
+      .then(({ subscribed, enabledTypes: types }) => {
+        setIsSubscribed(subscribed)
+        setEnabledTypes(types)
+      })
       .catch(() => setIsSubscribed(false))
       .finally(() => setIsLoading(false))
   }, [])
@@ -64,6 +71,7 @@ export function usePushNotifications(): PushState {
     try {
       await unsubscribeFromPush()
       setIsSubscribed(false)
+      setEnabledTypes([])
     } catch (err) {
       setError('Impossible de désactiver les notifications')
       console.error('[Pioum] Erreur désabonnement push:', err)
@@ -72,5 +80,15 @@ export function usePushNotifications(): PushState {
     }
   }
 
-  return { isSubscribed, isLoading, error, permission, subscribe, unsubscribe }
+  const handleUpdatePreferences = async (types: string[]): Promise<void> => {
+    try {
+      await updatePreferences(types)
+      setEnabledTypes(types)
+    } catch (err) {
+      setError('Impossible de mettre à jour les préférences')
+      console.error('[Pioum] Erreur mise à jour préférences:', err)
+    }
+  }
+
+  return { isSubscribed, isLoading, error, permission, enabledTypes, subscribe, unsubscribe, updatePreferences: handleUpdatePreferences }
 }

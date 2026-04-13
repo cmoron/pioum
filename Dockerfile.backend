@@ -42,9 +42,11 @@ COPY --from=builder --chown=nodejs:nodejs /app/packages/backend/dist ./dist
 COPY --from=builder --chown=nodejs:nodejs /app/packages/backend/prisma ./prisma
 COPY --from=builder --chown=nodejs:nodejs /app/packages/backend/package.json ./
 COPY --from=builder --chown=nodejs:nodejs /app/node_modules ./node_modules
-# Workspace package target for the node_modules/@pioum/shared symlink
-COPY --from=builder --chown=nodejs:nodejs /app/packages/shared/dist ./packages/shared/dist
-COPY --from=builder --chown=nodejs:nodejs /app/packages/shared/package.json ./packages/shared/package.json
+# Place @pioum/shared directly under node_modules so Node ESM resolves it from
+# /app without relying on the pnpm workspace symlink (which lived under
+# packages/backend/node_modules and isn't present in this runner layout).
+COPY --from=builder --chown=nodejs:nodejs /app/packages/shared/dist ./node_modules/@pioum/shared/dist
+COPY --from=builder --chown=nodejs:nodejs /app/packages/shared/package.json ./node_modules/@pioum/shared/package.json
 
 # Switch to non-root user
 USER nodejs

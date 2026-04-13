@@ -6,10 +6,6 @@ import request from 'supertest'
 vi.mock('./notification.service.js', () => ({
   saveSubscription: vi.fn(),
   removeSubscription: vi.fn(),
-  NOTIFICATION_TYPES: [
-    'NEW_INSCRIPTION', 'NEW_WITHDRAWAL', 'CAR_AVAILABLE', 'NO_CAR',
-    'DRIVER_LEFT', 'USER_BANNED', 'PASSENGER_JOINED', 'PASSENGER_LEFT', 'PASSENGER_KICKED',
-  ] as const,
 }))
 
 vi.mock('../middleware/auth.js', () => ({

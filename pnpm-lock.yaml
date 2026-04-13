@@ -20,6 +20,9 @@ importers:
 
   packages/backend:
     dependencies:
+      '@pioum/shared':
+        specifier: workspace:*
+        version: link:../shared
       '@prisma/client':
         specifier: ^6.2.1
         version: 6.19.2(prisma@6.19.2(typescript@5.9.3))(typescript@5.9.3)
@@ -126,6 +129,9 @@ importers:
 
   packages/frontend:
     dependencies:
+      '@pioum/shared':
+        specifier: workspace:*
+        version: link:../shared
       clsx:
         specifier: ^2.1.1
         version: 2.1.1
@@ -211,6 +217,12 @@ importers:
       workbox-precaching:
         specifier: ^7.4.0
         version: 7.4.0
+
+  packages/shared:
+    devDependencies:
+      typescript:
+        specifier: ^5.7.3
+        version: 5.9.3
 
 packages:
 

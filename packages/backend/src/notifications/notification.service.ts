@@ -1,6 +1,9 @@
 import { buildPushHTTPRequest } from '@pushforge/builder'
 import { prisma } from '../lib/prisma.js'
 import { AppError } from '../middleware/errorHandler.js'
+import type { PioumNotificationPayload } from '@pioum/shared/notifications'
+
+export type { PioumNotificationPayload } from '@pioum/shared/notifications'
 
 export type WebPushSubscription = {
   endpoint: string
@@ -8,25 +11,6 @@ export type WebPushSubscription = {
     p256dh: string
     auth: string
   }
-}
-
-export const NOTIFICATION_TYPES = [
-  'NEW_INSCRIPTION',
-  'NEW_WITHDRAWAL',
-  'CAR_AVAILABLE',
-  'NO_CAR',
-  'DRIVER_LEFT',
-  'USER_BANNED',
-  'PASSENGER_JOINED',
-  'PASSENGER_LEFT',
-  'PASSENGER_KICKED',
-] as const
-
-export type PioumNotificationPayload = {
-  title: string
-  body: string
-  url: string
-  type: typeof NOTIFICATION_TYPES[number]
 }
 
 // ── VAPID key ──────────────────────────────────────────────────────────────

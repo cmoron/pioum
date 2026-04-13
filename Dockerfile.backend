@@ -8,17 +8,22 @@ WORKDIR /app
 # Copy workspace config with hoisted node-linker
 COPY package.json pnpm-workspace.yaml pnpm-lock.yaml* .npmrc ./
 COPY packages/backend/package.json ./packages/backend/
+COPY packages/shared/package.json ./packages/shared/
 
 # Install dependencies (hoisted mode = flat node_modules)
 RUN pnpm install --frozen-lockfile
 
-# Copy source
+# Copy source (shared first — backend depends on it)
+COPY packages/shared ./packages/shared
 COPY packages/backend ./packages/backend
+
+# Build shared package first (backend imports from @pioum/shared)
+RUN pnpm --filter @pioum/shared build
 
 # Generate Prisma client
 RUN pnpm --filter @pioum/backend db:generate
 
-# Build
+# Build backend
 RUN pnpm --filter @pioum/backend build
 
 # Production stage

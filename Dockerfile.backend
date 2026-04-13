@@ -42,6 +42,9 @@ COPY --from=builder --chown=nodejs:nodejs /app/packages/backend/dist ./dist
 COPY --from=builder --chown=nodejs:nodejs /app/packages/backend/prisma ./prisma
 COPY --from=builder --chown=nodejs:nodejs /app/packages/backend/package.json ./
 COPY --from=builder --chown=nodejs:nodejs /app/node_modules ./node_modules
+# Workspace package target for the node_modules/@pioum/shared symlink
+COPY --from=builder --chown=nodejs:nodejs /app/packages/shared/dist ./packages/shared/dist
+COPY --from=builder --chown=nodejs:nodejs /app/packages/shared/package.json ./packages/shared/package.json
 
 # Switch to non-root user
 USER nodejs

@@ -1,10 +1,11 @@
 import { usePushNotifications } from '../hooks/usePushNotifications'
 
-const NOTIFICATION_TYPE_LABELS: Record<string, string> = {
+import { NOTIFICATION_TYPES, type NotificationType } from '@pioum/shared/notifications'
+
+const NOTIFICATION_TYPE_LABELS: Record<NotificationType, string> = {
   NEW_INSCRIPTION: '🏋️ Nouvelle inscription à une séance',
   NEW_WITHDRAWAL: '👋 Désistement d\'un inscrit',
   CAR_AVAILABLE: '🚗 Voiture disponible',
-  NO_CAR: '😬 Aucune voiture disponible',
   DRIVER_LEFT: '🚨 Chauffeur désisté',
   USER_BANNED: '🔨 Utilisateur banni',
   PASSENGER_JOINED: '🙋 Passager rejoint ma voiture',
@@ -12,7 +13,7 @@ const NOTIFICATION_TYPE_LABELS: Record<string, string> = {
   PASSENGER_KICKED: '👢 Éjecté d\'une voiture',
 }
 
-const ALL_TYPES = Object.keys(NOTIFICATION_TYPE_LABELS)
+const ALL_TYPES: NotificationType[] = [...NOTIFICATION_TYPES]
 
 function isTypeEnabled(type: string, enabledTypes: string[]): boolean {
   return enabledTypes.length === 0 || enabledTypes.includes(type)

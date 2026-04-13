@@ -16,6 +16,7 @@
     "db:studio": "prisma studio"
   },
   "dependencies": {
+    "@pioum/shared": "workspace:*",
     "@prisma/client": "^6.2.1",
     "@pushforge/builder": "^2.0.1",
     "bcryptjs": "^2.4.3",

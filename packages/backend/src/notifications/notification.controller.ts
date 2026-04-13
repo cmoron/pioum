@@ -7,8 +7,8 @@ import {
   saveSubscription,
   removeSubscription,
   WebPushSubscription,
-  NOTIFICATION_TYPES,
 } from './notification.service.js'
+import { NOTIFICATION_TYPES } from '@pioum/shared/notifications'
 
 export const notificationsRouter = Router()
 

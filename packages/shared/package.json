@@ -1,0 +1,28 @@
+{
+  "name": "@pioum/shared",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js"
+    },
+    "./notifications": {
+      "types": "./dist/notifications.d.ts",
+      "import": "./dist/notifications.js"
+    }
+  },
+  "scripts": {
+    "build": "tsc",
+    "dev": "tsc --watch",
+    "lint": "tsc --noEmit",
+    "test": "echo 'no tests'",
+    "test:run": "echo 'no tests'"
+  },
+  "devDependencies": {
+    "typescript": "^5.7.3"
+  }
+}

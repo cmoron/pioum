@@ -1,5 +1,6 @@
 /// <reference lib="webworker" />
 import { precacheAndRoute } from 'workbox-precaching'
+import { NOTIFICATION_TYPES, type NotificationType } from '@pioum/shared/notifications'
 
 declare const self: ServiceWorkerGlobalScope
 
@@ -10,16 +11,12 @@ type NotificationData = {
   title: string
   body: string
   url?: string
-  type?: 'NEW_INSCRIPTION' | 'CAR_AVAILABLE' | 'NO_CAR' | 'DRIVER_LEFT' | 'USER_BANNED'
+  type?: NotificationType
 }
 
-const iconMap: Record<string, string> = {
-  NEW_INSCRIPTION: '/pwa-192x192.png',
-  CAR_AVAILABLE: '/pwa-192x192.png',
-  NO_CAR: '/pwa-192x192.png',
-  DRIVER_LEFT: '/pwa-192x192.png',
-  USER_BANNED: '/pwa-192x192.png',
-}
+const iconMap: Record<NotificationType, string> = Object.fromEntries(
+  NOTIFICATION_TYPES.map((t) => [t, '/pwa-192x192.png'])
+) as Record<NotificationType, string>
 
 self.addEventListener('push', (event: PushEvent) => {
   if (!event.data) return

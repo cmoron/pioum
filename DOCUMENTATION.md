@@ -402,7 +402,7 @@ packages/backend/src/
 │   └── notification.service.test.ts        ✅ (saveSubscription, notifyUser, notifyGroupMembers)
 └── routes/
     ├── auth.test.ts                        (skipped - integration)
-    ├── sessions-join.test.ts               ✅ (NO_CAR notification)
+    ├── sessions-join.test.ts               ✅ (NEW_INSCRIPTION notification)
     ├── sessions-leave.test.ts              ✅ (DRIVER_LEFT notification)
     ├── cars-add.test.ts                    ✅ (CAR_AVAILABLE notification)
     └── bans-ban.test.ts                    ✅ (USER_BANNED notification)

@@ -207,32 +207,7 @@ sessionsRouter.get(
             },
           }),
         },
-        include: {
-          cars: {
-            include: {
-              driver: {
-                select: USER_SELECT,
-              },
-              userCar: {
-                include: { avatar: true },
-              },
-              passengers: {
-                include: {
-                  user: {
-                    select: USER_SELECT,
-                  },
-                },
-              },
-            },
-          },
-          passengers: {
-            include: {
-              user: {
-                select: USER_SELECT,
-              },
-            },
-          },
-        },
+        include: SESSION_INCLUDE,
         orderBy: { startTime: "asc" },
         take: limit + 1, // Take one extra to know if there are more
       });
@@ -281,29 +256,7 @@ sessionsRouter.get("/today/:groupId", authenticate, async (req, res, next) => {
         date: today,
       },
       orderBy: { startTime: "asc" },
-      include: {
-        cars: {
-          include: {
-            driver: {
-              select: USER_SELECT,
-            },
-            passengers: {
-              include: {
-                user: {
-                  select: USER_SELECT,
-                },
-              },
-            },
-          },
-        },
-        passengers: {
-          include: {
-            user: {
-              select: USER_SELECT,
-            },
-          },
-        },
-      },
+      include: SESSION_INCLUDE,
     });
 
     if (!session) {
@@ -315,29 +268,7 @@ sessionsRouter.get("/today/:groupId", authenticate, async (req, res, next) => {
           startTime,
           endTime,
         },
-        include: {
-          cars: {
-            include: {
-              driver: {
-                select: USER_SELECT,
-              },
-              passengers: {
-                include: {
-                  user: {
-                    select: USER_SELECT,
-                  },
-                },
-              },
-            },
-          },
-          passengers: {
-            include: {
-              user: {
-                select: USER_SELECT,
-              },
-            },
-          },
-        },
+        include: SESSION_INCLUDE,
       });
     }
 
@@ -354,27 +285,7 @@ sessionsRouter.get("/:id", authenticate, async (req, res, next) => {
       where: { id: req.params.id as string },
       include: {
         group: true,
-        cars: {
-          include: {
-            driver: {
-              select: USER_SELECT,
-            },
-            passengers: {
-              include: {
-                user: {
-                  select: USER_SELECT,
-                },
-              },
-            },
-          },
-        },
-        passengers: {
-          include: {
-            user: {
-              select: USER_SELECT,
-            },
-          },
-        },
+        ...SESSION_INCLUDE,
       },
     });
 

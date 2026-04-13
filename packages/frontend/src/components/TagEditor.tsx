@@ -19,6 +19,8 @@ export function TagEditor({ tags, groupId, onAdd, onRemove }: TagEditorProps) {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const popoverRef = useRef<HTMLDivElement>(null);
+  const containerRef = useRef<HTMLDivElement>(null);
+  const inputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
     if (open) {
@@ -26,22 +28,33 @@ export function TagEditor({ tags, groupId, onAdd, onRemove }: TagEditorProps) {
         .getGroupTags(groupId)
         .then(({ tags }) => setGroupTags(tags))
         .catch(() => {});
+      // Focus the input shortly after opening (after layout settles)
+      requestAnimationFrame(() => inputRef.current?.focus());
+    } else {
+      setError(null);
+      setFreeText("");
     }
   }, [open, groupId]);
 
   useEffect(() => {
     function handleClickOutside(e: MouseEvent) {
       if (
-        popoverRef.current &&
-        !popoverRef.current.contains(e.target as Node)
+        containerRef.current &&
+        !containerRef.current.contains(e.target as Node)
       ) {
         setOpen(false);
       }
     }
+    function handleKey(e: KeyboardEvent) {
+      if (e.key === "Escape") setOpen(false);
+    }
     if (open) {
       document.addEventListener("mousedown", handleClickOutside);
-      return () =>
+      document.addEventListener("keydown", handleKey);
+      return () => {
         document.removeEventListener("mousedown", handleClickOutside);
+        document.removeEventListener("keydown", handleKey);
+      };
     }
   }, [open]);
 
@@ -95,7 +108,7 @@ export function TagEditor({ tags, groupId, onAdd, onRemove }: TagEditorProps) {
   };
 
   return (
-    <div className="relative inline-flex flex-wrap items-center gap-1">
+    <div ref={containerRef} className="relative inline-flex flex-wrap items-center gap-1">
       {tags.map((tag) => (
         <TagBadge
           key={tag.id}
@@ -106,46 +119,60 @@ export function TagEditor({ tags, groupId, onAdd, onRemove }: TagEditorProps) {
 
       {canAddMore && (
         <button
-          onClick={() => setOpen(!open)}
+          type="button"
+          onClick={() => setOpen((v) => !v)}
           disabled={loading}
-          className="inline-flex items-center justify-center w-5 h-5 rounded-full bg-primary-100 hover:bg-primary-200 text-primary-500 hover:text-primary-700 transition-colors border border-primary-200"
+          aria-expanded={open}
+          aria-label="Ajouter un tag"
           title="Ajouter un tag"
+          className={`inline-flex items-center gap-0.5 text-[11px] leading-tight font-medium px-2 py-0.5 rounded-full border border-dashed transition-colors disabled:opacity-50 ${
+            open
+              ? "bg-primary-700 text-white border-primary-700"
+              : "bg-transparent text-primary-600 border-primary-300 hover:border-primary-500 hover:text-primary-800 hover:bg-primary-50"
+          }`}
         >
           <svg
             className="w-3 h-3"
             fill="none"
             viewBox="0 0 24 24"
             stroke="currentColor"
-            strokeWidth={2}
+            strokeWidth={2.5}
           >
             <path
               strokeLinecap="round"
               strokeLinejoin="round"
-              d="M12 4v16m8-8H4"
+              d="M12 5v14m7-7H5"
             />
           </svg>
+          {tags.length === 0 && <span>tag</span>}
         </button>
       )}
 
       {open && (
         <div
           ref={popoverRef}
-          className="absolute top-full left-0 mt-1 bg-white rounded-warm shadow-warm-lg border-2 border-primary-200 p-3 z-50 min-w-[200px]"
+          role="dialog"
+          className="absolute top-full right-0 mt-1.5 bg-white rounded-warm shadow-warm-lg border-2 border-primary-200 p-3 z-50 w-[260px] max-w-[calc(100vw-1.5rem)]"
         >
-          {error && <p className="text-xs text-red-500 mb-2">{error}</p>}
+          {error && (
+            <p className="text-xs text-red-600 mb-2 bg-red-50 border border-red-200 rounded px-2 py-1">
+              {error}
+            </p>
+          )}
 
           {availableGroupTags.length > 0 && (
-            <div className="mb-2">
-              <p className="text-xs font-medium text-primary-600 mb-1">
+            <div className="mb-3">
+              <p className="text-[11px] font-semibold text-primary-600 uppercase tracking-wide mb-1.5">
                 Tags du groupe
               </p>
               <div className="flex flex-wrap gap-1">
                 {availableGroupTags.map((gt) => (
                   <button
                     key={gt.id}
+                    type="button"
                     onClick={() => handleAddGroupTag(gt.id)}
                     disabled={loading}
-                    className="text-xs bg-primary-50 text-primary-700 px-2 py-1 rounded-full border border-primary-200 hover:bg-primary-100 transition-colors disabled:opacity-50"
+                    className="text-xs font-medium bg-primary-100 text-primary-800 border border-primary-200 px-2 py-1 rounded-full hover:bg-primary-200 active:bg-primary-300 transition-colors disabled:opacity-50"
                   >
                     {gt.label}
                   </button>
@@ -155,7 +182,7 @@ export function TagEditor({ tags, groupId, onAdd, onRemove }: TagEditorProps) {
           )}
 
           <div>
-            <p className="text-xs font-medium text-primary-600 mb-1">
+            <p className="text-[11px] font-semibold text-primary-600 uppercase tracking-wide mb-1.5">
               Texte libre
             </p>
             <form
@@ -166,22 +193,28 @@ export function TagEditor({ tags, groupId, onAdd, onRemove }: TagEditorProps) {
               className="flex gap-1"
             >
               <input
+                ref={inputRef}
                 type="text"
                 value={freeText}
                 onChange={(e) => setFreeText(e.target.value)}
                 maxLength={MAX_FREE_TEXT_LENGTH}
                 placeholder="Ex: musique, détour..."
-                className="flex-1 text-xs px-2 py-1 rounded-warm border border-primary-300 focus:outline-none focus:ring-1 focus:ring-primary-600 focus:border-primary-600"
+                className="flex-1 min-w-0 text-xs px-2 py-1 rounded-warm border border-primary-300 focus:outline-none focus:ring-1 focus:ring-primary-600 focus:border-primary-600"
                 disabled={loading}
               />
               <button
                 type="submit"
                 disabled={loading || !freeText.trim()}
-                className="text-xs bg-primary-700 text-white px-2 py-1 rounded-warm hover:bg-primary-800 transition-colors disabled:opacity-50"
+                className="text-xs font-medium bg-primary-700 text-white px-3 py-1 rounded-warm hover:bg-primary-800 active:bg-primary-900 transition-colors disabled:opacity-50"
               >
                 OK
               </button>
             </form>
+            {freeText.length > 0 && (
+              <p className="text-[10px] text-primary-500 mt-1 text-right">
+                {freeText.length}/{MAX_FREE_TEXT_LENGTH}
+              </p>
+            )}
           </div>
         </div>
       )}

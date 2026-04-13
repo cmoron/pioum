@@ -59,50 +59,57 @@ function PassengerList({
 
   const isCompact = variant === "compact";
   const avatarSize = isCompact ? "xs" : "sm";
-  const tagMargin = isCompact ? "ml-7" : "ml-11";
   const containerCn = isCompact
     ? "flex flex-wrap gap-1.5"
     : "flex flex-wrap gap-2";
   const chipCn = isCompact
-    ? `rounded-warm pl-0.5 pr-2 py-0.5 border ${isPast ? "bg-primary-100 border-primary-100" : "bg-primary-50 border-primary-200"}`
-    : "bg-primary-50 rounded-warm pl-1 pr-3 py-1 border border-primary-200";
+    ? `rounded-warm pl-0.5 pr-2 py-0.5 border max-w-full ${isPast ? "bg-primary-100 border-primary-100" : "bg-primary-50 border-primary-200"}`
+    : "bg-primary-50 rounded-warm pl-1 pr-3 py-1 border border-primary-200 max-w-full";
   const nameCn = isCompact
-    ? `text-xs ${isPast ? "text-primary-600" : "text-primary-700"}`
-    : "text-sm text-primary-800";
+    ? `text-xs truncate ${isPast ? "text-primary-600" : "text-primary-700"}`
+    : "text-sm text-primary-800 truncate";
   const gapCn = isCompact ? "gap-1" : "gap-1.5";
 
   const inner = (
     <div className={containerCn}>
-      {participants.map((p) => (
-        <div key={p.id} className={chipCn}>
-          <div className={`flex items-center ${gapCn}`}>
-            <Avatar user={p.user} size={avatarSize} />
-            <span className={nameCn}>{p.user.name}</span>
+      {participants.map((p) => {
+        const tags = p.tags ?? [];
+        const isMe = p.userId === currentUserId;
+        const canEdit = (!isCompact || !isPast) && isMe;
+        const showTagsRow = canEdit || tags.length > 0;
+        return (
+          <div key={p.id} className={chipCn}>
+            <div className={`flex items-center ${gapCn}`}>
+              <Avatar user={p.user} size={avatarSize} />
+              <span className={nameCn}>{p.user.name}</span>
+            </div>
+            {showTagsRow && (
+              <div className="mt-1">
+                {canEdit ? (
+                  <TagEditor
+                    tags={tags}
+                    groupId={sessionGroupId}
+                    onAdd={async (data) => {
+                      await api.addPassengerTag(p.id, data);
+                      onRefresh();
+                    }}
+                    onRemove={async (tagId) => {
+                      await api.removePassengerTag(p.id, tagId);
+                      onRefresh();
+                    }}
+                  />
+                ) : (
+                  <div className="flex flex-wrap gap-1">
+                    {tags.map((tag) => (
+                      <TagBadge key={tag.id} tag={tag} />
+                    ))}
+                  </div>
+                )}
+              </div>
+            )}
           </div>
-          {(!isCompact || !isPast) && p.userId === currentUserId ? (
-            <div className={`${tagMargin} mt-0.5`}>
-              <TagEditor
-                tags={p.tags ?? []}
-                groupId={sessionGroupId}
-                onAdd={async (data) => {
-                  await api.addPassengerTag(p.id, data);
-                  onRefresh();
-                }}
-                onRemove={async (tagId) => {
-                  await api.removePassengerTag(p.id, tagId);
-                  onRefresh();
-                }}
-              />
-            </div>
-          ) : (p.tags ?? []).length > 0 ? (
-            <div className={`flex flex-wrap gap-1 ${tagMargin} mt-0.5`}>
-              {p.tags.map((tag) => (
-                <TagBadge key={tag.id} tag={tag} />
-              ))}
-            </div>
-          ) : null}
-        </div>
-      ))}
+        );
+      })}
     </div>
   );
 

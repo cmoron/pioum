@@ -57,5 +57,9 @@ packages/frontend/public/dev-sw.js
 # Deployment
 backups/
 *.sql
+
+# Local artifacts (Playwright screenshots, audit captures)
+.playwright-mcp/
+audit-*.png
 *.sql.gz
 !packages/backend/prisma/migrations/**/*.sql

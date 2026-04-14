@@ -81,9 +81,16 @@ export async function removeSubscription(userId: string): Promise<void> {
 
 type PushRecord = { userId: string; endpoint: string; p256dh: string; auth: string; enabledTypes: string[] }
 
-async function sendPushToRecord(record: PushRecord, payload: PioumNotificationPayload): Promise<void> {
+type PushResult = 'sent' | 'skipped' | 'expired'
+
+async function sendPushToRecord(
+  record: PushRecord,
+  payload: PioumNotificationPayload
+): Promise<PushResult> {
   // [] = opt-out (tous activés) — sinon vérifier que le type est dans la liste
-  if (record.enabledTypes.length > 0 && !record.enabledTypes.includes(payload.type)) return
+  if (record.enabledTypes.length > 0 && !record.enabledTypes.includes(payload.type)) {
+    return 'skipped'
+  }
   const sub: WebPushSubscription = {
     endpoint: record.endpoint,
     keys: { p256dh: record.p256dh, auth: record.auth },
@@ -102,9 +109,9 @@ async function sendPushToRecord(record: PushRecord, payload: PioumNotificationPa
   const response = await fetch(endpoint, { method: 'POST', headers, body })
 
   if (response.status === 410) {
-    // Subscription expirée — suppression silencieuse
     await removeSubscription(record.userId)
-    return
+    console.info('[push] expired', { userId: record.userId, type: payload.type })
+    return 'expired'
   }
 
   if (response.status === 429 || response.status === 503) {
@@ -114,6 +121,37 @@ async function sendPushToRecord(record: PushRecord, payload: PioumNotificationPa
   if (!response.ok) {
     throw new Error(`Push failed: ${response.status} ${await response.text()}`)
   }
+
+  return 'sent'
+}
+
+function logFanout(
+  context: string,
+  payload: PioumNotificationPayload,
+  results: PromiseSettledResult<PushResult>[]
+): void {
+  let sent = 0
+  let skipped = 0
+  let expired = 0
+  let failed = 0
+  for (const r of results) {
+    if (r.status === 'rejected') {
+      failed++
+      console.error('[push] sendPushToRecord failed:', r.reason)
+      continue
+    }
+    if (r.value === 'sent') sent++
+    else if (r.value === 'skipped') skipped++
+    else if (r.value === 'expired') expired++
+  }
+  console.info(`[push] ${context}`, {
+    type: payload.type,
+    total: results.length,
+    sent,
+    skipped,
+    expired,
+    failed,
+  })
 }
 
 export async function notifyUsers(
@@ -127,9 +165,7 @@ export async function notifyUsers(
   const results = await Promise.allSettled(
     subscriptions.map((record) => sendPushToRecord(record, payload))
   )
-  results.forEach((r) => {
-    if (r.status === 'rejected') console.error('[push] sendPushToRecord failed:', r.reason)
-  })
+  logFanout('notifyUsers', payload, results)
 }
 
 export async function notifyUser(
@@ -137,8 +173,17 @@ export async function notifyUser(
   payload: PioumNotificationPayload
 ): Promise<void> {
   const record = await prisma.pushSubscription.findUnique({ where: { userId } })
-  if (!record) return
-  await sendPushToRecord(record, payload)
+  if (!record) {
+    console.info('[push] notifyUser', { userId, type: payload.type, status: 'no-subscription' })
+    return
+  }
+  try {
+    const result = await sendPushToRecord(record, payload)
+    console.info('[push] notifyUser', { userId, type: payload.type, status: result })
+  } catch (err) {
+    console.error('[push] notifyUser failed:', { userId, type: payload.type }, err)
+    throw err
+  }
 }
 
 export async function notifyGroupMembers(
@@ -163,7 +208,5 @@ export async function notifyGroupMembers(
   const results = await Promise.allSettled(
     subscriptions.map((record) => sendPushToRecord(record, payload))
   )
-  results.forEach((r) => {
-    if (r.status === 'rejected') console.error('[push] sendPushToRecord failed:', r.reason)
-  })
+  logFanout('notifyGroupMembers', payload, results)
 }

@@ -112,7 +112,7 @@ function getMagicLinkHtml(magicLinkUrl: string, frontendUrl: string): string {
 export async function sendMagicLinkEmail(email: string, token: string): Promise<string | null> {
   const frontendUrl = process.env.FRONTEND_URL || 'http://localhost:5173'
   const magicLinkUrl = `${frontendUrl}/auth/verify?token=${token}`
-  const fromAddress = process.env.EMAIL_FROM || 'Pioum <noreply@pioum.app>'
+  const fromAddress = process.env.EMAIL_FROM || 'Pioum <noreply@mypacer.fr>'
 
   // In development without email configured, log and return the link
   if (process.env.NODE_ENV !== 'production' && !resend && !transporter) {

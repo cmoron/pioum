@@ -95,7 +95,7 @@ describe('sendMagicLinkEmail', () => {
     beforeEach(() => {
       process.env.NODE_ENV = 'production'
       process.env.RESEND_API_KEY = 're_test_key'
-      process.env.EMAIL_FROM = 'Pioum <noreply@pioum.app>'
+      process.env.EMAIL_FROM = 'Pioum <noreply@mypacer.fr>'
       process.env.FRONTEND_URL = 'https://pioum.app'
       delete process.env.SMTP_HOST
     })
@@ -177,7 +177,7 @@ describe('sendMagicLinkEmail', () => {
       process.env.SMTP_PORT = '587'
       process.env.SMTP_USER = 'test@example.com'
       process.env.SMTP_PASS = 'password'
-      process.env.EMAIL_FROM = 'Pioum <noreply@pioum.app>'
+      process.env.EMAIL_FROM = 'Pioum <noreply@mypacer.fr>'
       process.env.FRONTEND_URL = 'https://pioum.app'
     })
 

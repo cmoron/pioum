@@ -1,5 +1,5 @@
 import { describe, it, expect, vi } from "vitest";
-import { render, screen, fireEvent } from "@testing-library/react";
+import { render, screen, fireEvent, waitFor } from "@testing-library/react";
 import { TagBadge } from "./TagBadge";
 
 describe("TagBadge", () => {
@@ -43,5 +43,86 @@ describe("TagBadge", () => {
 
     fireEvent.click(screen.getByTitle("Supprimer le tag"));
     expect(onRemove).toHaveBeenCalledOnce();
+  });
+
+  it("displays aggregated reaction chips", () => {
+    const tag = {
+      id: "pt-1",
+      passengerId: "p-1",
+      freeText: "Test",
+      reactions: [
+        { id: "r-1", userId: "user-1", emoji: "👍" },
+        { id: "r-2", userId: "user-2", emoji: "👍" },
+        { id: "r-3", userId: "user-3", emoji: "❤️" },
+      ],
+    };
+    render(<TagBadge tag={tag} currentUserId="user-1" />);
+    // Should show both emojis
+    expect(screen.getByText("👍")).toBeInTheDocument();
+    expect(screen.getByText("❤️")).toBeInTheDocument();
+    // 👍 has count 2
+    expect(screen.getByText("2")).toBeInTheDocument();
+  });
+
+  it("highlights the current user's reaction", () => {
+    const tag = {
+      id: "pt-1",
+      passengerId: "p-1",
+      freeText: "Test",
+      reactions: [{ id: "r-1", userId: "user-1", emoji: "👍" }],
+    };
+    const { container } = render(<TagBadge tag={tag} currentUserId="user-1" />);
+    const reactionBtn = container.querySelector("button.bg-primary-200");
+    expect(reactionBtn).toBeInTheDocument();
+  });
+
+  it("opens emoji picker on click when onReact is provided", () => {
+    const tag = { id: "pt-1", passengerId: "p-1", freeText: "Test" };
+    render(<TagBadge tag={tag} onReact={async () => {}} />);
+
+    // Click the tag label area to open picker
+    fireEvent.click(screen.getByText("Test"));
+    expect(screen.getByTestId("emoji-picker")).toBeInTheDocument();
+  });
+
+  it("does not open emoji picker when onReact is not provided", () => {
+    const tag = { id: "pt-1", passengerId: "p-1", freeText: "Test" };
+    render(<TagBadge tag={tag} />);
+
+    fireEvent.click(screen.getByText("Test"));
+    expect(screen.queryByTestId("emoji-picker")).not.toBeInTheDocument();
+  });
+
+  it("calls onReact when an emoji is picked", async () => {
+    const onReact = vi.fn().mockResolvedValue(undefined);
+    const tag = { id: "pt-1", passengerId: "p-1", freeText: "Test" };
+    render(<TagBadge tag={tag} onReact={onReact} />);
+
+    // Open picker
+    fireEvent.click(screen.getByText("Test"));
+    // Pick an emoji
+    fireEvent.click(screen.getByText("👍"));
+
+    await waitFor(() => {
+      expect(onReact).toHaveBeenCalledWith("👍");
+    });
+  });
+
+  it("calls onReact when clicking an existing reaction chip", async () => {
+    const onReact = vi.fn().mockResolvedValue(undefined);
+    const tag = {
+      id: "pt-1",
+      passengerId: "p-1",
+      freeText: "Test",
+      reactions: [{ id: "r-1", userId: "user-1", emoji: "👍" }],
+    };
+    render(<TagBadge tag={tag} currentUserId="user-1" onReact={onReact} />);
+
+    // Click the reaction chip directly
+    fireEvent.click(screen.getByText("👍"));
+
+    await waitFor(() => {
+      expect(onReact).toHaveBeenCalledWith("👍");
+    });
   });
 });

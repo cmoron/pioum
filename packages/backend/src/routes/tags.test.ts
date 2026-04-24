@@ -7,8 +7,31 @@ vi.mock("../lib/prisma.js", () => ({
     passenger: { findUnique: vi.fn() },
     car: { findUnique: vi.fn() },
     groupTag: { findFirst: vi.fn() },
-    passengerTag: { create: vi.fn(), findFirst: vi.fn(), delete: vi.fn() },
-    carTag: { create: vi.fn(), findFirst: vi.fn(), delete: vi.fn() },
+    passengerTag: {
+      create: vi.fn(),
+      findFirst: vi.fn(),
+      findUnique: vi.fn(),
+      delete: vi.fn(),
+    },
+    carTag: {
+      create: vi.fn(),
+      findFirst: vi.fn(),
+      findUnique: vi.fn(),
+      delete: vi.fn(),
+    },
+    groupMember: { findUnique: vi.fn() },
+    passengerTagReaction: {
+      findUnique: vi.fn(),
+      create: vi.fn(),
+      update: vi.fn(),
+      delete: vi.fn(),
+    },
+    carTagReaction: {
+      findUnique: vi.fn(),
+      create: vi.fn(),
+      update: vi.fn(),
+      delete: vi.fn(),
+    },
   },
 }));
 
@@ -19,6 +42,8 @@ import {
   removePassengerTagHandler,
   addCarTagHandler,
   removeCarTagHandler,
+  togglePassengerTagReactionHandler,
+  toggleCarTagReactionHandler,
 } from "./tags.js";
 
 const mockPassengerFindUnique = vi.mocked(prisma.passenger.findUnique);
@@ -30,6 +55,19 @@ const mockPassengerTagDelete = vi.mocked(prisma.passengerTag.delete);
 const mockCarTagCreate = vi.mocked(prisma.carTag.create);
 const mockCarTagFindFirst = vi.mocked(prisma.carTag.findFirst);
 const mockCarTagDelete = vi.mocked(prisma.carTag.delete);
+const mockPassengerTagFindUnique = vi.mocked(prisma.passengerTag.findUnique);
+const mockCarTagFindUnique = vi.mocked(prisma.carTag.findUnique);
+const mockGroupMemberFindUnique = vi.mocked(prisma.groupMember.findUnique);
+const mockPTReactionFindUnique = vi.mocked(
+  prisma.passengerTagReaction.findUnique,
+);
+const mockPTReactionCreate = vi.mocked(prisma.passengerTagReaction.create);
+const mockPTReactionUpdate = vi.mocked(prisma.passengerTagReaction.update);
+const mockPTReactionDelete = vi.mocked(prisma.passengerTagReaction.delete);
+const mockCTReactionFindUnique = vi.mocked(prisma.carTagReaction.findUnique);
+const mockCTReactionCreate = vi.mocked(prisma.carTagReaction.create);
+const mockCTReactionUpdate = vi.mocked(prisma.carTagReaction.update);
+const mockCTReactionDelete = vi.mocked(prisma.carTagReaction.delete);
 
 describe("POST /passengers/:passengerId/tags", () => {
   let mockRes: ReturnType<typeof makeRes>;
@@ -541,6 +579,273 @@ describe("DELETE /cars/:carId/tags/:tagId", () => {
 
     expect(mockNext).toHaveBeenCalledWith(
       expect.objectContaining({ statusCode: 404 }),
+    );
+  });
+});
+
+// --- Reaction tests ---
+
+describe("PUT /passenger-tags/:tagId/reaction", () => {
+  let mockRes: ReturnType<typeof makeRes>;
+  let mockNext: NextFunction;
+
+  beforeEach(() => {
+    vi.clearAllMocks();
+    mockRes = makeRes();
+    mockNext = vi.fn();
+  });
+
+  it("creates a new reaction on a passenger tag", async () => {
+    mockPassengerTagFindUnique.mockResolvedValue({
+      id: "pt-1",
+      passenger: { session: { groupId: "group-1" } },
+    } as never);
+    mockGroupMemberFindUnique.mockResolvedValue({
+      id: "gm-1",
+      userId: "user-1",
+      groupId: "group-1",
+    } as never);
+    mockPTReactionFindUnique.mockResolvedValue(null as never);
+    mockPTReactionCreate.mockResolvedValue({
+      id: "r-1",
+      userId: "user-1",
+      emoji: "👍",
+    } as never);
+
+    const req = makeReq({
+      params: { tagId: "pt-1" },
+      body: { emoji: "👍" },
+      user: { userId: "user-1" },
+    });
+
+    await togglePassengerTagReactionHandler(req, asRes(mockRes), mockNext);
+
+    expect(mockRes.json).toHaveBeenCalledWith({
+      reaction: { id: "r-1", userId: "user-1", emoji: "👍" },
+    });
+  });
+
+  it("toggles off when same emoji is sent", async () => {
+    mockPassengerTagFindUnique.mockResolvedValue({
+      id: "pt-1",
+      passenger: { session: { groupId: "group-1" } },
+    } as never);
+    mockGroupMemberFindUnique.mockResolvedValue({ id: "gm-1" } as never);
+    mockPTReactionFindUnique.mockResolvedValue({
+      id: "r-1",
+      emoji: "👍",
+    } as never);
+    mockPTReactionDelete.mockResolvedValue({} as never);
+
+    const req = makeReq({
+      params: { tagId: "pt-1" },
+      body: { emoji: "👍" },
+      user: { userId: "user-1" },
+    });
+
+    await togglePassengerTagReactionHandler(req, asRes(mockRes), mockNext);
+
+    expect(mockPTReactionDelete).toHaveBeenCalledWith({
+      where: { id: "r-1" },
+    });
+    expect(mockRes.json).toHaveBeenCalledWith({ reaction: null });
+  });
+
+  it("replaces reaction when different emoji is sent", async () => {
+    mockPassengerTagFindUnique.mockResolvedValue({
+      id: "pt-1",
+      passenger: { session: { groupId: "group-1" } },
+    } as never);
+    mockGroupMemberFindUnique.mockResolvedValue({ id: "gm-1" } as never);
+    mockPTReactionFindUnique.mockResolvedValue({
+      id: "r-1",
+      emoji: "👍",
+    } as never);
+    mockPTReactionUpdate.mockResolvedValue({
+      id: "r-1",
+      userId: "user-1",
+      emoji: "❤️",
+    } as never);
+
+    const req = makeReq({
+      params: { tagId: "pt-1" },
+      body: { emoji: "❤️" },
+      user: { userId: "user-1" },
+    });
+
+    await togglePassengerTagReactionHandler(req, asRes(mockRes), mockNext);
+
+    expect(mockPTReactionUpdate).toHaveBeenCalledWith({
+      where: { id: "r-1" },
+      data: { emoji: "❤️" },
+    });
+    expect(mockRes.json).toHaveBeenCalledWith({
+      reaction: { id: "r-1", userId: "user-1", emoji: "❤️" },
+    });
+  });
+
+  it("returns 404 if tag not found", async () => {
+    mockPassengerTagFindUnique.mockResolvedValue(null as never);
+
+    const req = makeReq({
+      params: { tagId: "pt-nonexistent" },
+      body: { emoji: "👍" },
+      user: { userId: "user-1" },
+    });
+
+    await togglePassengerTagReactionHandler(req, asRes(mockRes), mockNext);
+
+    expect(mockNext).toHaveBeenCalledWith(
+      expect.objectContaining({ statusCode: 404 }),
+    );
+  });
+
+  it("returns 403 if user is not a group member", async () => {
+    mockPassengerTagFindUnique.mockResolvedValue({
+      id: "pt-1",
+      passenger: { session: { groupId: "group-1" } },
+    } as never);
+    mockGroupMemberFindUnique.mockResolvedValue(null as never);
+
+    const req = makeReq({
+      params: { tagId: "pt-1" },
+      body: { emoji: "👍" },
+      user: { userId: "user-outsider" },
+    });
+
+    await togglePassengerTagReactionHandler(req, asRes(mockRes), mockNext);
+
+    expect(mockNext).toHaveBeenCalledWith(
+      expect.objectContaining({ statusCode: 403 }),
+    );
+  });
+});
+
+describe("PUT /car-tags/:tagId/reaction", () => {
+  let mockRes: ReturnType<typeof makeRes>;
+  let mockNext: NextFunction;
+
+  beforeEach(() => {
+    vi.clearAllMocks();
+    mockRes = makeRes();
+    mockNext = vi.fn();
+  });
+
+  it("creates a new reaction on a car tag", async () => {
+    mockCarTagFindUnique.mockResolvedValue({
+      id: "ct-1",
+      car: { session: { groupId: "group-1" } },
+    } as never);
+    mockGroupMemberFindUnique.mockResolvedValue({ id: "gm-1" } as never);
+    mockCTReactionFindUnique.mockResolvedValue(null as never);
+    mockCTReactionCreate.mockResolvedValue({
+      id: "r-1",
+      userId: "user-1",
+      emoji: "🚗",
+    } as never);
+
+    const req = makeReq({
+      params: { tagId: "ct-1" },
+      body: { emoji: "🚗" },
+      user: { userId: "user-1" },
+    });
+
+    await toggleCarTagReactionHandler(req, asRes(mockRes), mockNext);
+
+    expect(mockRes.json).toHaveBeenCalledWith({
+      reaction: { id: "r-1", userId: "user-1", emoji: "🚗" },
+    });
+  });
+
+  it("toggles off when same emoji is sent", async () => {
+    mockCarTagFindUnique.mockResolvedValue({
+      id: "ct-1",
+      car: { session: { groupId: "group-1" } },
+    } as never);
+    mockGroupMemberFindUnique.mockResolvedValue({ id: "gm-1" } as never);
+    mockCTReactionFindUnique.mockResolvedValue({
+      id: "r-1",
+      emoji: "🚗",
+    } as never);
+    mockCTReactionDelete.mockResolvedValue({} as never);
+
+    const req = makeReq({
+      params: { tagId: "ct-1" },
+      body: { emoji: "🚗" },
+      user: { userId: "user-1" },
+    });
+
+    await toggleCarTagReactionHandler(req, asRes(mockRes), mockNext);
+
+    expect(mockCTReactionDelete).toHaveBeenCalledWith({
+      where: { id: "r-1" },
+    });
+    expect(mockRes.json).toHaveBeenCalledWith({ reaction: null });
+  });
+
+  it("replaces reaction when different emoji is sent", async () => {
+    mockCarTagFindUnique.mockResolvedValue({
+      id: "ct-1",
+      car: { session: { groupId: "group-1" } },
+    } as never);
+    mockGroupMemberFindUnique.mockResolvedValue({ id: "gm-1" } as never);
+    mockCTReactionFindUnique.mockResolvedValue({
+      id: "r-1",
+      emoji: "🚗",
+    } as never);
+    mockCTReactionUpdate.mockResolvedValue({
+      id: "r-1",
+      userId: "user-1",
+      emoji: "😎",
+    } as never);
+
+    const req = makeReq({
+      params: { tagId: "ct-1" },
+      body: { emoji: "😎" },
+      user: { userId: "user-1" },
+    });
+
+    await toggleCarTagReactionHandler(req, asRes(mockRes), mockNext);
+
+    expect(mockCTReactionUpdate).toHaveBeenCalledWith({
+      where: { id: "r-1" },
+      data: { emoji: "😎" },
+    });
+  });
+
+  it("returns 404 if tag not found", async () => {
+    mockCarTagFindUnique.mockResolvedValue(null as never);
+
+    const req = makeReq({
+      params: { tagId: "ct-nonexistent" },
+      body: { emoji: "👍" },
+      user: { userId: "user-1" },
+    });
+
+    await toggleCarTagReactionHandler(req, asRes(mockRes), mockNext);
+
+    expect(mockNext).toHaveBeenCalledWith(
+      expect.objectContaining({ statusCode: 404 }),
+    );
+  });
+
+  it("returns 403 if user is not a group member", async () => {
+    mockCarTagFindUnique.mockResolvedValue({
+      id: "ct-1",
+      car: { session: { groupId: "group-1" } },
+    } as never);
+    mockGroupMemberFindUnique.mockResolvedValue(null as never);
+
+    const req = makeReq({
+      params: { tagId: "ct-1" },
+      body: { emoji: "👍" },
+      user: { userId: "user-outsider" },
+    });
+
+    await toggleCarTagReactionHandler(req, asRes(mockRes), mockNext);
+
+    expect(mockNext).toHaveBeenCalledWith(
+      expect.objectContaining({ statusCode: 403 }),
     );
   });
 });

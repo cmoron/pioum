@@ -75,7 +75,10 @@ export async function addPassengerTagHandler(
 
     const tag = await prisma.passengerTag.create({
       data: { passengerId, groupTagId, freeText },
-      include: { groupTag: true },
+      include: {
+        groupTag: true,
+        reactions: { select: { id: true, userId: true, emoji: true } },
+      },
     });
 
     res.status(201).json({ tag });
@@ -172,7 +175,10 @@ export async function addCarTagHandler(
 
     const tag = await prisma.carTag.create({
       data: { carId, groupTagId, freeText },
-      include: { groupTag: true },
+      include: {
+        groupTag: true,
+        reactions: { select: { id: true, userId: true, emoji: true } },
+      },
     });
 
     res.status(201).json({ tag });
@@ -222,6 +228,140 @@ export async function removeCarTagHandler(
   }
 }
 
+// --- Reaction handlers ---
+
+const reactionSchema = z.object({
+  emoji: z.string().min(1).max(8),
+});
+
+// Toggle reaction on a passenger tag
+export async function togglePassengerTagReactionHandler(
+  req: Request,
+  res: Response,
+  next: NextFunction,
+): Promise<void> {
+  try {
+    const tagId = req.params.tagId as string;
+    const { emoji } = reactionSchema.parse(req.body);
+    const userId = req.user!.userId;
+
+    // Find the tag and its group context
+    const tag = await prisma.passengerTag.findUnique({
+      where: { id: tagId },
+      include: { passenger: { include: { session: true } } },
+    });
+
+    if (!tag) {
+      throw new AppError(404, "Tag not found");
+    }
+
+    // Verify user is a member of the group
+    const membership = await prisma.groupMember.findUnique({
+      where: {
+        userId_groupId: {
+          userId,
+          groupId: tag.passenger.session.groupId,
+        },
+      },
+    });
+
+    if (!membership) {
+      throw new AppError(403, "Tu dois être membre du groupe pour réagir");
+    }
+
+    // Check existing reaction
+    const existing = await prisma.passengerTagReaction.findUnique({
+      where: { passengerTagId_userId: { passengerTagId: tagId, userId } },
+    });
+
+    if (existing && existing.emoji === emoji) {
+      // Same emoji → toggle off
+      await prisma.passengerTagReaction.delete({ where: { id: existing.id } });
+      res.json({ reaction: null });
+    } else if (existing) {
+      // Different emoji → replace
+      const reaction = await prisma.passengerTagReaction.update({
+        where: { id: existing.id },
+        data: { emoji },
+      });
+      res.json({ reaction: { id: reaction.id, userId, emoji } });
+    } else {
+      // New reaction
+      const reaction = await prisma.passengerTagReaction.create({
+        data: { passengerTagId: tagId, userId, emoji },
+      });
+      res.json({ reaction: { id: reaction.id, userId, emoji } });
+    }
+  } catch (error) {
+    next(error);
+  }
+}
+
+// Toggle reaction on a car tag
+export async function toggleCarTagReactionHandler(
+  req: Request,
+  res: Response,
+  next: NextFunction,
+): Promise<void> {
+  try {
+    const tagId = req.params.tagId as string;
+    const { emoji } = reactionSchema.parse(req.body);
+    const userId = req.user!.userId;
+
+    // Find the tag and its group context
+    const tag = await prisma.carTag.findUnique({
+      where: { id: tagId },
+      include: { car: { include: { session: true } } },
+    });
+
+    if (!tag) {
+      throw new AppError(404, "Tag not found");
+    }
+
+    // Verify user is a member of the group
+    const membership = await prisma.groupMember.findUnique({
+      where: {
+        userId_groupId: {
+          userId,
+          groupId: tag.car.session.groupId,
+        },
+      },
+    });
+
+    if (!membership) {
+      throw new AppError(403, "Tu dois être membre du groupe pour réagir");
+    }
+
+    // Check existing reaction
+    const existing = await prisma.carTagReaction.findUnique({
+      where: { carTagId_userId: { carTagId: tagId, userId } },
+    });
+
+    if (existing && existing.emoji === emoji) {
+      // Same emoji → toggle off
+      await prisma.carTagReaction.delete({ where: { id: existing.id } });
+      res.json({ reaction: null });
+    } else if (existing) {
+      // Different emoji → replace
+      const reaction = await prisma.carTagReaction.update({
+        where: { id: existing.id },
+        data: { emoji },
+      });
+      res.json({ reaction: { id: reaction.id, userId, emoji } });
+    } else {
+      // New reaction
+      const reaction = await prisma.carTagReaction.create({
+        data: { carTagId: tagId, userId, emoji },
+      });
+      res.json({ reaction: { id: reaction.id, userId, emoji } });
+    }
+  } catch (error) {
+    next(error);
+  }
+}
+
+// --- Route registration ---
+
 tagsRouter.post(
   "/passengers/:passengerId/tags",
   authenticate,
@@ -232,9 +372,19 @@ tagsRouter.delete(
   authenticate,
   removePassengerTagHandler,
 );
+tagsRouter.put(
+  "/passenger-tags/:tagId/reaction",
+  authenticate,
+  togglePassengerTagReactionHandler,
+);
 tagsRouter.post("/cars/:carId/tags", authenticate, addCarTagHandler);
 tagsRouter.delete(
   "/cars/:carId/tags/:tagId",
   authenticate,
   removeCarTagHandler,
+);
+tagsRouter.put(
+  "/car-tags/:tagId/reaction",
+  authenticate,
+  toggleCarTagReactionHandler,
 );

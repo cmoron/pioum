@@ -12,15 +12,19 @@ export const USER_SELECT = {
 /**
  * Standard tag INCLUDE shape for passenger tags
  */
+export const TAG_REACTION_INCLUDE = {
+  select: { id: true, userId: true, emoji: true },
+} as const;
+
 export const PASSENGER_TAG_INCLUDE = {
-  include: { groupTag: true },
+  include: { groupTag: true, reactions: TAG_REACTION_INCLUDE },
 } as const;
 
 /**
  * Standard tag INCLUDE shape for car tags
  */
 export const CAR_TAG_INCLUDE = {
-  include: { groupTag: true },
+  include: { groupTag: true, reactions: TAG_REACTION_INCLUDE },
 } as const;
 
 /**

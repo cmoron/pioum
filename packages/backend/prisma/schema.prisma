@@ -27,7 +27,9 @@ model User {
   userCars           UserCar[]
   recurrencePatterns RecurrencePattern[]
   sessionsCreated    Session[]           @relation("sessionsCreated")
-  pushSubscription   PushSubscription?
+  pushSubscription        PushSubscription?
+  passengerTagReactions   PassengerTagReaction[]
+  carTagReactions         CarTagReaction[]
 
   @@index([email])
   @@index([googleId])
@@ -181,10 +183,24 @@ model CarTag {
   groupTagId String?
   freeText   String?
 
-  car      Car       @relation(fields: [carId], references: [id], onDelete: Cascade)
-  groupTag GroupTag? @relation(fields: [groupTagId], references: [id], onDelete: Cascade)
+  car       Car              @relation(fields: [carId], references: [id], onDelete: Cascade)
+  groupTag  GroupTag?        @relation(fields: [groupTagId], references: [id], onDelete: Cascade)
+  reactions CarTagReaction[]
 
   @@index([carId])
+}
+
+model CarTagReaction {
+  id       String @id @default(cuid())
+  carTagId String
+  userId   String
+  emoji    String
+
+  carTag CarTag @relation(fields: [carTagId], references: [id], onDelete: Cascade)
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([carTagId, userId])
+  @@index([carTagId])
 }
 
 model Passenger {
@@ -210,10 +226,24 @@ model PassengerTag {
   groupTagId  String?
   freeText    String?
 
-  passenger Passenger @relation(fields: [passengerId], references: [id], onDelete: Cascade)
-  groupTag  GroupTag? @relation(fields: [groupTagId], references: [id], onDelete: Cascade)
+  passenger Passenger            @relation(fields: [passengerId], references: [id], onDelete: Cascade)
+  groupTag  GroupTag?            @relation(fields: [groupTagId], references: [id], onDelete: Cascade)
+  reactions PassengerTagReaction[]
 
   @@index([passengerId])
+}
+
+model PassengerTagReaction {
+  id             String @id @default(cuid())
+  passengerTagId String
+  userId         String
+  emoji          String
+
+  passengerTag PassengerTag @relation(fields: [passengerTagId], references: [id], onDelete: Cascade)
+  user         User         @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([passengerTagId, userId])
+  @@index([passengerTagId])
 }
 
 model Ban {

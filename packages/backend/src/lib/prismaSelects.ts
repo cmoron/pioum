@@ -13,7 +13,12 @@ export const USER_SELECT = {
  * Standard tag INCLUDE shape for passenger tags
  */
 export const TAG_REACTION_INCLUDE = {
-  select: { id: true, userId: true, emoji: true },
+  select: {
+    id: true,
+    userId: true,
+    emoji: true,
+    user: { select: USER_SELECT },
+  },
 } as const;
 
 export const PASSENGER_TAG_INCLUDE = {

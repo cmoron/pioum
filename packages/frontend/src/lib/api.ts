@@ -679,6 +679,7 @@ export interface TagReaction {
   id: string;
   userId: string;
   emoji: string;
+  user?: User;
 }
 
 export interface PassengerTag {

@@ -108,21 +108,80 @@ describe("TagBadge", () => {
     });
   });
 
-  it("calls onReact when clicking an existing reaction chip", async () => {
+  it("opens the reactors popover when clicking an existing reaction chip", () => {
+    const tag = {
+      id: "pt-1",
+      passengerId: "p-1",
+      freeText: "Test",
+      reactions: [
+        {
+          id: "r-1",
+          userId: "user-1",
+          emoji: "👍",
+          user: { id: "user-1", name: "Alice" },
+        },
+      ],
+    };
+    render(<TagBadge tag={tag} currentUserId="user-1" onReact={async () => {}} />);
+
+    fireEvent.click(screen.getByText("👍"));
+
+    expect(screen.getByTestId("reactors-popover")).toBeInTheDocument();
+    expect(screen.getByText("Alice")).toBeInTheDocument();
+  });
+
+  it("calls onReact when clicking your own name in the reactors popover", async () => {
     const onReact = vi.fn().mockResolvedValue(undefined);
     const tag = {
       id: "pt-1",
       passengerId: "p-1",
       freeText: "Test",
-      reactions: [{ id: "r-1", userId: "user-1", emoji: "👍" }],
+      reactions: [
+        {
+          id: "r-1",
+          userId: "user-1",
+          emoji: "👍",
+          user: { id: "user-1", name: "Alice" },
+        },
+        {
+          id: "r-2",
+          userId: "user-2",
+          emoji: "👍",
+          user: { id: "user-2", name: "Bob" },
+        },
+      ],
     };
     render(<TagBadge tag={tag} currentUserId="user-1" onReact={onReact} />);
 
-    // Click the reaction chip directly
     fireEvent.click(screen.getByText("👍"));
+    // Alice is current user → clicking her row removes her reaction
+    fireEvent.click(screen.getByText("Alice"));
 
     await waitFor(() => {
       expect(onReact).toHaveBeenCalledWith("👍");
     });
+  });
+
+  it("does not call onReact when clicking another user's name in the reactors popover", () => {
+    const onReact = vi.fn().mockResolvedValue(undefined);
+    const tag = {
+      id: "pt-1",
+      passengerId: "p-1",
+      freeText: "Test",
+      reactions: [
+        {
+          id: "r-1",
+          userId: "user-2",
+          emoji: "👍",
+          user: { id: "user-2", name: "Bob" },
+        },
+      ],
+    };
+    render(<TagBadge tag={tag} currentUserId="user-1" onReact={onReact} />);
+
+    fireEvent.click(screen.getByText("👍"));
+    fireEvent.click(screen.getByText("Bob"));
+
+    expect(onReact).not.toHaveBeenCalled();
   });
 });

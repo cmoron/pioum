@@ -126,12 +126,17 @@ export function CarCard({
                     <TagEditor
                       tags={carTags}
                       groupId={groupId}
+                      currentUserId={user?.id}
                       onAdd={async (data) => {
                         await api.addCarTag(car.id, data);
                         onRefresh?.();
                       }}
                       onRemove={async (tagId) => {
                         await api.removeCarTag(car.id, tagId);
+                        onRefresh?.();
+                      }}
+                      onReact={async (tagId, emoji) => {
+                        await api.toggleCarTagReaction(tagId, emoji);
                         onRefresh?.();
                       }}
                     />
@@ -225,12 +230,20 @@ export function CarCard({
                           <TagEditor
                             tags={passengerTags}
                             groupId={groupId}
+                            currentUserId={user?.id}
                             onAdd={async (data) => {
                               await api.addPassengerTag(passenger.id, data);
                               onRefresh?.();
                             }}
                             onRemove={async (tagId) => {
                               await api.removePassengerTag(passenger.id, tagId);
+                              onRefresh?.();
+                            }}
+                            onReact={async (tagId, emoji) => {
+                              await api.togglePassengerTagReaction(
+                                tagId,
+                                emoji,
+                              );
                               onRefresh?.();
                             }}
                           />

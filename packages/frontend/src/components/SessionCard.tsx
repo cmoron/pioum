@@ -59,33 +59,33 @@ function PassengerList({
 
   const isCompact = variant === "compact";
   const avatarSize = isCompact ? "xs" : "sm";
+  const tagMargin = isCompact ? "ml-7" : "ml-11";
   const containerCn = isCompact
     ? "flex flex-wrap gap-1.5"
     : "flex flex-wrap gap-2";
   const chipCn = isCompact
-    ? `rounded-warm pl-0.5 pr-2 py-0.5 border max-w-full ${isPast ? "bg-primary-100 border-primary-100" : "bg-primary-50 border-primary-200"}`
-    : "bg-primary-50 rounded-warm pl-1 pr-3 py-1 border border-primary-200 max-w-full";
+    ? `rounded-warm pl-0.5 pr-2 py-0.5 border ${isPast ? "bg-primary-100 border-primary-100" : "bg-primary-50 border-primary-200"}`
+    : "bg-primary-50 rounded-warm pl-1 pr-3 py-1 border border-primary-200";
   const nameCn = isCompact
-    ? `text-xs truncate ${isPast ? "text-primary-600" : "text-primary-700"}`
-    : "text-sm text-primary-800 truncate";
+    ? `text-xs ${isPast ? "text-primary-600" : "text-primary-700"}`
+    : "text-sm text-primary-800";
   const gapCn = isCompact ? "gap-1" : "gap-1.5";
 
   const inner = (
     <div className={containerCn}>
-      {participants.map((p) => {
-        const tags = p.tags ?? [];
-        const isMe = p.userId === currentUserId;
-        const canEdit = (!isCompact || !isPast) && isMe;
-        const showTagsRow = canEdit || tags.length > 0;
-        return (
-          <div key={p.id} className={chipCn}>
-            <div className={`flex items-center ${gapCn}`}>
-              <Avatar user={p.user} size={avatarSize} />
-              <span className={nameCn}>{p.user.name}</span>
-            </div>
-            {showTagsRow && (
-              <div className="mt-1">
-                {canEdit ? (
+      {participants.map((p) => (
+        <div key={p.id} className={chipCn}>
+          <div className={`flex items-center ${gapCn}`}>
+            <Avatar user={p.user} size={avatarSize} />
+            <span className={nameCn}>{p.user.name}</span>
+          </div>
+          {(() => {
+            const canEdit =
+              (!isCompact || !isPast) && p.userId === currentUserId;
+            const tags = p.tags ?? [];
+            if (canEdit) {
+              return (
+                <div className={`${tagMargin} mt-0.5`}>
                   <TagEditor
                     tags={tags}
                     groupId={sessionGroupId}
@@ -98,18 +98,30 @@ function PassengerList({
                       onRefresh();
                     }}
                   />
-                ) : (
-                  <div className="flex flex-wrap gap-1">
-                    {tags.map((tag) => (
-                      <TagBadge key={tag.id} tag={tag} />
-                    ))}
-                  </div>
-                )}
-              </div>
-            )}
-          </div>
-        );
-      })}
+                </div>
+              );
+            }
+            if (tags.length > 0) {
+              return (
+                <div className={`flex flex-wrap gap-1 ${tagMargin} mt-0.5`}>
+                  {tags.map((tag) => (
+                    <TagBadge
+                      key={tag.id}
+                      tag={tag}
+                      currentUserId={currentUserId}
+                      onReact={async (emoji) => {
+                        await api.togglePassengerTagReaction(tag.id, emoji);
+                        onRefresh();
+                      }}
+                    />
+                  ))}
+                </div>
+              );
+            }
+            return null;
+          })()}
+        </div>
+      ))}
     </div>
   );
 
@@ -180,7 +192,7 @@ function EditCancelButtons({
   loading,
   onEdit,
   onCancel,
-  cancelLabel = "Annuler la séance",
+  cancelLabel = "Annuler la s\u00e9ance",
   pyClass = "py-2",
 }: EditCancelButtonsProps) {
   if (!canEdit && !canCancel) return null;
@@ -351,7 +363,7 @@ export function SessionCard({
       setShowDeleteModal(true);
     } else {
       // Simple confirmation for non-recurring sessions without participants
-      if (window.confirm("Supprimer cette séance ?")) {
+      if (window.confirm("Supprimer cette s\u00e9ance ?")) {
         setLoading(true);
         api
           .cancelSession(session.id)
@@ -397,7 +409,7 @@ export function SessionCard({
                         d="M5 13l4 4L19 7"
                       />
                     </svg>
-                    Terminée
+                    Termin\u00e9e
                   </span>
                 ) : (
                   isLocked && (
@@ -424,7 +436,7 @@ export function SessionCard({
                   {session.passengers.length} participant
                   {session.passengers.length > 1 ? "s" : ""}
                 </span>
-                <span>•</span>
+                <span>\u2022</span>
                 <span>
                   {session.cars.length} voiture
                   {session.cars.length > 1 ? "s" : ""}
@@ -437,7 +449,7 @@ export function SessionCard({
             {isParticipating && (
               <span
                 className={`w-2 h-2 rounded-full flex-shrink-0 ${isPast ? "bg-green-400" : "bg-green-500"}`}
-                title="Tu as participé"
+                title="Tu as particip\u00e9"
               />
             )}
             <svg
@@ -478,7 +490,7 @@ export function SessionCard({
                     disabled={loading || isLocked}
                     className="btn-primary flex-1 text-sm py-1.5 disabled:opacity-50"
                   >
-                    {isLocked ? "Fermé" : "Je viens !"}
+                    {isLocked ? "Ferm\u00e9" : "Je viens !"}
                   </button>
                 )}
                 {isParticipating && !myCar && !isLocked && (
@@ -632,7 +644,7 @@ export function SessionCard({
                 disabled={loading || isLocked}
                 className="btn-primary w-full disabled:opacity-50"
               >
-                {isLocked ? "Inscriptions fermées" : "Je viens !"}
+                {isLocked ? "Inscriptions ferm\u00e9es" : "Je viens !"}
               </button>
             )}
           </div>
@@ -816,7 +828,7 @@ export function SessionCard({
                 disabled={loading || isLocked}
                 className="btn-primary flex-1 disabled:opacity-50"
               >
-                {isLocked ? "Inscriptions fermées" : "Je viens !"}
+                {isLocked ? "Inscriptions ferm\u00e9es" : "Je viens !"}
               </button>
             )}
 

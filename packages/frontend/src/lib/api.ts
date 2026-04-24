@@ -5,6 +5,20 @@ interface ApiError {
   code?: string;
 }
 
+/** Validate and encode a single URL path segment to prevent path traversal. */
+function safePath(segment: string): string {
+  if (
+    !segment ||
+    segment.includes("/") ||
+    segment.includes("\\") ||
+    segment === ".." ||
+    segment === "."
+  ) {
+    throw new Error(`Invalid path segment: "${segment}"`);
+  }
+  return encodeURIComponent(segment);
+}
+
 async function handleResponse<T>(response: Response): Promise<T> {
   if (!response.ok) {
     const error: ApiError = await response
@@ -111,7 +125,7 @@ export const api = {
   },
 
   async getGroup(id: string) {
-    const res = await fetch(`${API_BASE}/groups/${id}`, {
+    const res = await fetch(`${API_BASE}/groups/${safePath(id)}`, {
       credentials: "include",
     });
     return handleResponse<{ group: Group; role: string }>(res);
@@ -138,7 +152,7 @@ export const api = {
   },
 
   async leaveGroup(groupId: string) {
-    const res = await fetch(`${API_BASE}/groups/${groupId}/leave`, {
+    const res = await fetch(`${API_BASE}/groups/${safePath(groupId)}/leave`, {
       method: "DELETE",
       credentials: "include",
     });
@@ -149,7 +163,7 @@ export const api = {
     id: string,
     data: { name?: string; avatarId?: string | null },
   ) {
-    const res = await fetch(`${API_BASE}/groups/${id}`, {
+    const res = await fetch(`${API_BASE}/groups/${safePath(id)}`, {
       method: "PATCH",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify(data),
@@ -159,7 +173,7 @@ export const api = {
   },
 
   async deleteGroup(id: string) {
-    const res = await fetch(`${API_BASE}/groups/${id}`, {
+    const res = await fetch(`${API_BASE}/groups/${safePath(id)}`, {
       method: "DELETE",
       credentials: "include",
     });
@@ -168,7 +182,7 @@ export const api = {
 
   // Sessions
   async getTodaySession(groupId: string) {
-    const res = await fetch(`${API_BASE}/sessions/today/${groupId}`, {
+    const res = await fetch(`${API_BASE}/sessions/today/${safePath(groupId)}`, {
       credentials: "include",
     });
     return handleResponse<{ session: Session }>(res);
@@ -182,7 +196,7 @@ export const api = {
     const params = new URLSearchParams({ limit: limit.toString() });
     if (cursor) params.append("cursor", cursor);
     const res = await fetch(
-      `${API_BASE}/sessions/upcoming/${groupId}?${params}`,
+      `${API_BASE}/sessions/upcoming/${safePath(groupId)}?${params}`,
       {
         credentials: "include",
       },
@@ -196,18 +210,24 @@ export const api = {
 
   async getSessionsByRange(groupId: string, from: string, to: string) {
     const params = new URLSearchParams({ from, to });
-    const res = await fetch(`${API_BASE}/sessions/range/${groupId}?${params}`, {
-      credentials: "include",
-    });
+    const res = await fetch(
+      `${API_BASE}/sessions/range/${safePath(groupId)}?${params}`,
+      {
+        credentials: "include",
+      },
+    );
     return handleResponse<{ sessions: Session[] }>(res);
   },
 
   async getPastSessions(groupId: string, limit: number = 15, cursor?: string) {
     const params = new URLSearchParams({ limit: limit.toString() });
     if (cursor) params.append("cursor", cursor);
-    const res = await fetch(`${API_BASE}/sessions/past/${groupId}?${params}`, {
-      credentials: "include",
-    });
+    const res = await fetch(
+      `${API_BASE}/sessions/past/${safePath(groupId)}?${params}`,
+      {
+        credentials: "include",
+      },
+    );
     return handleResponse<{
       sessions: Session[];
       hasMore: boolean;
@@ -216,16 +236,19 @@ export const api = {
   },
 
   async getSession(id: string) {
-    const res = await fetch(`${API_BASE}/sessions/${id}`, {
+    const res = await fetch(`${API_BASE}/sessions/${safePath(id)}`, {
       credentials: "include",
     });
     return handleResponse<{ session: Session }>(res);
   },
 
   async getSessionLockStatus(sessionId: string) {
-    const res = await fetch(`${API_BASE}/sessions/${sessionId}/lock-status`, {
-      credentials: "include",
-    });
+    const res = await fetch(
+      `${API_BASE}/sessions/${safePath(sessionId)}/lock-status`,
+      {
+        credentials: "include",
+      },
+    );
     return handleResponse<{
       isLocked: boolean;
       canModify: boolean;
@@ -234,27 +257,36 @@ export const api = {
   },
 
   async joinSession(sessionId: string) {
-    const res = await fetch(`${API_BASE}/sessions/${sessionId}/join`, {
-      method: "POST",
-      credentials: "include",
-    });
+    const res = await fetch(
+      `${API_BASE}/sessions/${safePath(sessionId)}/join`,
+      {
+        method: "POST",
+        credentials: "include",
+      },
+    );
     return handleResponse<{ message: string }>(res);
   },
 
   async leaveSession(sessionId: string) {
-    const res = await fetch(`${API_BASE}/sessions/${sessionId}/leave`, {
-      method: "DELETE",
-      credentials: "include",
-    });
+    const res = await fetch(
+      `${API_BASE}/sessions/${safePath(sessionId)}/leave`,
+      {
+        method: "DELETE",
+        credentials: "include",
+      },
+    );
     return handleResponse<{ message: string }>(res);
   },
 
   async cancelSession(sessionId: string, scope?: "single" | "future" | "all") {
     const params = scope ? `?scope=${scope}` : "";
-    const res = await fetch(`${API_BASE}/sessions/${sessionId}${params}`, {
-      method: "DELETE",
-      credentials: "include",
-    });
+    const res = await fetch(
+      `${API_BASE}/sessions/${safePath(sessionId)}${params}`,
+      {
+        method: "DELETE",
+        credentials: "include",
+      },
+    );
     return handleResponse<{
       message: string;
       hadParticipants?: boolean;
@@ -272,7 +304,7 @@ export const api = {
       scope?: "single" | "future";
     },
   ) {
-    const res = await fetch(`${API_BASE}/sessions/${sessionId}`, {
+    const res = await fetch(`${API_BASE}/sessions/${safePath(sessionId)}`, {
       method: "PATCH",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify(data),
@@ -298,7 +330,7 @@ export const api = {
   },
 
   async updateCar(carId: string, seats: number) {
-    const res = await fetch(`${API_BASE}/cars/${carId}`, {
+    const res = await fetch(`${API_BASE}/cars/${safePath(carId)}`, {
       method: "PATCH",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ seats }),
@@ -308,7 +340,7 @@ export const api = {
   },
 
   async removeCar(carId: string) {
-    const res = await fetch(`${API_BASE}/cars/${carId}`, {
+    const res = await fetch(`${API_BASE}/cars/${safePath(carId)}`, {
       method: "DELETE",
       credentials: "include",
     });
@@ -316,7 +348,7 @@ export const api = {
   },
 
   async joinCar(carId: string) {
-    const res = await fetch(`${API_BASE}/cars/${carId}/join`, {
+    const res = await fetch(`${API_BASE}/cars/${safePath(carId)}/join`, {
       method: "POST",
       credentials: "include",
     });
@@ -324,7 +356,7 @@ export const api = {
   },
 
   async leaveCar(carId: string) {
-    const res = await fetch(`${API_BASE}/cars/${carId}/leave`, {
+    const res = await fetch(`${API_BASE}/cars/${safePath(carId)}/leave`, {
       method: "DELETE",
       credentials: "include",
     });
@@ -332,10 +364,13 @@ export const api = {
   },
 
   async kickPassenger(carId: string, userId: string) {
-    const res = await fetch(`${API_BASE}/cars/${carId}/kick/${userId}`, {
-      method: "DELETE",
-      credentials: "include",
-    });
+    const res = await fetch(
+      `${API_BASE}/cars/${safePath(carId)}/kick/${safePath(userId)}`,
+      {
+        method: "DELETE",
+        credentials: "include",
+      },
+    );
     return handleResponse<{ message: string }>(res);
   },
 
@@ -372,7 +407,7 @@ export const api = {
   },
 
   async liftBan(banId: string) {
-    const res = await fetch(`${API_BASE}/bans/${banId}`, {
+    const res = await fetch(`${API_BASE}/bans/${safePath(banId)}`, {
       method: "DELETE",
       credentials: "include",
     });
@@ -380,7 +415,7 @@ export const api = {
   },
 
   async checkBan(giverId: string) {
-    const res = await fetch(`${API_BASE}/bans/check/${giverId}`, {
+    const res = await fetch(`${API_BASE}/bans/check/${safePath(giverId)}`, {
       credentials: "include",
     });
     return handleResponse<{ banned: boolean; ban: Ban | null }>(res);
@@ -412,7 +447,7 @@ export const api = {
     id: string,
     data: { name?: string | null; avatarId?: string; defaultSeats?: number },
   ) {
-    const res = await fetch(`${API_BASE}/user-cars/${id}`, {
+    const res = await fetch(`${API_BASE}/user-cars/${safePath(id)}`, {
       method: "PATCH",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify(data),
@@ -422,7 +457,7 @@ export const api = {
   },
 
   async deleteUserCar(id: string) {
-    const res = await fetch(`${API_BASE}/user-cars/${id}`, {
+    const res = await fetch(`${API_BASE}/user-cars/${safePath(id)}`, {
       method: "DELETE",
       credentials: "include",
     });
@@ -432,7 +467,7 @@ export const api = {
   // Recurrence Patterns
   async getRecurrencePatterns(groupId: string) {
     const res = await fetch(
-      `${API_BASE}/groups/${groupId}/recurrence-patterns`,
+      `${API_BASE}/groups/${safePath(groupId)}/recurrence-patterns`,
       {
         credentials: "include",
       },
@@ -451,7 +486,7 @@ export const api = {
     },
   ) {
     const res = await fetch(
-      `${API_BASE}/groups/${groupId}/recurrence-patterns`,
+      `${API_BASE}/groups/${safePath(groupId)}/recurrence-patterns`,
       {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -470,7 +505,7 @@ export const api = {
     deleteFutureSessions: boolean = false,
   ) {
     const res = await fetch(
-      `${API_BASE}/recurrence-patterns/${patternId}?deleteFutureSessions=${deleteFutureSessions}`,
+      `${API_BASE}/recurrence-patterns/${safePath(patternId)}?deleteFutureSessions=${deleteFutureSessions}`,
       {
         method: "DELETE",
         credentials: "include",
@@ -481,14 +516,14 @@ export const api = {
 
   // Group Tags
   async getGroupTags(groupId: string) {
-    const res = await fetch(`${API_BASE}/groups/${groupId}/tags`, {
+    const res = await fetch(`${API_BASE}/groups/${safePath(groupId)}/tags`, {
       credentials: "include",
     });
     return handleResponse<{ tags: GroupTag[] }>(res);
   },
 
   async createGroupTag(groupId: string, label: string) {
-    const res = await fetch(`${API_BASE}/groups/${groupId}/tags`, {
+    const res = await fetch(`${API_BASE}/groups/${safePath(groupId)}/tags`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ label }),
@@ -498,20 +533,26 @@ export const api = {
   },
 
   async updateGroupTag(groupId: string, tagId: string, label: string) {
-    const res = await fetch(`${API_BASE}/groups/${groupId}/tags/${tagId}`, {
-      method: "PATCH",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ label }),
-      credentials: "include",
-    });
+    const res = await fetch(
+      `${API_BASE}/groups/${safePath(groupId)}/tags/${safePath(tagId)}`,
+      {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ label }),
+        credentials: "include",
+      },
+    );
     return handleResponse<{ tag: GroupTag }>(res);
   },
 
   async deleteGroupTag(groupId: string, tagId: string) {
-    const res = await fetch(`${API_BASE}/groups/${groupId}/tags/${tagId}`, {
-      method: "DELETE",
-      credentials: "include",
-    });
+    const res = await fetch(
+      `${API_BASE}/groups/${safePath(groupId)}/tags/${safePath(tagId)}`,
+      {
+        method: "DELETE",
+        credentials: "include",
+      },
+    );
     return handleResponse<{ message: string }>(res);
   },
 
@@ -520,18 +561,21 @@ export const api = {
     passengerId: string,
     data: { groupTagId?: string; freeText?: string },
   ) {
-    const res = await fetch(`${API_BASE}/tags/passengers/${passengerId}/tags`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(data),
-      credentials: "include",
-    });
+    const res = await fetch(
+      `${API_BASE}/tags/passengers/${safePath(passengerId)}/tags`,
+      {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(data),
+        credentials: "include",
+      },
+    );
     return handleResponse<{ tag: PassengerTag }>(res);
   },
 
   async removePassengerTag(passengerId: string, tagId: string) {
     const res = await fetch(
-      `${API_BASE}/tags/passengers/${passengerId}/tags/${tagId}`,
+      `${API_BASE}/tags/passengers/${safePath(passengerId)}/tags/${safePath(tagId)}`,
       {
         method: "DELETE",
         credentials: "include",
@@ -545,7 +589,7 @@ export const api = {
     carId: string,
     data: { groupTagId?: string; freeText?: string },
   ) {
-    const res = await fetch(`${API_BASE}/tags/cars/${carId}/tags`, {
+    const res = await fetch(`${API_BASE}/tags/cars/${safePath(carId)}/tags`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify(data),
@@ -555,11 +599,41 @@ export const api = {
   },
 
   async removeCarTag(carId: string, tagId: string) {
-    const res = await fetch(`${API_BASE}/tags/cars/${carId}/tags/${tagId}`, {
-      method: "DELETE",
-      credentials: "include",
-    });
+    const res = await fetch(
+      `${API_BASE}/tags/cars/${safePath(carId)}/tags/${safePath(tagId)}`,
+      {
+        method: "DELETE",
+        credentials: "include",
+      },
+    );
     return handleResponse<{ message: string }>(res);
+  },
+
+  // Tag Reactions
+  async togglePassengerTagReaction(tagId: string, emoji: string) {
+    const res = await fetch(
+      `${API_BASE}/tags/passenger-tags/${safePath(tagId)}/reaction`,
+      {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ emoji }),
+        credentials: "include",
+      },
+    );
+    return handleResponse<{ reaction: TagReaction | null }>(res);
+  },
+
+  async toggleCarTagReaction(tagId: string, emoji: string) {
+    const res = await fetch(
+      `${API_BASE}/tags/car-tags/${safePath(tagId)}/reaction`,
+      {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ emoji }),
+        credentials: "include",
+      },
+    );
+    return handleResponse<{ reaction: TagReaction | null }>(res);
   },
 };
 
@@ -601,12 +675,19 @@ export interface GroupTag {
   createdAt: string;
 }
 
+export interface TagReaction {
+  id: string;
+  userId: string;
+  emoji: string;
+}
+
 export interface PassengerTag {
   id: string;
   passengerId: string;
   groupTagId?: string;
   freeText?: string;
   groupTag?: GroupTag;
+  reactions?: TagReaction[];
 }
 
 export interface CarTag {
@@ -615,6 +696,7 @@ export interface CarTag {
   groupTagId?: string;
   freeText?: string;
   groupTag?: GroupTag;
+  reactions?: TagReaction[];
 }
 
 export interface Passenger {

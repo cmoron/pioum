@@ -95,8 +95,8 @@ export function CarCard({
         )}
       >
         {/* Driver */}
-        <div className="flex items-center justify-between mb-2">
-          <div className="flex items-center gap-3 min-w-0">
+        <div className="flex items-center justify-between mb-3">
+          <div className="flex items-center gap-3">
             {car.userCar ? (
               <div className="w-16 h-16 rounded-full bg-gradient-to-br from-primary-400 to-primary-700 flex items-center justify-center text-3xl flex-shrink-0 border-2 border-primary-300">
                 {isImageUrl(car.userCar.avatar.imageUrl) ? (
@@ -112,16 +112,56 @@ export function CarCard({
             ) : (
               <Avatar user={car.driver} size="md" />
             )}
-            <p className="font-medium text-primary-800 truncate">
-              {car.userCar
-                ? car.userCar.name || car.userCar.avatar.name
-                : `Voiture de ${car.driver.name}`}
-            </p>
+            <div>
+              <p className="font-medium text-primary-800">
+                {car.userCar
+                  ? car.userCar.name || car.userCar.avatar.name
+                  : `Voiture de ${car.driver.name}`}
+              </p>
+              {/* Car tags */}
+              {(() => {
+                const carTags = car.tags ?? [];
+                if (!readOnly && isDriver) {
+                  return (
+                    <TagEditor
+                      tags={carTags}
+                      groupId={groupId}
+                      onAdd={async (data) => {
+                        await api.addCarTag(car.id, data);
+                        onRefresh?.();
+                      }}
+                      onRemove={async (tagId) => {
+                        await api.removeCarTag(car.id, tagId);
+                        onRefresh?.();
+                      }}
+                    />
+                  );
+                }
+                if (carTags.length > 0) {
+                  return (
+                    <div className="flex flex-wrap gap-1 mt-0.5">
+                      {carTags.map((tag) => (
+                        <TagBadge
+                          key={tag.id}
+                          tag={tag}
+                          currentUserId={user?.id}
+                          onReact={async (emoji) => {
+                            await api.toggleCarTagReaction(tag.id, emoji);
+                            onRefresh?.();
+                          }}
+                        />
+                      ))}
+                    </div>
+                  );
+                }
+                return null;
+              })()}
+            </div>
           </div>
-          <div className="text-right flex-shrink-0">
+          <div className="text-right">
             <p
               className={clsx(
-                "text-lg font-bold leading-none",
+                "text-lg font-bold",
                 isFull ? "text-red-500" : "text-green-600",
               )}
             >
@@ -130,30 +170,6 @@ export function CarCard({
             <p className="text-xs text-primary-600">places</p>
           </div>
         </div>
-
-        {/* Car tags — full-width row below the driver header */}
-        {!readOnly && isDriver ? (
-          <div className="mb-3">
-            <TagEditor
-              tags={car.tags ?? []}
-              groupId={groupId}
-              onAdd={async (data) => {
-                await api.addCarTag(car.id, data);
-                onRefresh?.();
-              }}
-              onRemove={async (tagId) => {
-                await api.removeCarTag(car.id, tagId);
-                onRefresh?.();
-              }}
-            />
-          </div>
-        ) : (car.tags ?? []).length > 0 ? (
-          <div className="flex flex-wrap gap-1 mb-3">
-            {car.tags.map((tag) => (
-              <TagBadge key={tag.id} tag={tag} />
-            ))}
-          </div>
-        ) : null}
 
         {/* Passengers */}
         <div className="border-t border-primary-200 pt-3 mb-3">
@@ -172,24 +188,22 @@ export function CarCard({
             {car.passengers.map((passenger) => {
               const isMe = passenger.userId === user?.id;
               const passengerTags = passenger.tags ?? [];
-              const showTagsRow =
-                (!readOnly && isMe) || passengerTags.length > 0;
               return (
                 <div
                   key={passenger.id}
-                  className="bg-primary-50 rounded-warm pl-1 pr-3 py-1 border border-primary-200 max-w-full"
+                  className="bg-primary-50 rounded-warm pl-1 pr-3 py-1 border border-primary-200"
                 >
                   <div className="flex items-center gap-2">
                     <Avatar user={passenger.user} size="sm" />
-                    <span className="text-sm text-primary-800 truncate">
+                    <span className="text-sm text-primary-800">
                       {passenger.user.name}
                     </span>
                     {!readOnly && isDriver && !isMe && (
-                      <div className="flex gap-1 ml-1 flex-shrink-0">
+                      <div className="flex gap-1 ml-1">
                         <button
                           onClick={() => handleKick(passenger.userId)}
                           className="text-primary-400 hover:text-red-500 p-1 transition-colors"
-                          title="Éjecter"
+                          title="\u00c9jecter"
                         >
                           <XIcon className="w-5 h-5" />
                         </button>
@@ -203,31 +217,48 @@ export function CarCard({
                       </div>
                     )}
                   </div>
-                  {/* Tags row — sits at the chip's left edge; the chip border groups them with the user above */}
-                  {showTagsRow && (
-                    <div className="mt-1">
-                      {!readOnly && isMe ? (
-                        <TagEditor
-                          tags={passengerTags}
-                          groupId={groupId}
-                          onAdd={async (data) => {
-                            await api.addPassengerTag(passenger.id, data);
-                            onRefresh?.();
-                          }}
-                          onRemove={async (tagId) => {
-                            await api.removePassengerTag(passenger.id, tagId);
-                            onRefresh?.();
-                          }}
-                        />
-                      ) : (
-                        <div className="flex flex-wrap gap-1">
+                  {/* Passenger tags */}
+                  {(() => {
+                    if (!readOnly && isMe) {
+                      return (
+                        <div className="ml-12 mt-0.5">
+                          <TagEditor
+                            tags={passengerTags}
+                            groupId={groupId}
+                            onAdd={async (data) => {
+                              await api.addPassengerTag(passenger.id, data);
+                              onRefresh?.();
+                            }}
+                            onRemove={async (tagId) => {
+                              await api.removePassengerTag(passenger.id, tagId);
+                              onRefresh?.();
+                            }}
+                          />
+                        </div>
+                      );
+                    }
+                    if (passengerTags.length > 0) {
+                      return (
+                        <div className="flex flex-wrap gap-1 ml-12 mt-0.5">
                           {passengerTags.map((tag) => (
-                            <TagBadge key={tag.id} tag={tag} />
+                            <TagBadge
+                              key={tag.id}
+                              tag={tag}
+                              currentUserId={user?.id}
+                              onReact={async (emoji) => {
+                                await api.togglePassengerTagReaction(
+                                  tag.id,
+                                  emoji,
+                                );
+                                onRefresh?.();
+                              }}
+                            />
                           ))}
                         </div>
-                      )}
-                    </div>
-                  )}
+                      );
+                    }
+                    return null;
+                  })()}
                 </div>
               );
             })}
@@ -240,39 +271,53 @@ export function CarCard({
         {/* Actions - hidden in read-only mode */}
         {!readOnly && (
           <div className="flex gap-2">
-            {isDriver ? (
-              <button
-                onClick={handleRemoveCar}
-                disabled={loading}
-                className="btn-danger flex-1"
-              >
-                Retirer ma voiture
-              </button>
-            ) : isPassenger ? (
-              <button
-                onClick={handleLeave}
-                disabled={loading}
-                className="btn-secondary flex-1"
-              >
-                Quitter
-              </button>
-            ) : isBanned ? (
-              <button disabled className="btn-secondary flex-1 opacity-50">
-                Banni de cette voiture
-              </button>
-            ) : isFull ? (
-              <button disabled className="btn-secondary flex-1 opacity-50">
-                Complet
-              </button>
-            ) : (
-              <button
-                onClick={handleJoin}
-                disabled={loading}
-                className="btn-primary flex-1"
-              >
-                Rejoindre
-              </button>
-            )}
+            {(() => {
+              if (isDriver) {
+                return (
+                  <button
+                    onClick={handleRemoveCar}
+                    disabled={loading}
+                    className="btn-danger flex-1"
+                  >
+                    Retirer ma voiture
+                  </button>
+                );
+              }
+              if (isPassenger) {
+                return (
+                  <button
+                    onClick={handleLeave}
+                    disabled={loading}
+                    className="btn-secondary flex-1"
+                  >
+                    Quitter
+                  </button>
+                );
+              }
+              if (isBanned) {
+                return (
+                  <button disabled className="btn-secondary flex-1 opacity-50">
+                    Banni de cette voiture
+                  </button>
+                );
+              }
+              if (isFull) {
+                return (
+                  <button disabled className="btn-secondary flex-1 opacity-50">
+                    Complet
+                  </button>
+                );
+              }
+              return (
+                <button
+                  onClick={handleJoin}
+                  disabled={loading}
+                  className="btn-primary flex-1"
+                >
+                  Rejoindre
+                </button>
+              );
+            })()}
           </div>
         )}
       </div>

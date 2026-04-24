@@ -409,7 +409,7 @@ export function SessionCard({
                         d="M5 13l4 4L19 7"
                       />
                     </svg>
-                    Termin\u00e9e
+                    Terminée
                   </span>
                 ) : (
                   isLocked && (
@@ -436,7 +436,7 @@ export function SessionCard({
                   {session.passengers.length} participant
                   {session.passengers.length > 1 ? "s" : ""}
                 </span>
-                <span>\u2022</span>
+                <span>•</span>
                 <span>
                   {session.cars.length} voiture
                   {session.cars.length > 1 ? "s" : ""}
@@ -449,7 +449,7 @@ export function SessionCard({
             {isParticipating && (
               <span
                 className={`w-2 h-2 rounded-full flex-shrink-0 ${isPast ? "bg-green-400" : "bg-green-500"}`}
-                title="Tu as particip\u00e9"
+                title="Tu as participé"
               />
             )}
             <svg

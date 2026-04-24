@@ -203,7 +203,7 @@ export function CarCard({
                         <button
                           onClick={() => handleKick(passenger.userId)}
                           className="text-primary-400 hover:text-red-500 p-1 transition-colors"
-                          title="\u00c9jecter"
+                          title="Éjecter"
                         >
                           <XIcon className="w-5 h-5" />
                         </button>

@@ -11,9 +11,18 @@ interface TagEditorProps {
   groupId: string;
   onAdd: (data: { groupTagId?: string; freeText?: string }) => Promise<void>;
   onRemove: (tagId: string) => Promise<void>;
+  onReact?: (tagId: string, emoji: string) => Promise<void>;
+  currentUserId?: string;
 }
 
-export function TagEditor({ tags, groupId, onAdd, onRemove }: TagEditorProps) {
+export function TagEditor({
+  tags,
+  groupId,
+  onAdd,
+  onRemove,
+  onReact,
+  currentUserId,
+}: TagEditorProps) {
   const [open, setOpen] = useState(false);
   const [groupTags, setGroupTags] = useState<GroupTag[]>([]);
   const [freeText, setFreeText] = useState("");
@@ -139,6 +148,8 @@ export function TagEditor({ tags, groupId, onAdd, onRemove }: TagEditorProps) {
           key={tag.id}
           tag={tag}
           onRemove={() => handleRemove(tag.id)}
+          currentUserId={currentUserId}
+          onReact={onReact ? (emoji) => onReact(tag.id, emoji) : undefined}
         />
       ))}
 

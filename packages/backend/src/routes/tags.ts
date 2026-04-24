@@ -3,6 +3,7 @@ import { z } from "zod";
 import { prisma } from "../lib/prisma.js";
 import { authenticate } from "../middleware/auth.js";
 import { AppError } from "../middleware/errorHandler.js";
+import { TAG_REACTION_INCLUDE } from "../lib/prismaSelects.js";
 
 export const tagsRouter = Router();
 
@@ -77,7 +78,7 @@ export async function addPassengerTagHandler(
       data: { passengerId, groupTagId, freeText },
       include: {
         groupTag: true,
-        reactions: { select: { id: true, userId: true, emoji: true } },
+        reactions: TAG_REACTION_INCLUDE,
       },
     });
 
@@ -177,7 +178,7 @@ export async function addCarTagHandler(
       data: { carId, groupTagId, freeText },
       include: {
         groupTag: true,
-        reactions: { select: { id: true, userId: true, emoji: true } },
+        reactions: TAG_REACTION_INCLUDE,
       },
     });
 

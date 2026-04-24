@@ -89,12 +89,17 @@ function PassengerList({
                   <TagEditor
                     tags={tags}
                     groupId={sessionGroupId}
+                    currentUserId={currentUserId}
                     onAdd={async (data) => {
                       await api.addPassengerTag(p.id, data);
                       onRefresh();
                     }}
                     onRemove={async (tagId) => {
                       await api.removePassengerTag(p.id, tagId);
+                      onRefresh();
+                    }}
+                    onReact={async (tagId, emoji) => {
+                      await api.togglePassengerTagReaction(tagId, emoji);
                       onRefresh();
                     }}
                   />

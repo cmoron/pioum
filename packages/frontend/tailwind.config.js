@@ -4,6 +4,12 @@ export default {
     "./index.html",
     "./src/**/*.{js,ts,jsx,tsx}",
   ],
+  // N'applique les styles `hover:` que sur les appareils qui pointent réellement
+  // (souris). Sur tactile, ça évite le "premier tap = survol, second tap = clic"
+  // qui obligeait à double-cliquer certains boutons (ex. nav Admin sur mobile).
+  future: {
+    hoverOnlyWhenSupported: true,
+  },
   theme: {
     extend: {
       colors: {

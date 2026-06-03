@@ -11,6 +11,7 @@ const avatars = [
   { name: 'gTheB', imageUrl: '/avatars/users/avatar_grolem_b.webp', category: 'users' },
   { name: 'gClovi', imageUrl: '/avatars/users/avatar_grolem_clovi.webp', category: 'users' },
   { name: 'gMax', imageUrl: '/avatars/users/avatar_grolem_max.webp', category: 'users' },
+  { name: 'gChristophe', imageUrl: '/avatars/users/avatar_grolem_christophe.webp', category: 'users' },
   { name: 'aLion', imageUrl: '/avatars/users/avatar_animal_lion.webp', category: 'users' },
   { name: 'aGorilla', imageUrl: '/avatars/users/avatar_animal_gorilla.webp', category: 'users' },
   { name: 'aWolf', imageUrl: '/avatars/users/avatar_animal_wolf.webp', category: 'users' },

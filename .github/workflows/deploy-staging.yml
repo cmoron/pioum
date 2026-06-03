@@ -35,6 +35,9 @@ jobs:
             echo "=== Running migrations ==="
             docker-compose -f docker-compose.staging.yml --env-file .env.staging exec -T backend npx prisma migrate deploy
 
+            echo "=== Syncing seed data ==="
+            docker-compose -f docker-compose.staging.yml --env-file .env.staging exec -T backend npm run db:seed
+
             echo "=== Checking health ==="
             sleep 10
             ./deploy-staging.sh health

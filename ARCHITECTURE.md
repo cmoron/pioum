@@ -148,6 +148,7 @@ pioum/
 │ name         │
 │ imageUrl     │
 │ category     │  (users/cars/groups)
+│ mimeType     │  (avatars uploadés)
 └──────┬───────┘
        │ 1
        │
@@ -158,7 +159,8 @@ pioum/
 │ id           │         │ id           │
 │ name         │         │ role         │────┐
 │ email        │         │ joinedAt     │    │
-│ avatarId     │         └──────────────┘    │
+│ role         │         └──────────────┘    │
+│ avatarId     │  (user/admin — plateforme)  │
 │ customAvatar │                │            │
 └──────────────┘                │ *          │
        │                        │            │
@@ -335,7 +337,23 @@ pioum/
 ### Autorisation
 - Vérification membership groupe sur chaque requête
 - Seul le conducteur peut bannir de sa voiture
-- Seul l'admin peut régénérer le code d'invitation
+- Seul l'admin (de groupe) peut régénérer le code d'invitation
+- **Admin plateforme** : champ `User.role` (`user` | `admin`), distinct du rôle
+  de groupe (`GroupMember.role`). Le middleware `requireAdmin` relit le rôle en
+  base à chaque requête (pas depuis le JWT) — une promotion/rétrogradation prend
+  effet immédiatement. Les routes `/api/admin/*` sont gardées par
+  `authenticate` + `requireAdmin`. Les premiers admins sont promus au seed via
+  `ADMIN_BOOTSTRAP_EMAILS`.
+
+### Avatars uploadés
+- L'admin uploade des images (webp/png/jpeg ≤ 2 Mo) via `/api/admin/avatars`
+  (multer). Les binaires sont stockés sur un **volume Docker** (`UPLOADS_DIR`)
+  et servis **sans extension** à `GET /api/avatars/files/:key` — le `mimeType`
+  stocké en base pilote le `Content-Type`. L'absence d'extension est délibérée :
+  elle évite que la regex de fichiers statiques de nginx (`\.(png|jpg|…)$`)
+  n'intercepte la requête avant qu'elle n'atteigne le backend.
+- La suppression d'un avatar est refusée (409) tant qu'il est référencé
+  (`UserCar.avatarId` est non-nullable).
 
 ### Validation
 - **Zod** : Validation des entrées côté serveur

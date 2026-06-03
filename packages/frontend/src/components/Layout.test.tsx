@@ -84,4 +84,15 @@ describe('Layout', () => {
     expect(screen.getByText('Bans')).toBeInTheDocument()
     expect(screen.getByText('Profil')).toBeInTheDocument()
   })
+
+  it('shows the Admin nav entry for an admin user', () => {
+    renderLayout({ id: '1', name: 'Boss', email: 'boss@example.com', role: 'admin' })
+    const adminLink = screen.getByText('Admin').closest('a')
+    expect(adminLink).toHaveAttribute('href', '/admin')
+  })
+
+  it('hides the Admin nav entry for a non-admin user', () => {
+    renderLayout({ id: '2', name: 'Member', email: 'member@example.com', role: 'user' })
+    expect(screen.queryByText('Admin')).not.toBeInTheDocument()
+  })
 })

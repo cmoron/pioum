@@ -17,6 +17,7 @@ Application de covoiturage pour aller à la muscu avec tes potes. Une webapp sim
 - **Gestion des voitures personnelles** (UserCar) avec avatars
 - **PWA installable** sur mobile
 - **Notifications push** : alertes en temps réel (nouvelle inscription, voiture disponible, chauffeur désisté, ban)
+- **Interface d'administration** (`/admin`, réservée aux admins) : gestion des avatars (upload + CRUD) et de la base utilisateurs (recherche, édition, suppression)
 
 ## Stack Technique
 
@@ -114,7 +115,15 @@ VAPID_EMAIL="mailto:contact@example.com"
 FRONTEND_URL="http://localhost:5173"
 PORT=3000
 NODE_ENV="development"
+
+# Admin & uploads
+UPLOADS_DIR="uploads"                    # dossier de stockage des avatars uploadés
+ADMIN_BOOTSTRAP_EMAILS=""                # emails promus admin au seed (virgules)
 ```
+
+> **Devenir admin** : renseigner son email dans `ADMIN_BOOTSTRAP_EMAILS` puis lancer
+> `pnpm db:seed`. Le compte doit déjà exister (s'être connecté au moins une fois).
+> Une fois admin, on peut promouvoir d'autres comptes depuis `/admin`.
 
 #### Frontend (`packages/frontend/.env`)
 ```env

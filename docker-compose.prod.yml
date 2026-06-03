@@ -56,6 +56,10 @@ services:
       FRONTEND_URL: https://${DOMAIN}
       PORT: 3000
       NODE_ENV: production
+      # Dossier des uploads (avatars) — monté sur volume persistant
+      UPLOADS_DIR: /app/uploads
+      # Emails promus admin au seed (séparés par des virgules)
+      ADMIN_BOOTSTRAP_EMAILS: ${ADMIN_BOOTSTRAP_EMAILS:-}
       # Email pour Magic Link - Resend (recommandé)
       RESEND_API_KEY: ${RESEND_API_KEY:-}
       EMAIL_FROM: "${EMAIL_FROM}"
@@ -70,6 +74,8 @@ services:
       - "traefik.http.routers.backend.entrypoints=websecure"
       - "traefik.http.routers.backend.tls.certresolver=letsencrypt"
       - "traefik.http.services.backend.loadbalancer.server.port=3000"
+    volumes:
+      - pioum_uploads:/app/uploads
     depends_on:
       db:
         condition: service_healthy
@@ -96,3 +102,4 @@ services:
 volumes:
   postgres_data:
   letsencrypt_data:
+  pioum_uploads:

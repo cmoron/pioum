@@ -48,6 +48,10 @@ COPY --from=builder --chown=nodejs:nodejs /app/node_modules ./node_modules
 COPY --from=builder --chown=nodejs:nodejs /app/packages/shared/dist ./node_modules/@pioum/shared/dist
 COPY --from=builder --chown=nodejs:nodejs /app/packages/shared/package.json ./node_modules/@pioum/shared/package.json
 
+# Pre-create the uploads dir owned by nodejs so a freshly mounted named volume
+# inherits that ownership (Docker seeds an empty volume from the image dir).
+RUN mkdir -p /app/uploads && chown -R nodejs:nodejs /app/uploads
+
 # Switch to non-root user
 USER nodejs
 

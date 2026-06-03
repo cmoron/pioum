@@ -59,6 +59,21 @@ async function main() {
   }
 
   console.log('Seeded', avatars.length, 'avatars')
+
+  // Bootstrap platform admins from env (idempotent).
+  // ADMIN_BOOTSTRAP_EMAILS=comma,separated,emails — promotes matching existing users to "admin".
+  const bootstrapEmails = (process.env.ADMIN_BOOTSTRAP_EMAILS ?? '')
+    .split(',')
+    .map((e) => e.trim().toLowerCase())
+    .filter(Boolean)
+
+  if (bootstrapEmails.length > 0) {
+    const { count } = await prisma.user.updateMany({
+      where: { email: { in: bootstrapEmails }, role: { not: 'admin' } },
+      data: { role: 'admin' },
+    })
+    console.log(`Promoted ${count} user(s) to admin from ADMIN_BOOTSTRAP_EMAILS`)
+  }
 }
 
 main()

@@ -15,13 +15,19 @@ import { userCarsRouter } from "./routes/userCars.js";
 import { recurrencePatternsRouter } from "./routes/recurrencePatterns.js";
 import { groupTagsRouter } from "./routes/groupTags.js";
 import { tagsRouter } from "./routes/tags.js";
+import { adminAvatarsRouter } from "./routes/adminAvatars.js";
+import { adminUsersRouter } from "./routes/adminUsers.js";
 import { notificationsRouter } from "./notifications/notification.controller.js";
 import { validateNotificationConfig } from "./notifications/notification.service.js";
+import { ensureUploadDirs } from "./lib/uploads.js";
 
 // Valider la config push notifications au démarrage si configurée
 if (process.env.VAPID_PRIVATE_KEY_JWK) {
   validateNotificationConfig();
 }
+
+// S'assurer que le dossier d'uploads existe (avatars uploadés)
+ensureUploadDirs();
 
 const app = express();
 app.disable("x-powered-by");
@@ -72,6 +78,8 @@ app.use("/api/user-cars", userCarsRouter);
 app.use("/api", recurrencePatternsRouter);
 app.use("/api/groups", groupTagsRouter);
 app.use("/api/tags", tagsRouter);
+app.use("/api/admin/avatars", adminAvatarsRouter);
+app.use("/api/admin/users", adminUsersRouter);
 app.use("/api/notifications", notificationsRouter);
 
 // Error handler

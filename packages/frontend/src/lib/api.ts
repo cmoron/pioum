@@ -635,6 +635,86 @@ export const api = {
     );
     return handleResponse<{ reaction: TagReaction | null }>(res);
   },
+
+  // Admin — Avatars
+  async adminGetAvatars() {
+    const res = await fetch(`${API_BASE}/admin/avatars`, {
+      credentials: "include",
+    });
+    return handleResponse<{ avatars: AdminAvatar[] }>(res);
+  },
+
+  async adminCreateAvatar(data: { name: string; category: string; image: File }) {
+    const form = new FormData();
+    form.append("name", data.name);
+    form.append("category", data.category);
+    form.append("image", data.image);
+    const res = await fetch(`${API_BASE}/admin/avatars`, {
+      method: "POST",
+      body: form,
+      credentials: "include",
+    });
+    return handleResponse<{ avatar: AdminAvatar }>(res);
+  },
+
+  async adminUpdateAvatar(
+    id: string,
+    data: { name?: string; category?: string; image?: File },
+  ) {
+    const form = new FormData();
+    if (data.name !== undefined) form.append("name", data.name);
+    if (data.category !== undefined) form.append("category", data.category);
+    if (data.image) form.append("image", data.image);
+    const res = await fetch(`${API_BASE}/admin/avatars/${safePath(id)}`, {
+      method: "PATCH",
+      body: form,
+      credentials: "include",
+    });
+    return handleResponse<{ avatar: AdminAvatar }>(res);
+  },
+
+  async adminDeleteAvatar(id: string) {
+    const res = await fetch(`${API_BASE}/admin/avatars/${safePath(id)}`, {
+      method: "DELETE",
+      credentials: "include",
+    });
+    return handleResponse<{ message: string }>(res);
+  },
+
+  // Admin — Users
+  async adminGetUsers(q?: string) {
+    const params = q ? `?q=${encodeURIComponent(q)}` : "";
+    const res = await fetch(`${API_BASE}/admin/users${params}`, {
+      credentials: "include",
+    });
+    return handleResponse<{ users: AdminUser[] }>(res);
+  },
+
+  async adminUpdateUser(
+    id: string,
+    data: {
+      name?: string;
+      email?: string | null;
+      avatarId?: string | null;
+      role?: "user" | "admin";
+    },
+  ) {
+    const res = await fetch(`${API_BASE}/admin/users/${safePath(id)}`, {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(data),
+      credentials: "include",
+    });
+    return handleResponse<{ user: AdminUser }>(res);
+  },
+
+  async adminDeleteUser(id: string) {
+    const res = await fetch(`${API_BASE}/admin/users/${safePath(id)}`, {
+      method: "DELETE",
+      credentials: "include",
+    });
+    return handleResponse<{ message: string }>(res);
+  },
 };
 
 // Types
@@ -649,9 +729,20 @@ export interface User {
   id: string;
   email?: string;
   name: string;
+  role?: string;
   avatarId?: string;
   customAvatarUrl?: string;
   avatar?: Avatar;
+}
+
+export interface AdminAvatar extends Avatar {
+  mimeType?: string;
+  _count?: { users: number; userCars: number; groups: number };
+}
+
+export interface AdminUser extends User {
+  createdAt: string;
+  _count?: { memberships: number };
 }
 
 export interface GroupMember extends User {

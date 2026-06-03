@@ -36,6 +36,10 @@ services:
       FRONTEND_URL: https://${STAGING_DOMAIN}
       PORT: 3000
       NODE_ENV: production
+      # Dossier des uploads (avatars) — monté sur volume persistant
+      UPLOADS_DIR: /app/uploads
+      # Emails promus admin au seed (séparés par des virgules)
+      ADMIN_BOOTSTRAP_EMAILS: ${ADMIN_BOOTSTRAP_EMAILS:-}
       # Email pour Magic Link - Resend (recommandé)
       RESEND_API_KEY: ${RESEND_API_KEY:-}
       EMAIL_FROM: "${EMAIL_FROM}"
@@ -46,6 +50,8 @@ services:
       SMTP_PASS: ${SMTP_PASS:-}
     env_file:
       - .env.staging
+    volumes:
+      - pioum_staging_uploads:/app/uploads
     # Exposition sur localhost uniquement pour le reverse proxy nginx
     ports:
       - "127.0.0.1:3002:3000"
@@ -91,6 +97,8 @@ volumes:
   postgres_staging_data:
     # Les données persistent même après 'docker-compose down'
     # Pour reset complet: docker-compose down -v
+  pioum_staging_uploads:
+    # Avatars uploadés — persistent entre les déploiements
 
 networks:
   pioum-staging-network:

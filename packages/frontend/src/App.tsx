@@ -11,6 +11,7 @@ import { ProfilePage } from './pages/ProfilePage'
 import { JoinGroupPage } from './pages/JoinGroupPage'
 import { CreateGroupPage } from './pages/CreateGroupPage'
 import { BansPage } from './pages/BansPage'
+import { AdminPage } from './pages/AdminPage'
 import { LoadingSpinner } from './components/LoadingSpinner'
 import { registerServiceWorker } from './services/pushNotification.service'
 
@@ -27,6 +28,16 @@ function ProtectedRoute({ children }: { children: React.ReactNode }) {
 
   if (!user) {
     return <Navigate to="/login" replace />
+  }
+
+  return <>{children}</>
+}
+
+function AdminRoute({ children }: { children: React.ReactNode }) {
+  const { user } = useAuthStore()
+
+  if (user?.role !== 'admin') {
+    return <Navigate to="/" replace />
   }
 
   return <>{children}</>
@@ -70,6 +81,14 @@ function App() {
                 <Route path="/sessions/:sessionId" element={<SessionPage />} />
                 <Route path="/profile" element={<ProfilePage />} />
                 <Route path="/bans" element={<BansPage />} />
+                <Route
+                  path="/admin"
+                  element={
+                    <AdminRoute>
+                      <AdminPage />
+                    </AdminRoute>
+                  }
+                />
               </Routes>
             </Layout>
           </ProtectedRoute>

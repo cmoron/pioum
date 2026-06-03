@@ -41,6 +41,10 @@ packages/backend/prisma/*.db-journal
 # Docker
 .docker/
 
+# Uploaded files (avatars) — stored on a Docker volume in staging/prod
+packages/backend/uploads/
+uploads/
+
 # Logs directory
 logs/
 

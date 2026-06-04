@@ -60,6 +60,18 @@ describe('MonthCalendar', () => {
     passengers: []
   })
 
+  const mockApi = (sessions: apiModule.Session[] = []) => {
+    vi.mocked(apiModule.api.getSessionsByRange).mockResolvedValue({ sessions })
+    vi.mocked(apiModule.api.getActiveBans).mockResolvedValue({
+      bansGiven: [], bansReceived: []
+    })
+  }
+
+  const getDayButtons = () =>
+    screen.getAllByRole('button').filter(
+      (btn) => btn.className.includes('flex flex-col items-center')
+    )
+
   beforeEach(() => {
     // Reset fake timers before each test
     vi.useFakeTimers({ shouldAdvanceTime: true })
@@ -620,20 +632,35 @@ describe('MonthCalendar', () => {
   })
 
   describe('Date Selection', () => {
-    it('displays selected date sessions when a date is clicked', async () => {
+    it('selects today by default and shows its sessions', async () => {
       const session = mockSession(
-        'session-10',
+        'session-today',
         '2025-02-15',
         '2025-02-15T10:00:00Z',
         '2025-02-15T11:00:00Z'
       )
 
-      vi.mocked(apiModule.api.getSessionsByRange).mockResolvedValue({
-        sessions: [session]
+      mockApi([session])
+
+      const { unmount } = render(<MonthCalendar groupId="group-1" />)
+
+      // Today's session should be visible without any interaction
+      await waitFor(() => {
+        expect(screen.queryByTestId('session-card-session-today')).toBeInTheDocument()
       })
-      vi.mocked(apiModule.api.getActiveBans).mockResolvedValue({
-        bansGiven: [], bansReceived: []
-      })
+
+      unmount()
+    })
+
+    it('displays selected date sessions when a date is clicked', async () => {
+      const session = mockSession(
+        'session-10',
+        '2025-02-20',
+        '2025-02-20T10:00:00Z',
+        '2025-02-20T11:00:00Z'
+      )
+
+      mockApi([session])
 
       const { unmount } = render(<MonthCalendar groupId="group-1" />)
 
@@ -641,14 +668,11 @@ describe('MonthCalendar', () => {
         expect(screen.queryByTestId('loading-spinner')).not.toBeInTheDocument()
       })
 
-      // Click on Feb 15 (today)
-      const dayButtons = screen.getAllByRole('button').filter(
-        (btn) => btn.className.includes('flex flex-col items-center')
-      )
-      const feb15Button = dayButtons[19] // Approximate
+      // Click on Feb 20 (a day other than the pre-selected today)
+      const feb20Button = getDayButtons()[24] // Approximate
 
-      if (feb15Button) {
-        fireEvent.click(feb15Button)
+      if (feb20Button) {
+        fireEvent.click(feb20Button)
       }
 
       // Should show the session card
@@ -660,12 +684,7 @@ describe('MonthCalendar', () => {
     })
 
     it('shows "no sessions" message for selected date with no sessions', async () => {
-      vi.mocked(apiModule.api.getSessionsByRange).mockResolvedValue({
-        sessions: []
-      })
-      vi.mocked(apiModule.api.getActiveBans).mockResolvedValue({
-        bansGiven: [], bansReceived: []
-      })
+      mockApi()
 
       const { unmount } = render(<MonthCalendar groupId="group-1" />)
 
@@ -673,12 +692,10 @@ describe('MonthCalendar', () => {
         expect(screen.queryByTestId('loading-spinner')).not.toBeInTheDocument()
       })
 
-      // Click on a day
-      const dayButtons = screen.getAllByRole('button').filter(
-        (btn) => btn.className.includes('flex flex-col items-center')
-      )
-      if (dayButtons.length > 19) {
-        fireEvent.click(dayButtons[19])
+      // Click on a day other than the pre-selected today
+      const dayButtons = getDayButtons()
+      if (dayButtons.length > 24) {
+        fireEvent.click(dayButtons[24])
       }
 
       // Should show no sessions message
@@ -692,12 +709,7 @@ describe('MonthCalendar', () => {
     })
 
     it('deselects date when clicking selected date again', async () => {
-      vi.mocked(apiModule.api.getSessionsByRange).mockResolvedValue({
-        sessions: []
-      })
-      vi.mocked(apiModule.api.getActiveBans).mockResolvedValue({
-        bansGiven: [], bansReceived: []
-      })
+      mockApi()
 
       const { unmount } = render(<MonthCalendar groupId="group-1" />)
 
@@ -705,11 +717,8 @@ describe('MonthCalendar', () => {
         expect(screen.queryByTestId('loading-spinner')).not.toBeInTheDocument()
       })
 
-      // Click on a day
-      const dayButtons = screen.getAllByRole('button').filter(
-        (btn) => btn.className.includes('flex flex-col items-center')
-      )
-      const targetButton = dayButtons[19]
+      // Click on a day other than the pre-selected today
+      const targetButton = getDayButtons()[24]
 
       if (targetButton) {
         fireEvent.click(targetButton)

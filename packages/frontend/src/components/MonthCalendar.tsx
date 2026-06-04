@@ -33,7 +33,7 @@ export function MonthCalendar({ groupId, refreshTrigger = 0, isAdmin = false }: 
   const [sessions, setSessions] = useState<Session[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
-  const [selectedDate, setSelectedDate] = useState<Date | null>(null)
+  const [selectedDate, setSelectedDate] = useState<Date | null>(() => new Date())
   const [bansReceived, setBansReceived] = useState<string[]>([])
 
   // Get all days to display (including padding days from prev/next month)

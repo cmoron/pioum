@@ -37,6 +37,9 @@ coverage/
 # Prisma
 packages/backend/prisma/*.db
 packages/backend/prisma/*.db-journal
+# Compiled seed artifacts (source of truth is seed.ts, run via tsx)
+packages/backend/prisma/seed.js
+packages/backend/prisma/seed.js.map
 
 # Docker
 .docker/

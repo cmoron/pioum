@@ -1,8 +1,7 @@
 import { PrismaClient } from '@prisma/client'
+import { pathToFileURL } from 'node:url'
 
-const prisma = new PrismaClient()
-
-const avatars = [
+export const avatars = [
   // Users category - photos de profil
   { name: 'gMelon', imageUrl: '/avatars/users/avatar_grolem_melon.webp', category: 'users' },
   { name: 'gPiou', imageUrl: '/avatars/users/avatar_grolem_piou.webp', category: 'users' },
@@ -36,51 +35,71 @@ const avatars = [
   { name: 'Wolves', imageUrl: '/avatars/groups/avatar_groups_wolves.webp', category: 'groups' },
 ]
 
-async function main() {
-  console.log('Seeding database...')
+/** Id déterministe d'un avatar seedé, dérivé de son nom. */
+export function seedAvatarId(name: string): string {
+  return name.toLowerCase().replace(/[^a-z0-9]/g, '-')
+}
 
-  // Supprimer les anciens avatars (ceux qui ne sont plus dans la liste)
-  const avatarIds = avatars.map(a => a.name.toLowerCase().replace(/[^a-z0-9]/g, '-'))
+export async function seedAvatars(prisma: PrismaClient): Promise<void> {
+  const avatarIds = avatars.map((a) => seedAvatarId(a.name))
+
+  // Ne supprimer que les avatars seedés (imageUrl statique /avatars/...) retirés
+  // de la liste. Les avatars uploadés via l'admin (/api/avatars/files/<key>, id cuid)
+  // doivent survivre : le seed est relancé à chaque déploiement.
   await prisma.avatar.deleteMany({
-    where: { id: { notIn: avatarIds } }
+    where: {
+      id: { notIn: avatarIds },
+      imageUrl: { startsWith: '/avatars/' },
+    },
   })
-  console.log('Cleaned old avatars')
+  console.log('Cleaned removed seed avatars')
 
-  // Create avatars
   for (const avatar of avatars) {
     await prisma.avatar.upsert({
-      where: { id: avatar.name.toLowerCase().replace(/[^a-z0-9]/g, '-') },
+      where: { id: seedAvatarId(avatar.name) },
       update: avatar,
       create: {
-        id: avatar.name.toLowerCase().replace(/[^a-z0-9]/g, '-'),
-        ...avatar
-      }
+        id: seedAvatarId(avatar.name),
+        ...avatar,
+      },
     })
   }
 
   console.log('Seeded', avatars.length, 'avatars')
+}
 
-  // Bootstrap platform admins from env (idempotent).
-  // ADMIN_BOOTSTRAP_EMAILS=comma,separated,emails — promotes matching existing users to "admin".
-  const bootstrapEmails = (process.env.ADMIN_BOOTSTRAP_EMAILS ?? '')
+// Bootstrap platform admins (idempotent).
+// ADMIN_BOOTSTRAP_EMAILS=comma,separated,emails — promotes matching existing users to "admin".
+export async function bootstrapAdmins(prisma: PrismaClient, emailsCsv: string): Promise<void> {
+  const bootstrapEmails = emailsCsv
     .split(',')
     .map((e) => e.trim().toLowerCase())
     .filter(Boolean)
 
-  if (bootstrapEmails.length > 0) {
-    const { count } = await prisma.user.updateMany({
-      where: { email: { in: bootstrapEmails }, role: { not: 'admin' } },
-      data: { role: 'admin' },
-    })
-    console.log(`Promoted ${count} user(s) to admin from ADMIN_BOOTSTRAP_EMAILS`)
-  }
+  if (bootstrapEmails.length === 0) return
+
+  const { count } = await prisma.user.updateMany({
+    where: { email: { in: bootstrapEmails }, role: { not: 'admin' } },
+    data: { role: 'admin' },
+  })
+  console.log(`Promoted ${count} user(s) to admin from ADMIN_BOOTSTRAP_EMAILS`)
 }
 
-main()
-  .catch((e) => {
-    console.error(e)
-    process.exit(1)
-  })
-  .finally(async () => {
-    await prisma.$disconnect()
-  })
+async function main(prisma: PrismaClient): Promise<void> {
+  console.log('Seeding database...')
+  await seedAvatars(prisma)
+  await bootstrapAdmins(prisma, process.env.ADMIN_BOOTSTRAP_EMAILS ?? '')
+}
+
+// Exécution directe uniquement (tsx prisma/seed.ts) — pas d'effet de bord à l'import (tests).
+if (process.argv[1] && import.meta.url === pathToFileURL(process.argv[1]).href) {
+  const prisma = new PrismaClient()
+  main(prisma)
+    .catch((e) => {
+      console.error(e)
+      process.exit(1)
+    })
+    .finally(async () => {
+      await prisma.$disconnect()
+    })
+}

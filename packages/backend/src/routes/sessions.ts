@@ -8,6 +8,7 @@ import { AppError } from '../middleware/errorHandler.js'
 import { actionRateLimit } from '../middleware/actionRateLimit.js'
 import { notifyGroupMembers } from '../notifications/notification.service.js'
 import { formatSessionDate } from '../lib/formatDate.js'
+import { getDefaultTimes, getTodayDate, zonedHHmm, zonedTimeOnDate } from '../lib/sessionTime.js'
 
 export const sessionsRouter = Router();
 
@@ -23,23 +24,6 @@ const updateSessionSchema = z.object({
   endTime: z.string(), // ISO datetime string
   scope: z.enum(["single", "future"]).optional(), // For recurring sessions
 });
-
-// Helper to get today's date at midnight UTC
-function getTodayDate(): Date {
-  const now = new Date();
-  return new Date(Date.UTC(now.getFullYear(), now.getMonth(), now.getDate()));
-}
-
-// Helper to get default start/end times for a date (12:00 - 14:00 local time)
-function getDefaultTimes(date: Date): { startTime: Date; endTime: Date } {
-  const startTime = new Date(date);
-  startTime.setHours(12, 0, 0, 0);
-
-  const endTime = new Date(date);
-  endTime.setHours(14, 0, 0, 0);
-
-  return { startTime, endTime };
-}
 
 // Helper to check if a session is locked (startTime has passed)
 function isSessionLocked(session: { startTime: Date }): boolean {
@@ -617,18 +601,16 @@ sessionsRouter.patch("/:id", authenticate, async (req, res, next) => {
 
     // If session is part of a recurrence and scope is 'future', update the pattern
     if (session.recurrencePatternId && scope === "future") {
-      // Extract time from the new dates
-      const newStartHour = newStartTime.getHours().toString().padStart(2, "0");
-      const newStartMin = newStartTime.getMinutes().toString().padStart(2, "0");
-      const newEndHour = newEndTime.getHours().toString().padStart(2, "0");
-      const newEndMin = newEndTime.getMinutes().toString().padStart(2, "0");
+      // Pattern times are stored as Paris wall-clock HH:mm (cf. services/recurrence.ts)
+      const newStartHHmm = zonedHHmm(newStartTime);
+      const newEndHHmm = zonedHHmm(newEndTime);
 
       // Update the pattern
       await prisma.recurrencePattern.update({
         where: { id: session.recurrencePatternId },
         data: {
-          startTime: `${newStartHour}:${newStartMin}`,
-          endTime: `${newEndHour}:${newEndMin}`,
+          startTime: newStartHHmm,
+          endTime: newEndHHmm,
         },
       });
 
@@ -642,23 +624,11 @@ sessionsRouter.patch("/:id", authenticate, async (req, res, next) => {
       });
 
       for (const futureSession of futureSessions) {
-        // Create new times using the session's date but new times
-        const sessionDate = new Date(futureSession.date);
-        const updatedStart = new Date(sessionDate);
-        updatedStart.setHours(
-          parseInt(newStartHour),
-          parseInt(newStartMin),
-          0,
-          0,
-        );
-        const updatedEnd = new Date(sessionDate);
-        updatedEnd.setHours(parseInt(newEndHour), parseInt(newEndMin), 0, 0);
-
         await prisma.session.update({
           where: { id: futureSession.id },
           data: {
-            startTime: updatedStart,
-            endTime: updatedEnd,
+            startTime: zonedTimeOnDate(futureSession.date, newStartHHmm),
+            endTime: zonedTimeOnDate(futureSession.date, newEndHHmm),
           },
         });
       }

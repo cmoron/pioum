@@ -1,4 +1,5 @@
 import { Router } from 'express'
+import { rateLimit } from 'express-rate-limit'
 import { z } from 'zod'
 import { OAuth2Client } from 'google-auth-library'
 import { nanoid } from 'nanoid'
@@ -93,14 +94,32 @@ authRouter.post('/google', async (req, res, next) => {
       maxAge: 7 * 24 * 60 * 60 * 1000 // 7 days
     })
 
-    res.json({ user, token })
+    res.json({ user })
   } catch (error) {
     next(error)
   }
 })
 
+// Limite dédiée par IP : sans elle, n'importe qui peut déclencher des envois
+// d'emails en masse (facturés via Resend) et créer des comptes illimités
+const magicLinkRateLimit = rateLimit({
+  windowMs: 15 * 60 * 1000,
+  limit: 5,
+  standardHeaders: 'draft-7',
+  legacyHeaders: false,
+  message: {
+    error: 'Trop de demandes de lien magique, réessaie dans 15 minutes',
+    code: 'MAGIC_LINK_RATE_LIMIT_EXCEEDED',
+    retryAfter: 900
+  },
+  handler: (req, res, _next, options) => {
+    console.warn(`[RATE LIMIT] Magic link bloqué pour ${req.ip}`)
+    res.status(429).json(options.message)
+  }
+})
+
 // Magic Link - Request
-authRouter.post('/magic-link', async (req, res, next) => {
+authRouter.post('/magic-link', magicLinkRateLimit, async (req, res, next) => {
   try {
     const { email, name } = magicLinkRequestSchema.parse(req.body)
 
@@ -193,7 +212,7 @@ authRouter.post('/magic-link/verify', async (req, res, next) => {
       maxAge: 7 * 24 * 60 * 60 * 1000
     })
 
-    res.json({ user: magicLink.user, token: jwtToken })
+    res.json({ user: magicLink.user })
   } catch (error) {
     next(error)
   }
@@ -237,7 +256,7 @@ if (process.env.NODE_ENV === 'development') {
         maxAge: 7 * 24 * 60 * 60 * 1000
       })
 
-      res.json({ user, token })
+      res.json({ user })
     } catch (error) {
       next(error)
     }

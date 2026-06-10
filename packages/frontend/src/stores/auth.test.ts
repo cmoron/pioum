@@ -98,10 +98,7 @@ describe('useAuthStore', () => {
 
   describe('loginWithGoogle', () => {
     it('should set user on successful Google login', async () => {
-      vi.mocked(apiModule.api.googleAuth).mockResolvedValue({
-        user: mockUser,
-        token: 'google-token'
-      })
+      vi.mocked(apiModule.api.googleAuth).mockResolvedValue({ user: mockUser })
 
       await useAuthStore.getState().loginWithGoogle('google-credential')
 
@@ -126,10 +123,7 @@ describe('useAuthStore', () => {
     })
 
     it('should call API with correct credential', async () => {
-      vi.mocked(apiModule.api.googleAuth).mockResolvedValue({
-        user: mockUser,
-        token: 'token'
-      })
+      vi.mocked(apiModule.api.googleAuth).mockResolvedValue({ user: mockUser })
 
       await useAuthStore.getState().loginWithGoogle('test-credential')
 
@@ -176,10 +170,7 @@ describe('useAuthStore', () => {
 
   describe('verifyMagicLink', () => {
     it('should set user on successful magic link verification', async () => {
-      vi.mocked(apiModule.api.verifyMagicLink).mockResolvedValue({
-        user: mockUser,
-        token: 'magic-token'
-      })
+      vi.mocked(apiModule.api.verifyMagicLink).mockResolvedValue({ user: mockUser })
 
       await useAuthStore.getState().verifyMagicLink('valid-token')
 
@@ -205,10 +196,7 @@ describe('useAuthStore', () => {
 
   describe('devLogin', () => {
     it('should set user on successful dev login', async () => {
-      vi.mocked(apiModule.api.devLogin).mockResolvedValue({
-        user: mockUser,
-        token: 'dev-token'
-      })
+      vi.mocked(apiModule.api.devLogin).mockResolvedValue({ user: mockUser })
 
       await useAuthStore.getState().devLogin('Dev User')
 
@@ -219,10 +207,7 @@ describe('useAuthStore', () => {
     })
 
     it('should call API with correct name', async () => {
-      vi.mocked(apiModule.api.devLogin).mockResolvedValue({
-        user: mockUser,
-        token: 'token'
-      })
+      vi.mocked(apiModule.api.devLogin).mockResolvedValue({ user: mockUser })
 
       await useAuthStore.getState().devLogin('Test Name')
 

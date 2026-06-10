@@ -38,7 +38,7 @@ export const api = {
       body: JSON.stringify({ credential }),
       credentials: "include",
     });
-    return handleResponse<{ user: User; token: string }>(res);
+    return handleResponse<{ user: User }>(res);
   },
 
   async requestMagicLink(email: string, name?: string) {
@@ -58,7 +58,7 @@ export const api = {
       body: JSON.stringify({ token }),
       credentials: "include",
     });
-    return handleResponse<{ user: User; token: string }>(res);
+    return handleResponse<{ user: User }>(res);
   },
 
   async devLogin(name: string) {
@@ -68,7 +68,7 @@ export const api = {
       body: JSON.stringify({ name }),
       credentials: "include",
     });
-    return handleResponse<{ user: User; token: string }>(res);
+    return handleResponse<{ user: User }>(res);
   },
 
   async getMe() {
@@ -76,13 +76,6 @@ export const api = {
       credentials: "include",
     });
     return handleResponse<{ user: User | null }>(res);
-  },
-
-  async users() {
-    const res = await fetch(`${API_BASE}/users`, {
-      credentials: "include",
-    });
-    return handleResponse<{ users: User[] | null }>(res);
   },
 
   async logout() {

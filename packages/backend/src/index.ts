@@ -31,6 +31,9 @@ ensureUploadDirs();
 
 const app = express();
 app.disable("x-powered-by");
+// Derrière nginx : fait confiance au premier proxy pour que req.ip soit
+// l'IP cliente (sinon le rate limit partage un seul bucket pour tout le monde)
+app.set("trust proxy", 1);
 const PORT = process.env.PORT || 3000;
 
 // Middleware

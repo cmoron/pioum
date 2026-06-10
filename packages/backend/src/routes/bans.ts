@@ -145,9 +145,17 @@ bansRouter.post('/', authenticate, async (req, res, next) => {
       throw new AppError(400, 'Cannot ban yourself')
     }
 
-    // Check if receiver exists
-    const receiver = await prisma.user.findUnique({
-      where: { id: receiverId }
+    // Le receveur doit exister ET partager au moins un groupe avec le
+    // bannisseur (même restriction que /bannable-users)
+    const receiver = await prisma.user.findFirst({
+      where: {
+        id: receiverId,
+        memberships: {
+          some: {
+            group: { members: { some: { userId: req.user!.userId } } }
+          }
+        }
+      }
     })
 
     if (!receiver) {

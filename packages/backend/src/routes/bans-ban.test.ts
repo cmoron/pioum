@@ -5,7 +5,7 @@ import '../middleware/auth.js'
 
 vi.mock('../lib/prisma.js', () => ({
   prisma: {
-    user: { findUnique: vi.fn() },
+    user: { findUnique: vi.fn(), findFirst: vi.fn() },
     ban: { findFirst: vi.fn(), create: vi.fn() },
     car: { findMany: vi.fn() },
     passenger: { updateMany: vi.fn() },
@@ -21,6 +21,7 @@ import { notifyUser } from '../notifications/notification.service.js'
 import { makeRes, makeReq, asRes } from './test-utils.js'
 
 const mockUserFindUnique = vi.mocked(prisma.user.findUnique)
+const mockUserFindFirst = vi.mocked(prisma.user.findFirst)
 const mockBanFindFirst = vi.mocked(prisma.ban.findFirst)
 const mockBanCreate = vi.mocked(prisma.ban.create)
 const mockCarFindMany = vi.mocked(prisma.car.findMany)
@@ -50,7 +51,12 @@ async function banHandler(req: Request, res: Response, next: NextFunction): Prom
 
     if (receiverId === req.user!.userId) throw new AppError(400, 'Cannot ban yourself')
 
-    const receiverUser = await prisma.user.findUnique({ where: { id: receiverId } })
+    const receiverUser = await prisma.user.findFirst({
+      where: {
+        id: receiverId,
+        memberships: { some: { group: { members: { some: { userId: req.user!.userId } } } } },
+      },
+    })
     if (!receiverUser) throw new AppError(404, 'User not found')
 
     const existingBan = await prisma.ban.findFirst({
@@ -111,9 +117,8 @@ describe('POST /bans — notification USER_BANNED', () => {
   })
 
   it('notifie le banni avec le bon message quand une raison est fournie', async () => {
-    mockUserFindUnique
-      .mockResolvedValueOnce(receiver)   // receiver exists check
-      .mockResolvedValueOnce(giver)      // giver name for notification
+    mockUserFindFirst.mockResolvedValueOnce(receiver) // receiver shares a group
+    mockUserFindUnique.mockResolvedValueOnce(giver)   // giver name for notification
 
     const req = makeReq({ body: { receiverId: 'user-2', reason: 'trop de faltas', duration: '1d' }, user: { userId: 'user-1' } })
 
@@ -136,9 +141,8 @@ describe('POST /bans — notification USER_BANNED', () => {
   })
 
   it('notifie sans raison quand aucune raison n\'est fournie', async () => {
-    mockUserFindUnique
-      .mockResolvedValueOnce(receiver)
-      .mockResolvedValueOnce(giver)
+    mockUserFindFirst.mockResolvedValueOnce(receiver)
+    mockUserFindUnique.mockResolvedValueOnce(giver)
 
     const req = makeReq({ body: { receiverId: 'user-2', duration: '1w' }, user: { userId: 'user-1' } })
 
@@ -155,9 +159,8 @@ describe('POST /bans — notification USER_BANNED', () => {
   })
 
   it('mentionne "gros orteils" dans le message', async () => {
-    mockUserFindUnique
-      .mockResolvedValueOnce(receiver)
-      .mockResolvedValueOnce(giver)
+    mockUserFindFirst.mockResolvedValueOnce(receiver)
+    mockUserFindUnique.mockResolvedValueOnce(giver)
 
     const req = makeReq({ body: { receiverId: 'user-2', reason: 'mauvaise ambiance', duration: '3d' }, user: { userId: 'user-1' } })
 
@@ -174,9 +177,8 @@ describe('POST /bans — notification USER_BANNED', () => {
   })
 
   it("utilise 'Quelqu'un' si le nom du bannisseur est introuvable", async () => {
-    mockUserFindUnique
-      .mockResolvedValueOnce(receiver)
-      .mockResolvedValueOnce(null) // giver inconnu
+    mockUserFindFirst.mockResolvedValueOnce(receiver)
+    mockUserFindUnique.mockResolvedValueOnce(null) // giver inconnu
 
     const req = makeReq({ body: { receiverId: 'user-2', duration: '1d' }, user: { userId: 'user-unknown' } })
 
@@ -193,7 +195,7 @@ describe('POST /bans — notification USER_BANNED', () => {
   })
 
   it("n'envoie pas de notification si le banni n'existe pas (404)", async () => {
-    mockUserFindUnique.mockResolvedValueOnce(null)
+    mockUserFindFirst.mockResolvedValueOnce(null)
 
     const req = makeReq({ body: { receiverId: 'user-inexistant', duration: '1d' }, user: { userId: 'user-1' } })
 
@@ -204,7 +206,7 @@ describe('POST /bans — notification USER_BANNED', () => {
   })
 
   it("n'envoie pas de notification si le ban existait déjà (400)", async () => {
-    mockUserFindUnique.mockResolvedValueOnce(receiver)
+    mockUserFindFirst.mockResolvedValueOnce(receiver)
     mockBanFindFirst.mockResolvedValue({ id: 'existing-ban' })
 
     const req = makeReq({ body: { receiverId: 'user-2', duration: '1d' }, user: { userId: 'user-1' } })

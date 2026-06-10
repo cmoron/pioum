@@ -68,6 +68,10 @@ services:
       SMTP_PORT: ${SMTP_PORT:-587}
       SMTP_USER: ${SMTP_USER:-}
       SMTP_PASS: ${SMTP_PASS:-}
+      # Push notifications Web Push — les 3 requises ensemble pour activer
+      VAPID_PUBLIC_KEY: ${VAPID_PUBLIC_KEY:-}
+      VAPID_PRIVATE_KEY_JWK: ${VAPID_PRIVATE_KEY_JWK:-}
+      VAPID_EMAIL: ${VAPID_EMAIL:-}
     labels:
       - "traefik.enable=true"
       - "traefik.http.routers.backend.rule=Host(`${DOMAIN}`) && PathPrefix(`/api`)"
@@ -87,7 +91,8 @@ services:
       dockerfile: Dockerfile.frontend
       args:
         VITE_GOOGLE_CLIENT_ID: ${GOOGLE_CLIENT_ID:-}
-        VITE_API_URL: https://${DOMAIN}
+        # Le client préfixe ses appels par cette base — le /api est indispensable
+        VITE_API_URL: https://${DOMAIN}/api
     container_name: pioum-frontend
     labels:
       - "traefik.enable=true"

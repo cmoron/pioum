@@ -122,10 +122,10 @@ export function EditSessionModal({ session, onClose, onUpdated }: EditSessionMod
                     onChange={() => setScope('single')}
                     className="text-primary-600"
                   />
-                  <div>
-                    <span className="font-medium text-primary-800">Cette séance uniquement</span>
-                    <p className="text-xs text-primary-500">Détache cette séance de la récurrence</p>
-                  </div>
+                  <span className="flex flex-col font-medium text-primary-800">
+                    Cette séance uniquement
+                    <span className="text-xs font-normal text-primary-500">Détache cette séance de la récurrence</span>
+                  </span>
                 </label>
                 <label htmlFor="edit-scope-future" className="flex items-center gap-2 p-3 rounded-warm border-2 border-primary-200 cursor-pointer hover:bg-primary-50 transition-colors">
                   <input
@@ -137,10 +137,10 @@ export function EditSessionModal({ session, onClose, onUpdated }: EditSessionMod
                     onChange={() => setScope('future')}
                     className="text-primary-600"
                   />
-                  <div>
-                    <span className="font-medium text-primary-800">Toutes les futures</span>
-                    <p className="text-xs text-primary-500">Met à jour la récurrence et toutes les séances à venir</p>
-                  </div>
+                  <span className="flex flex-col font-medium text-primary-800">
+                    Toutes les futures
+                    <span className="text-xs font-normal text-primary-500">Met à jour la récurrence et toutes les séances à venir</span>
+                  </span>
                 </label>
               </div>
             </div>

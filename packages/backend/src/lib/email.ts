@@ -10,7 +10,7 @@ const resend = process.env.RESEND_API_KEY
 const transporter = process.env.SMTP_HOST
   ? nodemailer.createTransport({
       host: process.env.SMTP_HOST,
-      port: parseInt(process.env.SMTP_PORT || '587'),
+      port: Number.parseInt(process.env.SMTP_PORT || '587'),
       secure: process.env.SMTP_SECURE === 'true',
       auth: process.env.SMTP_USER ? {
         user: process.env.SMTP_USER,

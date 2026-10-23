@@ -31,7 +31,7 @@ export function AdminAvatarsTab() {
   }
 
   useEffect(() => {
-    load()
+    void load()
   }, [])
 
   const handleUpload = async (e: React.FormEvent) => {

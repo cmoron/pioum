@@ -123,7 +123,7 @@ describe('SelectUserToBanModal', () => {
       )
     })
 
-    fireEvent.click(screen.getByText('Alice').closest('div')!)
+    fireEvent.click(screen.getByRole('button', { name: /Alice/ }))
 
     expect(screen.getByTestId('ban-modal')).toBeInTheDocument()
     expect(screen.getByText('Banning Alice')).toBeInTheDocument()

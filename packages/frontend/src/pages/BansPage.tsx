@@ -24,7 +24,8 @@ export function BansPage() {
       setBansGiven(bans.bansGiven)
       setBansReceived(bans.bansReceived)
       setHallOfFame(hof.hallOfFame)
-    }).finally(() => setLoading(false))
+    }).catch((err) => alert((err as Error).message))
+      .finally(() => setLoading(false))
   }, [])
 
   const handleLiftBan = async (banId: string) => {

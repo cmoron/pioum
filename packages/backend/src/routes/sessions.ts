@@ -47,7 +47,7 @@ sessionsRouter.get("/range/:groupId", authenticate, async (req, res, next) => {
     const fromDate = new Date(from);
     const toDate = new Date(to);
 
-    if (isNaN(fromDate.getTime()) || isNaN(toDate.getTime())) {
+    if (Number.isNaN(fromDate.getTime()) || Number.isNaN(toDate.getTime())) {
       throw new AppError(400, 'Invalid date format for "from" or "to"');
     }
 
@@ -87,7 +87,7 @@ sessionsRouter.get("/range/:groupId", authenticate, async (req, res, next) => {
 sessionsRouter.get("/past/:groupId", authenticate, async (req, res, next) => {
   try {
     const groupId = req.params.groupId as string;
-    const limit = Math.min(parseInt(req.query.limit as string) || 15, 50);
+    const limit = Math.min(Number.parseInt(req.query.limit as string) || 15, 50);
     const cursor = req.query.cursor as string | undefined;
 
     // Verify membership
@@ -158,7 +158,7 @@ sessionsRouter.get(
   async (req, res, next) => {
     try {
       const groupId = req.params.groupId as string;
-      const limit = Math.min(parseInt(req.query.limit as string) || 10, 50);
+      const limit = Math.min(Number.parseInt(req.query.limit as string) || 10, 50);
       const cursor = req.query.cursor as string | undefined;
 
       // Verify membership

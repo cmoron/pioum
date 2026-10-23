@@ -227,7 +227,7 @@ export function TagEditor({
               <form
                 onSubmit={(e) => {
                   e.preventDefault();
-                  handleAddFreeText();
+                  void handleAddFreeText();
                 }}
                 className="flex gap-1"
               >

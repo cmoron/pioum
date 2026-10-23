@@ -24,7 +24,7 @@ export function UserCarSelector({ onSelect, onClose }: UserCarSelectorProps) {
   const [creating, setCreating] = useState(false)
 
   useEffect(() => {
-    fetchUserCars()
+    void fetchUserCars()
     api.getAvatars()
       .then(({ avatars }) => {
         const carAvatars = avatars.filter(a => a.category === 'cars')
@@ -33,6 +33,7 @@ export function UserCarSelector({ onSelect, onClose }: UserCarSelectorProps) {
           setSelectedAvatarId(carAvatars[0].id)
         }
       })
+      .catch((err) => alert((err as Error).message))
       .finally(() => setLoadingAvatars(false))
   }, []) // eslint-disable-line react-hooks/exhaustive-deps
 

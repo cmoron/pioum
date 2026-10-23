@@ -25,7 +25,7 @@ export function AdminUsersTab() {
   }
 
   useEffect(() => {
-    load('')
+    void load('')
     api
       .getAvatars()
       .then(({ avatars }) => setAvatars(avatars.filter((a) => a.category === 'users')))
@@ -49,7 +49,7 @@ export function AdminUsersTab() {
       <form
         onSubmit={(e) => {
           e.preventDefault()
-          load()
+          void load()
         }}
         className="flex gap-2 mb-4"
       >
@@ -115,7 +115,7 @@ export function AdminUsersTab() {
           onClose={() => setEditing(null)}
           onSaved={() => {
             setEditing(null)
-            load()
+            void load()
           }}
         />
       )}

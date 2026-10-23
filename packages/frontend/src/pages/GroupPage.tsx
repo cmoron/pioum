@@ -121,6 +121,7 @@ export function GroupPage() {
               <>
                 <div
                   className="fixed inset-0 z-40"
+                  aria-hidden="true"
                   onClick={() => setShowSessionMenu(false)}
                 />
                 <div className="absolute right-0 top-full mt-1 bg-white rounded-warm shadow-warm-lg border-2 border-primary-200 py-1 z-50 min-w-[180px]">
@@ -278,7 +279,9 @@ export function GroupPage() {
             </div>
             <button
               onClick={() => {
-                navigator.clipboard.writeText(currentGroup.inviteCode)
+                navigator.clipboard
+                  .writeText(currentGroup.inviteCode)
+                  .catch(() => alert('Impossible de copier le code'))
               }}
               className="w-full btn-secondary mb-2"
             >

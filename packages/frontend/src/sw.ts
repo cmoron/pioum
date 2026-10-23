@@ -51,5 +51,5 @@ self.addEventListener('notificationclick', (event: NotificationEvent) => {
 })
 
 self.addEventListener('message', (event: ExtendableMessageEvent) => {
-  if (event.data?.type === 'SKIP_WAITING') self.skipWaiting()
+  if (event.data?.type === 'SKIP_WAITING') void self.skipWaiting()
 })

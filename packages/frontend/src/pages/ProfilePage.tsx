@@ -35,8 +35,9 @@ export function ProfilePage() {
         setAvatars(avatars.filter(a => a.category === 'users'))
         setCarAvatars(avatars.filter(a => a.category === 'cars'))
       })
+      .catch((err) => setError((err as Error).message))
       .finally(() => setLoadingAvatars(false))
-    fetchUserCars()
+    void fetchUserCars()
   }, []) // eslint-disable-line react-hooks/exhaustive-deps
 
   const handleSave = async () => {

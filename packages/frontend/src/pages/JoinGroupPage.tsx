@@ -30,7 +30,7 @@ export function JoinGroupPage() {
         to="/"
         className="flex items-center gap-2 text-primary-600 hover:text-primary-800 mb-4 transition-colors"
       >
-        <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+        <svg aria-hidden="true" className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
         </svg>
         Retour

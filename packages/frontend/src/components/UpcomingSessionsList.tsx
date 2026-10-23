@@ -104,7 +104,7 @@ export function UpcomingSessionsList({ groupId, refreshTrigger = 0, isAdmin = fa
     return (
       <div className="p-6 text-center card">
         <div className="w-12 h-12 mx-auto mb-3 bg-primary-100 rounded-full flex items-center justify-center">
-          <svg className="w-6 h-6 text-primary-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <svg aria-hidden="true" className="w-6 h-6 text-primary-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
           </svg>
         </div>
@@ -173,7 +173,7 @@ export function UpcomingSessionsList({ groupId, refreshTrigger = 0, isAdmin = fa
             onClick={() => setShowNextWeek(!showNextWeek)}
             className="w-full py-2 text-sm text-primary-600 hover:text-primary-800 flex items-center justify-center gap-1"
           >
-            <svg
+            <svg aria-hidden="true"
               className={`w-4 h-4 transition-transform ${showNextWeek ? 'rotate-180' : ''}`}
               fill="none"
               viewBox="0 0 24 24"

@@ -39,7 +39,7 @@ export function ReloadPrompt() {
       <div className="rounded-warm bg-primary-50 border border-primary-200 shadow-warm-xl p-4">
         <div className="flex items-start gap-3">
           <div className="flex-shrink-0 text-primary-700">
-            <svg
+            <svg aria-hidden="true"
               className="h-5 w-5"
               fill="none"
               stroke="currentColor"

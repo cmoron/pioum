@@ -237,7 +237,7 @@ export function GroupSettingsModal({
                           className="text-primary-400 hover:text-primary-700 p-1 transition-colors"
                           title="Modifier"
                         >
-                          <svg
+                          <svg aria-hidden="true"
                             className="w-4 h-4"
                             fill="none"
                             viewBox="0 0 24 24"
@@ -267,7 +267,7 @@ export function GroupSettingsModal({
                           className="text-primary-400 hover:text-red-500 p-1 transition-colors"
                           title="Supprimer"
                         >
-                          <svg
+                          <svg aria-hidden="true"
                             className="w-4 h-4"
                             fill="none"
                             viewBox="0 0 24 24"

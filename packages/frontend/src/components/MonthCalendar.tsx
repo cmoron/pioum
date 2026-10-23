@@ -167,7 +167,7 @@ export function MonthCalendar({ groupId, refreshTrigger = 0, isAdmin = false }: 
             className="p-2 rounded-warm hover:bg-primary-100 transition-colors text-primary-700"
             aria-label="Mois précédent"
           >
-            <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <svg aria-hidden="true" className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
             </svg>
           </button>
@@ -191,7 +191,7 @@ export function MonthCalendar({ groupId, refreshTrigger = 0, isAdmin = false }: 
             className="p-2 rounded-warm hover:bg-primary-100 transition-colors text-primary-700"
             aria-label="Mois suivant"
           >
-            <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <svg aria-hidden="true" className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
             </svg>
           </button>

@@ -29,7 +29,7 @@ export function SessionPage() {
         to={`/groups/${session.groupId}`}
         className="flex items-center gap-2 text-gray-600 hover:text-gray-900 mb-4"
       >
-        <svg
+        <svg aria-hidden="true"
           className="w-5 h-5"
           fill="none"
           viewBox="0 0 24 24"

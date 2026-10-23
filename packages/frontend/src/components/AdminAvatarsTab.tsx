@@ -95,7 +95,7 @@ export function AdminAvatarsTab() {
             className="btn-secondary w-full cursor-pointer overflow-hidden"
             title={file?.name}
           >
-            <svg
+            <svg aria-hidden="true"
               className="w-4 h-4 mr-2 flex-shrink-0"
               fill="none"
               viewBox="0 0 24 24"

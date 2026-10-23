@@ -91,10 +91,11 @@ export function UserCarSelector({ onSelect, onClose }: UserCarSelectorProps) {
             </button>
 
             <div className="mb-4">
-              <label className="block text-sm font-medium text-gray-700 mb-2">
+              <label htmlFor="new-car-name" className="block text-sm font-medium text-gray-700 mb-2">
                 Nom de la voiture (optionnel)
               </label>
               <input
+                id="new-car-name"
                 type="text"
                 value={newCarName}
                 onChange={(e) => setNewCarName(e.target.value)}
@@ -104,9 +105,9 @@ export function UserCarSelector({ onSelect, onClose }: UserCarSelectorProps) {
             </div>
 
             <div className="mb-4">
-              <label className="block text-sm font-medium text-gray-700 mb-2">
+              <p className="block text-sm font-medium text-gray-700 mb-2">
                 Type de voiture
-              </label>
+              </p>
               {loadingAvatars ? (
                 <LoadingSpinner />
               ) : (
@@ -136,9 +137,9 @@ export function UserCarSelector({ onSelect, onClose }: UserCarSelectorProps) {
             </div>
 
             <div className="mb-6">
-              <label className="block text-sm font-medium text-gray-700 mb-2">
+              <p className="block text-sm font-medium text-gray-700 mb-2">
                 Places disponibles
-              </label>
+              </p>
               <div className="flex items-center justify-center gap-4">
                 <button
                   onClick={() => setSeats(Math.max(1, seats - 1))}
@@ -223,9 +224,9 @@ export function UserCarSelector({ onSelect, onClose }: UserCarSelectorProps) {
 
             {selectedCar && (
               <div className="mb-4 p-4 bg-gray-50 rounded-lg">
-                <label className="block text-sm font-medium text-gray-700 mb-2">
+                <p className="block text-sm font-medium text-gray-700 mb-2">
                   Places pour cette session
-                </label>
+                </p>
                 <div className="flex items-center justify-center gap-4">
                   <button
                     onClick={() => setSeats(Math.max(1, seats - 1))}

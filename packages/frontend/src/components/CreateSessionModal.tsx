@@ -97,10 +97,11 @@ export function CreateSessionModal({ groupId, onClose, onCreated }: CreateSessio
 
         <form onSubmit={handleSubmit}>
           <div className="mb-4">
-            <label className="block text-sm font-medium text-primary-800 mb-2">
+            <label htmlFor="session-date" className="block text-sm font-medium text-primary-800 mb-2">
               Date
             </label>
             <input
+              id="session-date"
               type="date"
               value={date}
               onChange={(e) => setDate(e.target.value)}
@@ -112,10 +113,11 @@ export function CreateSessionModal({ groupId, onClose, onCreated }: CreateSessio
 
           <div className="grid grid-cols-2 gap-3 mb-4">
             <div>
-              <label className="block text-sm font-medium text-primary-800 mb-2">
+              <label htmlFor="session-start-time" className="block text-sm font-medium text-primary-800 mb-2">
                 Début
               </label>
               <input
+                id="session-start-time"
                 type="time"
                 value={startTime}
                 onChange={(e) => setStartTime(e.target.value)}
@@ -124,10 +126,11 @@ export function CreateSessionModal({ groupId, onClose, onCreated }: CreateSessio
               />
             </div>
             <div>
-              <label className="block text-sm font-medium text-primary-800 mb-2">
+              <label htmlFor="session-end-time" className="block text-sm font-medium text-primary-800 mb-2">
                 Fin
               </label>
               <input
+                id="session-end-time"
                 type="time"
                 value={endTime}
                 onChange={(e) => setEndTime(e.target.value)}

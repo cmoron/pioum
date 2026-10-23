@@ -78,10 +78,11 @@ export function EditSessionModal({ session, onClose, onUpdated }: EditSessionMod
           {/* Time inputs */}
           <div className="grid grid-cols-2 gap-3">
             <div>
-              <label className="block text-sm font-medium text-primary-700 mb-1">
+              <label htmlFor="edit-session-start-time" className="block text-sm font-medium text-primary-700 mb-1">
                 Début
               </label>
               <input
+                id="edit-session-start-time"
                 type="time"
                 value={startTime}
                 onChange={(e) => setStartTime(e.target.value)}
@@ -90,10 +91,11 @@ export function EditSessionModal({ session, onClose, onUpdated }: EditSessionMod
               />
             </div>
             <div>
-              <label className="block text-sm font-medium text-primary-700 mb-1">
+              <label htmlFor="edit-session-end-time" className="block text-sm font-medium text-primary-700 mb-1">
                 Fin
               </label>
               <input
+                id="edit-session-end-time"
                 type="time"
                 value={endTime}
                 onChange={(e) => setEndTime(e.target.value)}
@@ -110,8 +112,9 @@ export function EditSessionModal({ session, onClose, onUpdated }: EditSessionMod
                 Cette séance fait partie d'une récurrence
               </p>
               <div className="space-y-2">
-                <label className="flex items-center gap-2 p-3 rounded-warm border-2 border-primary-200 cursor-pointer hover:bg-primary-50 transition-colors">
+                <label htmlFor="edit-scope-single" className="flex items-center gap-2 p-3 rounded-warm border-2 border-primary-200 cursor-pointer hover:bg-primary-50 transition-colors">
                   <input
+                    id="edit-scope-single"
                     type="radio"
                     name="scope"
                     value="single"
@@ -124,8 +127,9 @@ export function EditSessionModal({ session, onClose, onUpdated }: EditSessionMod
                     <p className="text-xs text-primary-500">Détache cette séance de la récurrence</p>
                   </div>
                 </label>
-                <label className="flex items-center gap-2 p-3 rounded-warm border-2 border-primary-200 cursor-pointer hover:bg-primary-50 transition-colors">
+                <label htmlFor="edit-scope-future" className="flex items-center gap-2 p-3 rounded-warm border-2 border-primary-200 cursor-pointer hover:bg-primary-50 transition-colors">
                   <input
+                    id="edit-scope-future"
                     type="radio"
                     name="scope"
                     value="future"

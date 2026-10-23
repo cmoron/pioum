@@ -40,10 +40,11 @@ export function JoinGroupPage() {
 
       <form onSubmit={handleSubmit} className="card p-6">
         <div className="mb-4">
-          <label className="block text-sm font-medium text-primary-800 mb-2">
+          <label htmlFor="invite-code" className="block text-sm font-medium text-primary-800 mb-2">
             Code d'invitation
           </label>
           <input
+            id="invite-code"
             type="text"
             value={inviteCode}
             onChange={(e) => setInviteCode(e.target.value.toUpperCase())}

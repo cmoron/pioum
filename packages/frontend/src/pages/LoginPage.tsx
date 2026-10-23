@@ -259,10 +259,11 @@ export function LoginPage() {
 
               <form onSubmit={handleDevLogin}>
                 <div className="mb-4">
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                  <label htmlFor="dev-name" className="block text-sm font-medium text-gray-700 mb-1">
                     Prénom
                   </label>
                   <input
+                    id="dev-name"
                     type="text"
                     value={devName}
                     onChange={(e) => setDevName(e.target.value)}
@@ -309,10 +310,11 @@ export function LoginPage() {
 
               <form onSubmit={handleMagicLink}>
                 <div className="mb-4">
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                  <label htmlFor="login-email" className="block text-sm font-medium text-gray-700 mb-1">
                     Email
                   </label>
                   <input
+                    id="login-email"
                     type="email"
                     value={email}
                     onChange={(e) => setEmail(e.target.value)}
@@ -323,10 +325,11 @@ export function LoginPage() {
                 </div>
 
                 <div className="mb-4">
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                  <label htmlFor="login-name" className="block text-sm font-medium text-gray-700 mb-1">
                     Prénom (pour les nouveaux)
                   </label>
                   <input
+                    id="login-name"
                     type="text"
                     value={name}
                     onChange={(e) => setName(e.target.value)}

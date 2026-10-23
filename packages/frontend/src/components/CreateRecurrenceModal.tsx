@@ -107,9 +107,9 @@ export function CreateRecurrenceModal({ groupId, onClose, onCreated }: CreateRec
         <form onSubmit={handleSubmit}>
           {/* Days of week */}
           <div className="mb-4">
-            <label className="block text-sm font-medium text-primary-800 mb-2">
+            <p className="block text-sm font-medium text-primary-800 mb-2">
               Jours
-            </label>
+            </p>
             <div className="flex gap-1">
               {DAYS_OF_WEEK.map(day => (
                 <button
@@ -131,10 +131,11 @@ export function CreateRecurrenceModal({ groupId, onClose, onCreated }: CreateRec
           {/* Time pickers */}
           <div className="grid grid-cols-2 gap-3 mb-4">
             <div>
-              <label className="block text-sm font-medium text-primary-800 mb-2">
+              <label htmlFor="recurrence-start-time" className="block text-sm font-medium text-primary-800 mb-2">
                 Début
               </label>
               <input
+                id="recurrence-start-time"
                 type="time"
                 value={startTime}
                 onChange={(e) => setStartTime(e.target.value)}
@@ -143,10 +144,11 @@ export function CreateRecurrenceModal({ groupId, onClose, onCreated }: CreateRec
               />
             </div>
             <div>
-              <label className="block text-sm font-medium text-primary-800 mb-2">
+              <label htmlFor="recurrence-end-time" className="block text-sm font-medium text-primary-800 mb-2">
                 Fin
               </label>
               <input
+                id="recurrence-end-time"
                 type="time"
                 value={endTime}
                 onChange={(e) => setEndTime(e.target.value)}
@@ -158,10 +160,11 @@ export function CreateRecurrenceModal({ groupId, onClose, onCreated }: CreateRec
 
           {/* Start date */}
           <div className="mb-4">
-            <label className="block text-sm font-medium text-primary-800 mb-2">
+            <label htmlFor="recurrence-start-date" className="block text-sm font-medium text-primary-800 mb-2">
               À partir du
             </label>
             <input
+              id="recurrence-start-date"
               type="date"
               value={startDate}
               onChange={(e) => setStartDate(e.target.value)}

@@ -88,8 +88,9 @@ export function DeleteSessionModal({ session, onClose, onDeleted }: DeleteSessio
         </p>
 
         <div className="space-y-2 mb-4">
-          <label className="flex items-start gap-2 p-3 rounded-warm border-2 border-primary-200 cursor-pointer hover:bg-primary-50 transition-colors">
+          <label htmlFor="delete-scope-single" className="flex items-start gap-2 p-3 rounded-warm border-2 border-primary-200 cursor-pointer hover:bg-primary-50 transition-colors">
             <input
+              id="delete-scope-single"
               type="radio"
               name="scope"
               value="single"
@@ -103,8 +104,9 @@ export function DeleteSessionModal({ session, onClose, onDeleted }: DeleteSessio
             </div>
           </label>
 
-          <label className="flex items-start gap-2 p-3 rounded-warm border-2 border-primary-200 cursor-pointer hover:bg-primary-50 transition-colors">
+          <label htmlFor="delete-scope-future" className="flex items-start gap-2 p-3 rounded-warm border-2 border-primary-200 cursor-pointer hover:bg-primary-50 transition-colors">
             <input
+              id="delete-scope-future"
               type="radio"
               name="scope"
               value="future"
@@ -118,8 +120,9 @@ export function DeleteSessionModal({ session, onClose, onDeleted }: DeleteSessio
             </div>
           </label>
 
-          <label className="flex items-start gap-2 p-3 rounded-warm border-2 border-red-200 cursor-pointer hover:bg-red-50 transition-colors">
+          <label htmlFor="delete-scope-all" className="flex items-start gap-2 p-3 rounded-warm border-2 border-red-200 cursor-pointer hover:bg-red-50 transition-colors">
             <input
+              id="delete-scope-all"
               type="radio"
               name="scope"
               value="all"

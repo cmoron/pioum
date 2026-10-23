@@ -120,10 +120,11 @@ export function GroupSettingsModal({
           // Formulaire normal
           <>
             <div className="mb-4">
-              <label className="block text-sm font-medium text-primary-800 mb-2">
+              <label htmlFor="group-settings-name" className="block text-sm font-medium text-primary-800 mb-2">
                 Nom du groupe
               </label>
               <input
+                id="group-settings-name"
                 type="text"
                 value={name}
                 onChange={(e) => setName(e.target.value)}
@@ -134,9 +135,9 @@ export function GroupSettingsModal({
             </div>
 
             <div className="mb-6">
-              <label className="block text-sm font-medium text-primary-800 mb-3">
+              <p className="block text-sm font-medium text-primary-800 mb-3">
                 Avatar du groupe
-              </label>
+              </p>
               <div className="grid grid-cols-3 gap-3 mb-2">
                 {avatars.map((avatar) => (
                   <button
@@ -172,9 +173,9 @@ export function GroupSettingsModal({
 
             {/* Tags du groupe */}
             <div className="mb-6">
-              <label className="block text-sm font-medium text-primary-800 mb-2">
+              <p className="block text-sm font-medium text-primary-800 mb-2">
                 Tags prédéfinis
-              </label>
+              </p>
               <div className="space-y-2 mb-3">
                 {groupTags.map((tag) => (
                   <div key={tag.id} className="flex items-center gap-2">

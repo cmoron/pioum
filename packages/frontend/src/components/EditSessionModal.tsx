@@ -123,7 +123,7 @@ export function EditSessionModal({ session, onClose, onUpdated }: EditSessionMod
                     className="text-primary-600"
                   />
                   <span className="flex flex-col font-medium text-primary-800">
-                    Cette séance uniquement
+                    {'Cette séance uniquement'}
                     <span className="text-xs font-normal text-primary-500">Détache cette séance de la récurrence</span>
                   </span>
                 </label>
@@ -138,7 +138,7 @@ export function EditSessionModal({ session, onClose, onUpdated }: EditSessionMod
                     className="text-primary-600"
                   />
                   <span className="flex flex-col font-medium text-primary-800">
-                    Toutes les futures
+                    {'Toutes les futures'}
                     <span className="text-xs font-normal text-primary-500">Met à jour la récurrence et toutes les séances à venir</span>
                   </span>
                 </label>

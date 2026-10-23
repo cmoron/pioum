@@ -99,7 +99,7 @@ export function DeleteSessionModal({ session, onClose, onDeleted }: DeleteSessio
               className="mt-0.5 text-primary-600"
             />
             <span className="flex flex-col font-medium text-primary-800">
-              Cette séance uniquement
+              {'Cette séance uniquement'}
               <span className="text-xs font-normal text-primary-500">Supprime uniquement cette séance</span>
             </span>
           </label>
@@ -115,7 +115,7 @@ export function DeleteSessionModal({ session, onClose, onDeleted }: DeleteSessio
               className="mt-0.5 text-primary-600"
             />
             <span className="flex flex-col font-medium text-primary-800">
-              Cette séance et les suivantes
+              {'Cette séance et les suivantes'}
               <span className="text-xs font-normal text-primary-500">Supprime toutes les séances à partir de celle-ci</span>
             </span>
           </label>
@@ -131,7 +131,7 @@ export function DeleteSessionModal({ session, onClose, onDeleted }: DeleteSessio
               className="mt-0.5 text-red-600"
             />
             <span className="flex flex-col font-medium text-red-700">
-              Toute la récurrence
+              {'Toute la récurrence'}
               <span className="text-xs font-normal text-red-500">Supprime toutes les séances et la récurrence elle-même</span>
             </span>
           </label>

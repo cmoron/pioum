@@ -50,7 +50,7 @@ EOF
 
 # Vérifier que le fichier .env existe
 function check_env() {
-    if [ ! -f "$ENV_FILE" ]; then
+    if [[ ! -f "$ENV_FILE" ]]; then
         echo -e "${RED}Erreur: $ENV_FILE n'existe pas${NC}"
         echo "Exécutez d'abord: cp .env.staging.example $ENV_FILE"
         echo "Puis éditez $ENV_FILE avec vos configurations"
@@ -62,8 +62,8 @@ function check_env() {
 function setup() {
     echo -e "${GREEN}=== Configuration Initiale ===${NC}"
 
-    if [ ! -f "$ENV_FILE" ]; then
-        if [ -f ".env.staging.example" ]; then
+    if [[ ! -f "$ENV_FILE" ]]; then
+        if [[ -f ".env.staging.example" ]]; then
             cp .env.staging.example $ENV_FILE
             echo -e "${YELLOW}Fichier $ENV_FILE créé depuis le template${NC}"
             echo -e "${YELLOW}IMPORTANT: Éditez $ENV_FILE et remplissez les variables obligatoires${NC}"
@@ -254,9 +254,9 @@ function health() {
 
     echo ""
     echo "4. Test HTTPS (si configuré):"
-    if [ -f "$ENV_FILE" ]; then
+    if [[ -f "$ENV_FILE" ]]; then
         source $ENV_FILE
-        if [ -n "$STAGING_DOMAIN" ]; then
+        if [[ -n "$STAGING_DOMAIN" ]]; then
             if curl -f -k https://$STAGING_DOMAIN/api/health 2>/dev/null; then
                 echo -e "${GREEN}✓ HTTPS OK${NC}"
             else
@@ -279,7 +279,7 @@ function reset() {
     echo -e "${RED}Cette action va supprimer TOUTES les données (base de données, volumes)${NC}"
     read -p "Êtes-vous sûr? (tapez 'yes' pour confirmer): " confirm
 
-    if [ "$confirm" != "yes" ]; then
+    if [[ "$confirm" != "yes" ]]; then
         echo "Annulé"
         exit 0
     fi

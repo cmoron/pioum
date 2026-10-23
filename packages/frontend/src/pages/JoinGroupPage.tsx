@@ -30,7 +30,7 @@ export function JoinGroupPage() {
         to="/"
         className="flex items-center gap-2 text-primary-600 hover:text-primary-800 mb-4 transition-colors"
       >
-        <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+        <svg aria-hidden="true" className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
         </svg>
         Retour
@@ -40,10 +40,11 @@ export function JoinGroupPage() {
 
       <form onSubmit={handleSubmit} className="card p-6">
         <div className="mb-4">
-          <label className="block text-sm font-medium text-primary-800 mb-2">
+          <label htmlFor="invite-code" className="block text-sm font-medium text-primary-800 mb-2">
             Code d'invitation
           </label>
           <input
+            id="invite-code"
             type="text"
             value={inviteCode}
             onChange={(e) => setInviteCode(e.target.value.toUpperCase())}

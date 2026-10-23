@@ -43,9 +43,10 @@ export function UserCarCard({ userCar, onEdit, onDelete }: UserCarCardProps) {
         <div className="relative">
           <button
             onClick={() => setShowMenu(!showMenu)}
+            aria-label="Options de la voiture"
             className="p-2 hover:bg-gray-100 rounded-lg"
           >
-            <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <svg aria-hidden="true" className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 5v.01M12 12v.01M12 19v.01M12 6a1 1 0 110-2 1 1 0 010 2zm0 7a1 1 0 110-2 1 1 0 010 2zm0 7a1 1 0 110-2 1 1 0 010 2z" />
             </svg>
           </button>
@@ -54,6 +55,7 @@ export function UserCarCard({ userCar, onEdit, onDelete }: UserCarCardProps) {
             <>
               <div
                 className="fixed inset-0 z-10"
+                aria-hidden="true"
                 onClick={() => setShowMenu(false)}
               />
               <div className="absolute right-0 top-full mt-1 bg-white rounded-lg shadow-lg border border-gray-200 py-1 z-20 min-w-[120px]">

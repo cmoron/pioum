@@ -149,7 +149,7 @@ export async function deleteRecurrencePattern(
 }
 
 // Get all patterns for a group
-export async function getGroupPatterns(groupId: string) {
+export function getGroupPatterns(groupId: string) {
   return prisma.recurrencePattern.findMany({
     where: { groupId },
     include: {

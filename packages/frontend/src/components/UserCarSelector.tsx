@@ -24,7 +24,7 @@ export function UserCarSelector({ onSelect, onClose }: UserCarSelectorProps) {
   const [creating, setCreating] = useState(false)
 
   useEffect(() => {
-    fetchUserCars()
+    void fetchUserCars()
     api.getAvatars()
       .then(({ avatars }) => {
         const carAvatars = avatars.filter(a => a.category === 'cars')
@@ -33,6 +33,7 @@ export function UserCarSelector({ onSelect, onClose }: UserCarSelectorProps) {
           setSelectedAvatarId(carAvatars[0].id)
         }
       })
+      .catch((err) => alert((err as Error).message))
       .finally(() => setLoadingAvatars(false))
   }, []) // eslint-disable-line react-hooks/exhaustive-deps
 
@@ -84,17 +85,18 @@ export function UserCarSelector({ onSelect, onClose }: UserCarSelectorProps) {
               onClick={() => setShowNewCar(false)}
               className="text-sm text-gray-500 mb-4 flex items-center gap-1"
             >
-              <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <svg aria-hidden="true" className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
               </svg>
               Retour
             </button>
 
             <div className="mb-4">
-              <label className="block text-sm font-medium text-gray-700 mb-2">
+              <label htmlFor="new-car-name" className="block text-sm font-medium text-gray-700 mb-2">
                 Nom de la voiture (optionnel)
               </label>
               <input
+                id="new-car-name"
                 type="text"
                 value={newCarName}
                 onChange={(e) => setNewCarName(e.target.value)}
@@ -104,9 +106,9 @@ export function UserCarSelector({ onSelect, onClose }: UserCarSelectorProps) {
             </div>
 
             <div className="mb-4">
-              <label className="block text-sm font-medium text-gray-700 mb-2">
+              <p className="block text-sm font-medium text-gray-700 mb-2">
                 Type de voiture
-              </label>
+              </p>
               {loadingAvatars ? (
                 <LoadingSpinner />
               ) : (
@@ -136,9 +138,9 @@ export function UserCarSelector({ onSelect, onClose }: UserCarSelectorProps) {
             </div>
 
             <div className="mb-6">
-              <label className="block text-sm font-medium text-gray-700 mb-2">
+              <p className="block text-sm font-medium text-gray-700 mb-2">
                 Places disponibles
-              </label>
+              </p>
               <div className="flex items-center justify-center gap-4">
                 <button
                   onClick={() => setSeats(Math.max(1, seats - 1))}
@@ -215,7 +217,7 @@ export function UserCarSelector({ onSelect, onClose }: UserCarSelectorProps) {
               onClick={() => setShowNewCar(true)}
               className="w-full btn-secondary mb-4 flex items-center justify-center gap-2"
             >
-              <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <svg aria-hidden="true" className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
               </svg>
               Nouvelle voiture
@@ -223,9 +225,9 @@ export function UserCarSelector({ onSelect, onClose }: UserCarSelectorProps) {
 
             {selectedCar && (
               <div className="mb-4 p-4 bg-gray-50 rounded-lg">
-                <label className="block text-sm font-medium text-gray-700 mb-2">
+                <p className="block text-sm font-medium text-gray-700 mb-2">
                   Places pour cette session
-                </label>
+                </p>
                 <div className="flex items-center justify-center gap-4">
                   <button
                     onClick={() => setSeats(Math.max(1, seats - 1))}

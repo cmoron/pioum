@@ -208,7 +208,7 @@ export function TagBadge({
             className="text-primary-400 hover:text-red-500 transition-colors flex-shrink-0"
             title="Supprimer le tag"
           >
-            <svg
+            <svg aria-hidden="true"
               className="w-3 h-3"
               fill="none"
               viewBox="0 0 24 24"

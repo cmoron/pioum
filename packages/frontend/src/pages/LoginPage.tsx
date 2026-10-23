@@ -128,7 +128,7 @@ export function LoginPage() {
           {magicLinkSent ? (
             <div className="text-center">
               <div className="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-4">
-                <svg className="w-8 h-8 text-green-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <svg aria-hidden="true" className="w-8 h-8 text-green-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
                 </svg>
               </div>
@@ -184,7 +184,7 @@ export function LoginPage() {
                   className="w-full flex items-center justify-center gap-3 px-4 py-3 border-2 border-primary-300 rounded-warm bg-white shadow-warm transition-all group-hover:bg-primary-50 group-hover:shadow-warm-md"
                   tabIndex={-1} // Prevent tab focus since the overlay handles it
                 >
-                  <svg className="w-5 h-5" viewBox="0 0 24 24">
+                  <svg aria-hidden="true" className="w-5 h-5" viewBox="0 0 24 24">
                     <path
                       fill="#4285F4"
                       d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"
@@ -242,7 +242,7 @@ export function LoginPage() {
                 onClick={() => setMode('choose')}
                 className="flex items-center gap-2 text-primary-600 hover:text-primary-800 mb-4 transition-colors"
               >
-                <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <svg aria-hidden="true" className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
                 </svg>
                 Retour
@@ -259,10 +259,11 @@ export function LoginPage() {
 
               <form onSubmit={handleDevLogin}>
                 <div className="mb-4">
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                  <label htmlFor="dev-name" className="block text-sm font-medium text-gray-700 mb-1">
                     Prénom
                   </label>
                   <input
+                    id="dev-name"
                     type="text"
                     value={devName}
                     onChange={(e) => setDevName(e.target.value)}
@@ -293,7 +294,7 @@ export function LoginPage() {
                 onClick={() => setMode('choose')}
                 className="flex items-center gap-2 text-primary-600 hover:text-primary-800 mb-4 transition-colors"
               >
-                <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <svg aria-hidden="true" className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
                 </svg>
                 Retour
@@ -309,10 +310,11 @@ export function LoginPage() {
 
               <form onSubmit={handleMagicLink}>
                 <div className="mb-4">
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                  <label htmlFor="login-email" className="block text-sm font-medium text-gray-700 mb-1">
                     Email
                   </label>
                   <input
+                    id="login-email"
                     type="email"
                     value={email}
                     onChange={(e) => setEmail(e.target.value)}
@@ -323,10 +325,11 @@ export function LoginPage() {
                 </div>
 
                 <div className="mb-4">
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                  <label htmlFor="login-name" className="block text-sm font-medium text-gray-700 mb-1">
                     Prénom (pour les nouveaux)
                   </label>
                   <input
+                    id="login-name"
                     type="text"
                     value={name}
                     onChange={(e) => setName(e.target.value)}

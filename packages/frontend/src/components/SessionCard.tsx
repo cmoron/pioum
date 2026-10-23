@@ -209,7 +209,7 @@ function EditCancelButtons({
           disabled={loading}
           className={`flex-1 text-sm text-primary-600 hover:text-primary-700 hover:bg-primary-50 rounded-warm ${pyClass} transition-colors disabled:opacity-50 flex items-center justify-center gap-1`}
         >
-          <svg
+          <svg aria-hidden="true"
             className="w-4 h-4"
             fill="none"
             viewBox="0 0 24 24"
@@ -373,6 +373,7 @@ export function SessionCard({
         api
           .cancelSession(session.id)
           .then(() => onRefresh())
+          .catch((err) => alert((err as Error).message))
           .finally(() => setLoading(false));
       }
     }
@@ -401,7 +402,7 @@ export function SessionCard({
                 </span>
                 {isPast ? (
                   <span className="text-xs text-primary-400 flex items-center gap-1">
-                    <svg
+                    <svg aria-hidden="true"
                       className="w-3 h-3"
                       fill="none"
                       viewBox="0 0 24 24"
@@ -418,7 +419,7 @@ export function SessionCard({
                   </span>
                 ) : (
                   isLocked && (
-                    <svg
+                    <svg role="img" aria-label="Inscriptions verrouillées"
                       className="w-3.5 h-3.5 text-amber-500 flex-shrink-0"
                       fill="none"
                       viewBox="0 0 24 24"
@@ -457,7 +458,7 @@ export function SessionCard({
                 title="Tu as participé"
               />
             )}
-            <svg
+            <svg aria-hidden="true"
               className={`w-4 h-4 text-primary-400 transition-transform ${expanded ? "rotate-180" : ""}`}
               fill="none"
               viewBox="0 0 24 24"
@@ -571,7 +572,7 @@ export function SessionCard({
                   {formatSessionDate(session.date)}
                 </span>
                 {isLocked && (
-                  <svg
+                  <svg role="img" aria-label="Inscriptions verrouillées"
                     className="w-4 h-4 text-amber-500"
                     fill="none"
                     viewBox="0 0 24 24"
@@ -593,7 +594,7 @@ export function SessionCard({
 
             <div className="flex items-center gap-3 text-sm text-primary-600">
               <span className="flex items-center gap-1">
-                <svg
+                <svg aria-hidden="true"
                   className="w-4 h-4"
                   fill="none"
                   viewBox="0 0 24 24"
@@ -609,7 +610,7 @@ export function SessionCard({
                 {session.passengers.length}
               </span>
               <span className="flex items-center gap-1">
-                <svg
+                <svg aria-hidden="true"
                   className="w-4 h-4"
                   fill="none"
                   viewBox="0 0 24 24"
@@ -617,9 +618,9 @@ export function SessionCard({
                 >
                   <path
                     d="M18 17H21C21.5523 17 22 16.5523 22 16V12.6311C22 12.2188 21.747 11.8488 21.3629 11.6992L17 10L14 5H6L4 10H3C2.44772 10 2 10.4477 2 11V16C2 16.5523 2.44772 17 3 17H6M18 17C18 18.1046 17.1046 19 16 19C14.8954 19 14 18.1046 14 17M18 17C18 15.8954 17.1046 15 16 15C14.8954 15 14 15.8954 14 17M6 17C6 18.1046 6.89543 19 8 19C9.10457 19 10 18.1046 10 17M6 17C6 15.8954 6.89543 15 8 15C9.10457 15 10 15.8954 10 17M10 17H14"
-                    stroke-width="2"
-                    stroke-linecap="round"
-                    stroke-linejoin="round"
+                    strokeWidth="2"
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
                   />
                 </svg>
                 {session.cars.length}
@@ -673,7 +674,7 @@ export function SessionCard({
               disabled={loading}
               className="w-full btn-secondary mb-4 flex items-center justify-center gap-2"
             >
-              <svg
+              <svg aria-hidden="true"
                 className="w-5 h-5"
                 fill="none"
                 viewBox="0 0 24 24"
@@ -737,7 +738,7 @@ export function SessionCard({
               {formatSessionDate(session.date)}
             </span>
             {isLocked && (
-              <svg
+              <svg role="img" aria-label="Inscriptions verrouillées"
                 className="w-4 h-4 text-amber-500"
                 fill="none"
                 viewBox="0 0 24 24"
@@ -760,7 +761,7 @@ export function SessionCard({
         <div className="flex items-center gap-4">
           <div className="flex items-center gap-3 text-sm text-primary-600">
             <span className="flex items-center gap-1">
-              <svg
+              <svg aria-hidden="true"
                 className="w-4 h-4"
                 fill="none"
                 viewBox="0 0 24 24"
@@ -776,7 +777,7 @@ export function SessionCard({
               {session.passengers.length}
             </span>
             <span className="flex items-center gap-1">
-              <svg
+              <svg aria-hidden="true"
                 className="w-4 h-4"
                 fill="none"
                 viewBox="0 0 24 24"
@@ -800,7 +801,7 @@ export function SessionCard({
             />
           )}
 
-          <svg
+          <svg aria-hidden="true"
             className={`w-5 h-5 text-primary-400 transition-transform ${expanded ? "rotate-180" : ""}`}
             fill="none"
             viewBox="0 0 24 24"

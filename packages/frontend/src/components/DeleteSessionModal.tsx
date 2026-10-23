@@ -88,8 +88,9 @@ export function DeleteSessionModal({ session, onClose, onDeleted }: DeleteSessio
         </p>
 
         <div className="space-y-2 mb-4">
-          <label className="flex items-start gap-2 p-3 rounded-warm border-2 border-primary-200 cursor-pointer hover:bg-primary-50 transition-colors">
+          <label htmlFor="delete-scope-single" className="flex items-start gap-2 p-3 rounded-warm border-2 border-primary-200 cursor-pointer hover:bg-primary-50 transition-colors">
             <input
+              id="delete-scope-single"
               type="radio"
               name="scope"
               value="single"
@@ -97,14 +98,15 @@ export function DeleteSessionModal({ session, onClose, onDeleted }: DeleteSessio
               onChange={() => setScope('single')}
               className="mt-0.5 text-primary-600"
             />
-            <div>
-              <span className="font-medium text-primary-800">Cette séance uniquement</span>
-              <p className="text-xs text-primary-500">Supprime uniquement cette séance</p>
-            </div>
+            <span className="flex flex-col font-medium text-primary-800">
+              {'Cette séance uniquement'}
+              <span className="text-xs font-normal text-primary-500">Supprime uniquement cette séance</span>
+            </span>
           </label>
 
-          <label className="flex items-start gap-2 p-3 rounded-warm border-2 border-primary-200 cursor-pointer hover:bg-primary-50 transition-colors">
+          <label htmlFor="delete-scope-future" className="flex items-start gap-2 p-3 rounded-warm border-2 border-primary-200 cursor-pointer hover:bg-primary-50 transition-colors">
             <input
+              id="delete-scope-future"
               type="radio"
               name="scope"
               value="future"
@@ -112,14 +114,15 @@ export function DeleteSessionModal({ session, onClose, onDeleted }: DeleteSessio
               onChange={() => setScope('future')}
               className="mt-0.5 text-primary-600"
             />
-            <div>
-              <span className="font-medium text-primary-800">Cette séance et les suivantes</span>
-              <p className="text-xs text-primary-500">Supprime toutes les séances à partir de celle-ci</p>
-            </div>
+            <span className="flex flex-col font-medium text-primary-800">
+              {'Cette séance et les suivantes'}
+              <span className="text-xs font-normal text-primary-500">Supprime toutes les séances à partir de celle-ci</span>
+            </span>
           </label>
 
-          <label className="flex items-start gap-2 p-3 rounded-warm border-2 border-red-200 cursor-pointer hover:bg-red-50 transition-colors">
+          <label htmlFor="delete-scope-all" className="flex items-start gap-2 p-3 rounded-warm border-2 border-red-200 cursor-pointer hover:bg-red-50 transition-colors">
             <input
+              id="delete-scope-all"
               type="radio"
               name="scope"
               value="all"
@@ -127,10 +130,10 @@ export function DeleteSessionModal({ session, onClose, onDeleted }: DeleteSessio
               onChange={() => setScope('all')}
               className="mt-0.5 text-red-600"
             />
-            <div>
-              <span className="font-medium text-red-700">Toute la récurrence</span>
-              <p className="text-xs text-red-500">Supprime toutes les séances et la récurrence elle-même</p>
-            </div>
+            <span className="flex flex-col font-medium text-red-700">
+              {'Toute la récurrence'}
+              <span className="text-xs font-normal text-red-500">Supprime toutes les séances et la récurrence elle-même</span>
+            </span>
           </label>
         </div>
 

@@ -4,8 +4,8 @@ import { isImageUrl } from "../lib/utils";
 
 interface GroupSettingsModalProps {
   group: Group;
-  onSave: (data: { name?: string; avatarId?: string | null }) => void;
-  onDelete: () => void;
+  onSave: (data: { name?: string; avatarId?: string | null }) => Promise<void>;
+  onDelete: () => Promise<void>;
   onClose: () => void;
 }
 
@@ -31,10 +31,13 @@ export function GroupSettingsModal({
   const [tagError, setTagError] = useState<string | null>(null);
 
   useEffect(() => {
-    api.getAvatars().then(({ avatars }) => {
-      const groupAvatars = avatars.filter((a) => a.category === "groups");
-      setAvatars(groupAvatars);
-    });
+    api
+      .getAvatars()
+      .then(({ avatars }) => {
+        const groupAvatars = avatars.filter((a) => a.category === "groups");
+        setAvatars(groupAvatars);
+      })
+      .catch((err) => setError((err as Error).message));
     api
       .getGroupTags(group.id)
       .then(({ tags }) => setGroupTags(tags))
@@ -55,7 +58,7 @@ export function GroupSettingsModal({
       if (avatarId !== group.avatarId) data.avatarId = avatarId;
 
       if (Object.keys(data).length > 0) {
-        onSave(data);
+        await onSave(data);
       }
       onClose();
     } catch (err) {
@@ -69,7 +72,7 @@ export function GroupSettingsModal({
     setDeleting(true);
     setError(null);
     try {
-      onDelete();
+      await onDelete();
       onClose();
     } catch (err) {
       setError((err as Error).message);
@@ -120,10 +123,11 @@ export function GroupSettingsModal({
           // Formulaire normal
           <>
             <div className="mb-4">
-              <label className="block text-sm font-medium text-primary-800 mb-2">
+              <label htmlFor="group-settings-name" className="block text-sm font-medium text-primary-800 mb-2">
                 Nom du groupe
               </label>
               <input
+                id="group-settings-name"
                 type="text"
                 value={name}
                 onChange={(e) => setName(e.target.value)}
@@ -134,9 +138,9 @@ export function GroupSettingsModal({
             </div>
 
             <div className="mb-6">
-              <label className="block text-sm font-medium text-primary-800 mb-3">
+              <p className="block text-sm font-medium text-primary-800 mb-3">
                 Avatar du groupe
-              </label>
+              </p>
               <div className="grid grid-cols-3 gap-3 mb-2">
                 {avatars.map((avatar) => (
                   <button
@@ -172,9 +176,9 @@ export function GroupSettingsModal({
 
             {/* Tags du groupe */}
             <div className="mb-6">
-              <label className="block text-sm font-medium text-primary-800 mb-2">
+              <p className="block text-sm font-medium text-primary-800 mb-2">
                 Tags prédéfinis
-              </label>
+              </p>
               <div className="space-y-2 mb-3">
                 {groupTags.map((tag) => (
                   <div key={tag.id} className="flex items-center gap-2">
@@ -207,7 +211,8 @@ export function GroupSettingsModal({
                           onChange={(e) => setEditingTagLabel(e.target.value)}
                           maxLength={50}
                           className="flex-1 text-sm px-2 py-1 rounded-warm border border-primary-300 focus:outline-none focus:ring-1 focus:ring-primary-600"
-                          autoFocus
+                          // Focus on open: the user just clicked "Modifier"
+                          ref={(el) => el?.focus()}
                         />
                         <button
                           type="submit"
@@ -237,7 +242,7 @@ export function GroupSettingsModal({
                           className="text-primary-400 hover:text-primary-700 p-1 transition-colors"
                           title="Modifier"
                         >
-                          <svg
+                          <svg aria-hidden="true"
                             className="w-4 h-4"
                             fill="none"
                             viewBox="0 0 24 24"
@@ -267,7 +272,7 @@ export function GroupSettingsModal({
                           className="text-primary-400 hover:text-red-500 p-1 transition-colors"
                           title="Supprimer"
                         >
-                          <svg
+                          <svg aria-hidden="true"
                             className="w-4 h-4"
                             fill="none"
                             viewBox="0 0 24 24"

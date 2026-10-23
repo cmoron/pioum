@@ -168,7 +168,7 @@ export function TagEditor({
               : "bg-transparent text-primary-600 border-primary-300 hover:border-primary-500 hover:text-primary-800 hover:bg-primary-50"
           }`}
         >
-          <svg
+          <svg aria-hidden="true"
             className="w-3 h-3"
             fill="none"
             viewBox="0 0 24 24"
@@ -227,7 +227,7 @@ export function TagEditor({
               <form
                 onSubmit={(e) => {
                   e.preventDefault();
-                  handleAddFreeText();
+                  void handleAddFreeText();
                 }}
                 className="flex gap-1"
               >

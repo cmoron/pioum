@@ -349,7 +349,7 @@ export function CarCard({
 
 function XIcon({ className }: { className?: string }) {
   return (
-    <svg
+    <svg aria-hidden="true"
       className={className}
       fill="none"
       viewBox="0 0 24 24"
@@ -367,7 +367,7 @@ function XIcon({ className }: { className?: string }) {
 
 function BanIcon({ className }: { className?: string }) {
   return (
-    <svg
+    <svg aria-hidden="true"
       className={className}
       fill="none"
       viewBox="0 0 24 24"

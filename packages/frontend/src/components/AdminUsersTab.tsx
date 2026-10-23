@@ -25,7 +25,7 @@ export function AdminUsersTab() {
   }
 
   useEffect(() => {
-    load('')
+    void load('')
     api
       .getAvatars()
       .then(({ avatars }) => setAvatars(avatars.filter((a) => a.category === 'users')))
@@ -49,7 +49,7 @@ export function AdminUsersTab() {
       <form
         onSubmit={(e) => {
           e.preventDefault()
-          load()
+          void load()
         }}
         className="flex gap-2 mb-4"
       >
@@ -115,7 +115,7 @@ export function AdminUsersTab() {
           onClose={() => setEditing(null)}
           onSaved={() => {
             setEditing(null)
-            load()
+            void load()
           }}
         />
       )}
@@ -163,13 +163,14 @@ function EditUserModal({ user, avatars, isSelf, onClose, onSaved }: EditUserModa
         <h2 className="text-xl font-bold text-primary-800">Éditer {user.name}</h2>
 
         <div>
-          <label className="block text-sm font-medium text-primary-800 mb-1">Nom</label>
-          <input value={name} onChange={(e) => setName(e.target.value)} className="input" maxLength={50} />
+          <label htmlFor="admin-user-name" className="block text-sm font-medium text-primary-800 mb-1">Nom</label>
+          <input id="admin-user-name" value={name} onChange={(e) => setName(e.target.value)} className="input" maxLength={50} />
         </div>
 
         <div>
-          <label className="block text-sm font-medium text-primary-800 mb-1">Email</label>
+          <label htmlFor="admin-user-email" className="block text-sm font-medium text-primary-800 mb-1">Email</label>
           <input
+            id="admin-user-email"
             type="email"
             value={email}
             onChange={(e) => setEmail(e.target.value)}
@@ -179,8 +180,8 @@ function EditUserModal({ user, avatars, isSelf, onClose, onSaved }: EditUserModa
         </div>
 
         <div>
-          <label className="block text-sm font-medium text-primary-800 mb-1">Avatar</label>
-          <select value={avatarId} onChange={(e) => setAvatarId(e.target.value)} className="input">
+          <label htmlFor="admin-user-avatar" className="block text-sm font-medium text-primary-800 mb-1">Avatar</label>
+          <select id="admin-user-avatar" value={avatarId} onChange={(e) => setAvatarId(e.target.value)} className="input">
             <option value="">Aucun</option>
             {avatars.map((a) => (
               <option key={a.id} value={a.id}>
@@ -191,8 +192,9 @@ function EditUserModal({ user, avatars, isSelf, onClose, onSaved }: EditUserModa
         </div>
 
         <div>
-          <label className="block text-sm font-medium text-primary-800 mb-1">Rôle</label>
+          <label htmlFor="admin-user-role" className="block text-sm font-medium text-primary-800 mb-1">Rôle</label>
           <select
+            id="admin-user-role"
             value={role}
             onChange={(e) => setRole(e.target.value as 'user' | 'admin')}
             className="input disabled:opacity-50"

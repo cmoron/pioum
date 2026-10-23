@@ -49,9 +49,9 @@ export function BanModal({ user, onClose, onBanned }: BanModalProps) {
         </div>
 
         <div className="mb-4">
-          <label className="block text-sm font-medium text-primary-800 mb-2">
+          <p className="block text-sm font-medium text-primary-800 mb-2">
             Durée du ban
-          </label>
+          </p>
           <div className="grid grid-cols-2 gap-2">
             {durations.map((d) => (
               <button
@@ -71,10 +71,11 @@ export function BanModal({ user, onClose, onBanned }: BanModalProps) {
         </div>
 
         <div className="mb-4">
-          <label className="block text-sm font-medium text-primary-800 mb-2">
+          <label htmlFor="ban-reason" className="block text-sm font-medium text-primary-800 mb-2">
             Raison (optionnel)
           </label>
           <input
+            id="ban-reason"
             type="text"
             value={reason}
             onChange={(e) => setReason(e.target.value)}

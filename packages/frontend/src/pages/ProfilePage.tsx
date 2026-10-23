@@ -35,8 +35,9 @@ export function ProfilePage() {
         setAvatars(avatars.filter(a => a.category === 'users'))
         setCarAvatars(avatars.filter(a => a.category === 'cars'))
       })
+      .catch((err) => setError((err as Error).message))
       .finally(() => setLoadingAvatars(false))
-    fetchUserCars()
+    void fetchUserCars()
   }, []) // eslint-disable-line react-hooks/exhaustive-deps
 
   const handleSave = async () => {
@@ -137,10 +138,11 @@ export function ProfilePage() {
 
         {/* Name */}
         <div className="mb-6">
-          <label className="block text-sm font-medium text-primary-800 mb-2">
+          <label htmlFor="profile-name" className="block text-sm font-medium text-primary-800 mb-2">
             Nom
           </label>
           <input
+            id="profile-name"
             type="text"
             value={name}
             onChange={(e) => setName(e.target.value)}
@@ -150,9 +152,9 @@ export function ProfilePage() {
 
         {/* Avatar selection */}
         <div className="mb-6">
-          <label className="block text-sm font-medium text-primary-800 mb-2">
+          <p className="block text-sm font-medium text-primary-800 mb-2">
             Avatar
-          </label>
+          </p>
           {loadingAvatars ? (
             <div className="flex justify-center py-4">
               <LoadingSpinner />
@@ -210,7 +212,7 @@ export function ProfilePage() {
             onClick={() => handleOpenCarModal()}
             className="btn-secondary flex items-center gap-2"
           >
-            <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <svg aria-hidden="true" className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
             </svg>
             Ajouter
@@ -261,10 +263,11 @@ export function ProfilePage() {
             </h2>
 
             <div className="mb-4">
-              <label className="block text-sm font-medium text-primary-800 mb-2">
+              <label htmlFor="car-name" className="block text-sm font-medium text-primary-800 mb-2">
                 Nom (optionnel)
               </label>
               <input
+                id="car-name"
                 type="text"
                 value={carName}
                 onChange={(e) => setCarName(e.target.value)}
@@ -274,9 +277,9 @@ export function ProfilePage() {
             </div>
 
             <div className="mb-4">
-              <label className="block text-sm font-medium text-primary-800 mb-2">
+              <p className="block text-sm font-medium text-primary-800 mb-2">
                 Type de voiture
-              </label>
+              </p>
               {loadingAvatars ? (
                 <LoadingSpinner />
               ) : (
@@ -306,9 +309,9 @@ export function ProfilePage() {
             </div>
 
             <div className="mb-6">
-              <label className="block text-sm font-medium text-primary-800 mb-2">
+              <p className="block text-sm font-medium text-primary-800 mb-2">
                 Places par défaut
-              </label>
+              </p>
               <div className="flex items-center justify-center gap-4">
                 <button
                   onClick={() => setCarSeats(Math.max(1, carSeats - 1))}

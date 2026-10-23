@@ -28,7 +28,7 @@ export function SelectUserToBanModal({ me: me, bansGiven: bansGiven, onClose: on
             }
         };
 
-        fetchUsers();
+        void fetchUsers();
     }, []);
 
     return (
@@ -49,12 +49,10 @@ export function SelectUserToBanModal({ me: me, bansGiven: bansGiven, onClose: on
                             </div>
                         </div>
                     } else {
-                        return <div key={user.id} className="flex items-center gap-3 mb-4 p-3 bg-primary-50 rounded-warm border border-primary-200" onClick={() => setUserToBan(user)}>
+                        return <button type="button" key={user.id} className="w-full text-left flex items-center gap-3 mb-4 p-3 bg-primary-50 rounded-warm border border-primary-200" onClick={() => setUserToBan(user)}>
                             <Avatar user={user} size="md" />
-                            <div className="flex-1">
-                                <p className="font-medium text-primary-800">{user.name}</p>
-                            </div>
-                        </div>
+                            <span className="flex-1 font-medium text-primary-800">{user.name}</span>
+                        </button>
                     }
 
                 })}

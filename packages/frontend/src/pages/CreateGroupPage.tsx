@@ -30,7 +30,7 @@ export function CreateGroupPage() {
         to="/"
         className="flex items-center gap-2 text-primary-600 hover:text-primary-800 mb-4 transition-colors"
       >
-        <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+        <svg aria-hidden="true" className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
         </svg>
         Retour
@@ -40,10 +40,11 @@ export function CreateGroupPage() {
 
       <form onSubmit={handleSubmit} className="card p-6">
         <div className="mb-4">
-          <label className="block text-sm font-medium text-primary-800 mb-2">
+          <label htmlFor="group-name" className="block text-sm font-medium text-primary-800 mb-2">
             Nom du groupe
           </label>
           <input
+            id="group-name"
             type="text"
             value={name}
             onChange={(e) => setName(e.target.value)}
